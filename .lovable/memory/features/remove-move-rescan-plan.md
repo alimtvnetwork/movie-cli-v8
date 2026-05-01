@@ -34,11 +34,12 @@ phases. Each phase ends with a version bump and a verification step.
 - Reuses BuildConditionSQL + resolveMediaByQuery; logs FileActionMove via InsertMoveHistory (undo handled by existing executeMoveUndo).
 - Existing interactive `movie move` (argc 0–1) untouched.
 
-## Phase 5 — SmartRescan reconciliation
-- `cmd/movie_scan_reconcile.go` (8-step orchestrator).
-- `cmd/movie_scan_hydrate.go` (JSON → DB hydration, zero TMDb calls).
-- `--no-reconcile` opt-out flag added to `movie scan`.
-- Wire into `runMovieScan` BEFORE `executeScan`.
+## Phase 5 — SmartRescan reconciliation  ✅ DONE v2.293.0
+- `cmd/movie_scan_reconcile.go` — 8-step orchestrator (disk/json/db diff).
+- `cmd/movie_scan_hydrate.go` — JSON → DB, zero TMDb calls.
+- `db/media_softdelete.go` — added `MarkMediaMissing` helper.
+- `--no-reconcile` flag added to `movie scan`.
+- Wired into `runMovieScan` BEFORE `executeScan`.
 
 ## Phase 6 — QA + docs + cleanup
 - README section: rm/remove/delete examples + smart rescan note.
