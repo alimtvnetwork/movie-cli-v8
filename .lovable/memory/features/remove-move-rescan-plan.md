@@ -28,9 +28,10 @@ phases. Each phase ends with a version bump and a verification step.
 - `cmd/movie_undo_exec.go` patched: undoDelete restores existing soft-deleted row first.
 - Wired into `root.go` as `movieRmCmd`.
 
-## Phase 4 — `movie move <selector> <dest>` (selector mode)
-- `cmd/movie_move_selector.go` (argc dispatcher + `-g` sugar expander).
-- `cmd/movie_move_apply.go` (atomic batched mover + history rows + html regen).
+## Phase 4 — `movie move <selector> <dest>` (selector mode)  ✅ DONE v2.292.0
+- `cmd/movie_move_selector.go` (argc dispatcher + `-g` sugar + `-y` confirm skip).
+- `cmd/movie_move.go` patched: argc relaxed to ≤2, dispatches by isSelectorMoveInvocation.
+- Reuses BuildConditionSQL + resolveMediaByQuery; logs FileActionMove via InsertMoveHistory (undo handled by existing executeMoveUndo).
 - Existing interactive `movie move` (argc 0–1) untouched.
 
 ## Phase 5 — SmartRescan reconciliation
