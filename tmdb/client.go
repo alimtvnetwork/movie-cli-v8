@@ -126,6 +126,17 @@ func (c *Client) GetTVDetails(tmdbID int) (*TVDetails, error) {
 	return &d, nil
 }
 
+// GetTVSeason returns a TV season with its episode list. Mirrors TMDb's
+// /tv/{id}/season/{season_number} endpoint.
+func (c *Client) GetTVSeason(tmdbID, seasonNumber int) (*TVSeason, error) {
+	var s TVSeason
+	url := c.buildURL(fmt.Sprintf("/tv/%d/season/%d", tmdbID, seasonNumber), nil)
+	if err := c.get(url, &s); err != nil {
+		return nil, err
+	}
+	return &s, nil
+}
+
 // GetMovieCredits returns cast and crew for a movie.
 func (c *Client) GetMovieCredits(tmdbID int) (*Credits, error) {
 	var cr Credits

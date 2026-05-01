@@ -117,6 +117,12 @@ func linkScanMediaRelations(ctx *ScanContext, m *db.Media, mediaID int64) {
 			errlog.Warn("Director link error for '%s': %v", m.Title, linkErr)
 		}
 	}
+	if m.Type == string(db.MediaTypeTV) && m.TmdbID > 0 {
+		ingestTVSeasons(tvIngestInput{
+			Client: ctx.Client, DB: ctx.Database,
+			MediaID: mediaID, TmdbID: m.TmdbID, Title: m.Title,
+		})
+	}
 }
 
 func writeScanJSON(ctx *ScanContext, m *db.Media) {
