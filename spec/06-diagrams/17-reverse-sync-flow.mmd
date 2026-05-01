@@ -1,0 +1,50 @@
+%% 17-reverse-sync-flow.mmd — movie scan reverse-sync pass
+%% Version: 1.0.0 | Updated: 2026-05-01
+
+flowchart TD
+    START([movie scan reverse pass]) --> CHK_FLAG{--no-reverse-sync?}
+    CHK_FLAG -->|Yes| SKIP[/Skip reverse pass/]
+    SKIP --> END([End])
+    CHK_FLAG -->|No| LOAD_DB[R1: Load dbSet from Media\nWHERE CurrentFilePath LIKE folder%]
+
+    LOAD_DB --> LOAD_JSON[R2: Load jsonSet from\n.movie-output/json/**]
+    LOAD_JSON --> LOAD_DISK[R3: Build diskSet via\ncollectVideoFiles]
+
+    LOAD_DISK --> R4_LOOP{R4: Next active\nDB row?}
+    R4_LOOP -->|No more| R5_LOOP
+    R4_LOOP -->|Yes| R4_DISK{Path in\ndiskSet?}
+    R4_DISK -->|No| R4_LOOP
+    R4_DISK -->|Yes| R4_STALE{Sidecar missing\nor mtime < UpdatedAt?}
+    R4_STALE -->|No| R4_LOOP
+    R4_STALE -->|Yes| R4_WRITE[Rewrite sidecar\nfrom DB row]
+    R4_WRITE --> R4_LOG[/Log: ReverseSyncedSidecar/]
+    R4_LOG --> R4_LOOP
+
+    R5_LOOP{R5: Next orphan\nsidecar?} -->|No more| R6_LOOP
+    R5_LOOP -->|Yes| R5_DISK{File on disk?}
+    R5_DISK -->|Yes - keep| R5_LOOP
+    R5_DISK -->|No| R5_DEL[Delete sidecar]
+    R5_DEL --> R5_LOG[/Log: RemovedOrphanSidecar/]
+    R5_LOG --> R5_LOOP
+
+    R6_LOOP{R6: Next IsDeleted\nDB row with sidecar?} -->|No more| R7_LOOP
+    R6_LOOP -->|Yes| R6_DEL[Delete sidecar]
+    R6_DEL --> R6_LOG[/Log: RemovedDeletedSidecar/]
+    R6_LOG --> R6_LOOP
+
+    R7_LOOP{R7: Next DB row\nnot on disk?} -->|No more| R8_SUM
+    R7_LOOP -->|Yes| R7_MARK[markMissing]
+    R7_MARK --> R7_LOG[/Log: ReverseDetectedMissing/]
+    R7_LOG --> R7_LOOP
+
+    R8_SUM[R8: Print summary\nInsert Converged row] --> END
+
+    classDef entryExit fill:#1e293b,stroke:#1e293b,color:#f1f5f9,stroke-width:2px
+    classDef process fill:#f1f5f9,stroke:#cbd5e1,color:#1e293b
+    classDef decision fill:#e2e8f0,stroke:#94a3b8,color:#1e293b
+    classDef log fill:#3b82f6,stroke:#2563eb,color:#ffffff
+
+    class START,END entryExit
+    class LOAD_DB,LOAD_JSON,LOAD_DISK,R4_WRITE,R5_DEL,R6_DEL,R7_MARK,R8_SUM,SKIP process
+    class CHK_FLAG,R4_LOOP,R4_DISK,R4_STALE,R5_LOOP,R5_DISK,R6_LOOP,R7_LOOP decision
+    class R4_LOG,R5_LOG,R6_LOG,R7_LOG log
