@@ -35,6 +35,16 @@ func (d *DB) RestoreMedia(mediaID int64) error {
 	return err
 }
 
+// MarkMediaMissing flags a row as on-disk-missing without soft-deleting it.
+func (d *DB) MarkMediaMissing(mediaID int64) error {
+	_, err := d.Exec(`
+		UPDATE Media
+		SET MediaStatusId = ?,
+		    UpdatedAt = datetime('now')
+		WHERE MediaId = ?`, MediaStatusMissing, mediaID)
+	return err
+}
+
 // QueryMediaIDsByWhere runs SELECT MediaId FROM Media WHERE <where> LIMIT cap.
 func (d *DB) QueryMediaIDsByWhere(where string, args []any) ([]int64, error) {
 	q := "SELECT MediaId FROM Media WHERE " + where + " LIMIT ?"
