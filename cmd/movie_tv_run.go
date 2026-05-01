@@ -35,7 +35,7 @@ func printSeasonList(media *db.Media, seasons []db.Season) {
 	}
 	for _, s := range seasons {
 		fmt.Printf("  S%02d  %-30s  %d episodes  %s\n",
-			s.SeasonNumber, truncate(s.Name, 30), s.EpisodeCount, s.AirDate)
+			s.SeasonNumber, truncateLine(s.Name, 30), s.EpisodeCount, s.AirDate)
 	}
 }
 
@@ -70,7 +70,7 @@ func printEpisodesForSeason(database *db.DB, media *db.Media, seasonNumber int) 
 	for _, e := range eps {
 		fmt.Printf("  %s S%02dE%02d  ⭐ %.1f  %-40s  %s\n",
 			watchMarker(e.IsWatched), season.SeasonNumber, e.EpisodeNumber,
-			e.VoteAvg, truncate(e.Name, 40), e.AirDate)
+			e.VoteAvg, truncateLine(e.Name, 40), e.AirDate)
 	}
 }
 
@@ -135,7 +135,7 @@ func watchMarker(isWatched bool) string {
 	return "  "
 }
 
-func truncate(s string, n int) string {
+func truncateLine(s string, n int) string {
 	if len(s) <= n {
 		return s
 	}
