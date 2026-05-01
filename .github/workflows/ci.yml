@@ -96,6 +96,18 @@ jobs:
           # Full RCA: spec/09-app-issues/09-director-fk-stale-lastinsertid.md
           bash scripts/check-lastinsertid-anti-pattern.sh db
 
+      - name: Boolean naming guard (no Is/Has + Un/Not/No)
+        if: needs.sha-check.outputs.already-built != 'true'
+        run: |
+          # Enforce mem://constraints/boolean-no-negative-words:
+          # boolean identifiers must use positive semantic synonyms, never
+          # negative prefixes. IsUndone→IsReverted, IsNotReady→IsPending,
+          # HasNoX→IsLeaf, IsUnsaved→IsDirty.
+          # Allow-lists stdlib os.IsNotExist + common English words
+          # (IsUnique, IsNoteworthy, HasNotes, etc.) that happen to start
+          # with Un/Not/No but aren't negations.
+          bash scripts/check-boolean-naming.sh .
+
       - name: Stale-repo diagnose (main only)
         if: needs.sha-check.outputs.already-built != 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |

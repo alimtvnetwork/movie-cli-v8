@@ -123,9 +123,15 @@ All P0/P1/P2/P3 code work is complete. Recent hardening (May-2026):
 - v2.304.0 — fixed Director FK 787 (stale LastInsertId after INSERT OR IGNORE)
 - v2.305.0 — proactive Season/Episode audit fix for same anti-pattern
 - v2.306.0 — CI lint guard `scripts/check-lastinsertid-anti-pattern.sh`
-  prevents the anti-pattern from ever returning to `db/`
+- v2.307.0 — CI lint guard `scripts/check-boolean-naming.sh`
+  enforces `mem://constraints/boolean-no-negative-words`
 
-Only manual/user-side items remain:
+Only manual/user-side items + one open feature remain:
 
-1. **Real-OS QA** — run `spec/08-app/11-context-menu-qa-checklist.md` and 50+ file scan on user machine
-2. **Resolve stale local repo** — user must run `git fetch origin && git reset --hard origin/main && git clean -fd`
+1. **Wire Season/Episode into TV-show ingestion** — `db/season.go`
+   helpers exist and are FK-safe but have zero callers in `cmd/`.
+   First real feature work on the backlog.
+2. **Real-OS QA** — run `spec/08-app/11-context-menu-qa-checklist.md`
+   and 50+ file scan on user machine
+3. **Resolve stale local repo** — user must run
+   `git fetch origin && git reset --hard origin/main && git clean -fd`
