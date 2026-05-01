@@ -152,3 +152,15 @@ func printActionUndo(a *db.ActionRecord) {
 		fmt.Printf("   Batch: %s\n", a.BatchId[:8])
 	}
 }
+
+// regenSidecarFor recreates the JSON sidecar after an undo of soft-delete.
+// Sidecar lives in <currentFileDir>/.movie-output (same convention as scan).
+func regenSidecarFor(m *db.Media) {
+	if m.CurrentFilePath == "" {
+		return
+	}
+	basePath := filepath.Join(filepath.Dir(m.CurrentFilePath), ".movie-output")
+	if err := writeMediaJSON(basePath, m); err != nil {
+		errlog.Warn("undo: regen sidecar #%d: %v", m.ID, err)
+	}
+}
