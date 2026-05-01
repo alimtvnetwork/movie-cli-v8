@@ -77,10 +77,25 @@ ROW="$(sqlite3 "$DB_PATH" "
 [[ -z "$ROW" ]] && { note_fail "pick test row" "no active rows under $FOLDER"; exit 1; }
 MEDIA_ID="${ROW%%|*}"; REST="${ROW#*|}"
 ORIG_TITLE="${REST%%|*}"
+MEDIA_FILE="${REST#*|}"
 echo "🎯 Target: MediaId=$MEDIA_ID Title='$ORIG_TITLE'"
+echo "🎬 File:   $MEDIA_FILE"
+
+# Pre-flight: the on-disk media file MUST exist for reverse-sync to act on it.
+if [[ ! -f "$MEDIA_FILE" ]]; then
+  note_fail "media file on disk" "CurrentFilePath missing: $MEDIA_FILE" "$MEDIA_ID"
+  exit 1
+fi
 
 SIDECAR="$(grep -lR "\"title\": \"$ORIG_TITLE\"" "$JSON_DIR" 2>/dev/null | head -1)"
-[[ -z "$SIDECAR" ]] && { note_fail "find sidecar" "no JSON for '$ORIG_TITLE'" "$MEDIA_ID"; exit 1; }
+if [[ -z "$SIDECAR" ]]; then
+  note_fail "find sidecar" "no JSON sidecar for '$ORIG_TITLE' under $JSON_DIR" "$MEDIA_ID"
+  exit 1
+fi
+if [[ ! -f "$SIDECAR" ]]; then
+  note_fail "sidecar file on disk" "sidecar path resolved but missing: $SIDECAR" "$MEDIA_ID"
+  exit 1
+fi
 echo "📄 Sidecar: $SIDECAR"
 
 # ---------------- Test 1: rewrite on DB edit ----------------
