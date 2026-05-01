@@ -135,3 +135,12 @@ Backlog is empty. Only manual/user-side items remain:
    `movie tv` end-to-end)
 2. **Resolve stale local repo** — user must run
    `git fetch origin && git reset --hard origin/main && git clean -fd`
+- v2.310.0 — Reverse-sync pass (DB→JSON→disk awareness) wired into
+  `movie scan`; flags `--no-reverse-sync` / `--reverse-sync-only`;
+  spec/08-app/10-remove-move-rescan/rescan-reconciliation/02-reverse-sync-spec.md;
+  diagram spec/06-diagrams/17-reverse-sync-flow.mmd; migrate_v6 seeds
+  4 new ReconAction* lookup rows.
+
+3. **Reverse-sync real-OS verification** — edit a Media row via SQL,
+   rerun `movie scan`, confirm sidecar mtime advances and matches DB
+   UpdatedAt. Soft-delete a row, rerun scan, confirm sidecar removed.
