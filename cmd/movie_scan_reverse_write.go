@@ -55,7 +55,7 @@ func writeSidecarFromDB(database *db.DB, jsonRoot string, r *db.ReverseSyncRow) 
 	if scanDryRun {
 		return nil
 	}
-	media, err := loadMediaForSidecar(r.ID)
+	media, err := database.GetMediaByID(r.ID)
 	if err != nil {
 		return apperror.Wrap("load media", err)
 	}
@@ -69,9 +69,10 @@ func writeSidecarFromDB(database *db.DB, jsonRoot string, r *db.ReverseSyncRow) 
 // loadMediaForSidecar fetches one Media row by ID. Returns (nil, nil)
 // when not found so callers can branch on absence.
 func loadMediaForSidecar(id int64) (*db.Media, error) {
-	media, err := lookupMediaByID(id)
+	database, err := db.Open()
 	if err != nil {
 		return nil, err
 	}
-	return media, nil
+	defer database.Close()
+	return database.GetMediaByID(id)
 }
