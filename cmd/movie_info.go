@@ -1,3 +1,4 @@
+// SHARED HELPER: movie_info.go — movie info <id-or-title>
 // movie_info.go — movie info <id-or-title>
 //
 // Accepts a numeric ID (from library) or a title string.

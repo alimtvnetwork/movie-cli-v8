@@ -1,3 +1,4 @@
+// SHARED HELPER: imdb_cache_attach.go — shared helper to optionally attach the IMDb cache
 // imdb_cache_attach.go — shared helper to optionally attach the IMDb cache
 // to a TMDb client based on a --no-cache style flag.
 //

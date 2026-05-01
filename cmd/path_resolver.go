@@ -1,3 +1,4 @@
+// SHARED HELPER: path_resolver.go — universal CWD-default resolver for ALL movie commands.
 // path_resolver.go — universal CWD-default resolver for ALL movie commands.
 //
 // -- Shared helper exported from this file --

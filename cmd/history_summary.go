@@ -1,3 +1,4 @@
+// SHARED HELPER: history_summary.go — shared post-operation summary for movie undo/redo.
 // history_summary.go — shared post-operation summary for movie undo/redo.
 //
 // Whenever an undo/redo flow finishes (single op, batch, or just `--list`),

@@ -1,3 +1,4 @@
+// SHARED HELPER: constants.go — shared string constants to avoid magic strings.
 // constants.go — shared string constants to avoid magic strings.
 package cmd
 

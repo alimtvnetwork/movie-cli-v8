@@ -97,7 +97,7 @@
 
 ### Phase 3: Spec Completeness (P2)
 - [x] Acceptance criteria (GIVEN/WHEN/THEN) for all commands ✅ 01-May-2026 (v1.3.0, AC-01..AC-40)
-- [ ] Shared helper docs — code comments marking shared helpers
+- [x] Shared helper docs — `// SHARED HELPER:` banners on 17 cmd/ helper files ✅ 01-May-2026 (v2.303.0)
 
 ### Phase 4: Future Enhancements (P3)
 - [x] Director normalization table (`db/director.go`) ✅
@@ -119,8 +119,7 @@
 
 ## Next Task Selection
 
-All P0/P1/P2 work and guideline phases 1-7 are complete. Open items:
+All P0/P1/P2/P3 code work is complete. Only manual/user-side items remain:
 
-1. **Shared helper docs** — annotate remaining helper files with `// SHARED HELPER:` banners (P2, low effort)
-2. **Real-OS QA** — run `spec/08-app/11-context-menu-qa-checklist.md` and 50+ file scan on user machine
-3. **Resolve stale local repo** — user must run `git fetch origin && git reset --hard origin/main && git clean -fd`
+1. **Real-OS QA** — run `spec/08-app/11-context-menu-qa-checklist.md` and 50+ file scan on user machine
+2. **Resolve stale local repo** — user must run `git fetch origin && git reset --hard origin/main && git clean -fd`

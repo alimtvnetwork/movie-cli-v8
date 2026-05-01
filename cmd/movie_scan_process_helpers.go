@@ -1,3 +1,4 @@
+// SHARED HELPER: movie_scan_process_helpers.go — extracted helpers for processVideoFile.
 // movie_scan_process_helpers.go — extracted helpers for processVideoFile.
 //
 // SHARED: per-file scan pipeline pieces (title clean, year extract, TMDb

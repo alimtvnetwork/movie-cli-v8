@@ -1,3 +1,4 @@
+// SHARED HELPER: movie_resolve.go — shared media resolver.
 // movie_resolve.go — shared media resolver.
 //
 // SHARED: resolveMediaByQuery(db, query) — accepts a numeric ID or a fuzzy
