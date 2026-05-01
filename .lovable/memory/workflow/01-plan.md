@@ -1,6 +1,6 @@
 # Project Plan & Status
 
-> **Last Updated**: 24-Apr-2026
+> **Last Updated**: 01-May-2026
 
 ## ✅ Completed
 
@@ -96,13 +96,13 @@
 ## 🔲 Pending — Prioritized Backlog
 
 ### Phase 3: Spec Completeness (P2)
-- [ ] Acceptance criteria (GIVEN/WHEN/THEN) for all commands
+- [x] Acceptance criteria (GIVEN/WHEN/THEN) for all commands ✅ 01-May-2026 (v1.3.0, AC-01..AC-40)
 - [ ] Shared helper docs — code comments marking shared helpers
 
 ### Phase 4: Future Enhancements (P3)
 - [x] Director normalization table (`db/director.go`) ✅
 - [x] Season/Episode tables for TV series (`db/season.go`) ✅
-- [ ] REST API server mode with HTML dashboard
+- [x] REST API server mode with HTML dashboard ✅ (`cmd/movie_rest*.go`)
 - 🚫 **Watchlist TMDb account sync — FORBIDDEN.** See `mem://constraints/no-tmdb-account-sync`. Local JSON sync only.
 
 ---
@@ -119,8 +119,8 @@
 
 ## Next Task Selection
 
-All P0/P1 work and guideline phases 1-7 are complete. Pick from remaining P2/P3:
+All P0/P1/P2 work and guideline phases 1-7 are complete. Open items:
 
-1. **REST API server mode** — HTML dashboard over the existing DB
-2. **Acceptance criteria docs** — GIVEN/WHEN/THEN per command (P2)
+1. **Shared helper docs** — annotate remaining helper files with `// SHARED HELPER:` banners (P2, low effort)
+2. **Real-OS QA** — run `spec/08-app/11-context-menu-qa-checklist.md` and 50+ file scan on user machine
 3. **Resolve stale local repo** — user must run `git fetch origin && git reset --hard origin/main && git clean -fd`
