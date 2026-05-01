@@ -48,13 +48,14 @@ phases. Each phase ends with a version bump and a verification step.
   - R1 sidecar removal: `removeRmSidecar` deletes the JSON sidecar on rm.
   - R6 sidecar regen: `regenSidecarFor` recreates sidecar after `movie undo`.
 - Deferred to follow-up tasks (filed below):
-  - report.html regen after rm/move (currently relies on next `--rest`/scan).
   - Real 50+ file QA on user machine (cannot run in sandbox).
 - M5 ✅ done v2.299.0: `executeBatchMovesAtomic` in cmd/movie_move_atomic.go;
   rolls back completed FS moves in reverse order on first failure; DB writes
   only happen on full success. `--no-atomic` opt-out preserves legacy flow.
+- Auto report regen ✅ done v2.300.0: `regenerateReports(database)` is now
+  called from `applyRm`, `applySelectorMove`, `executeBatchMovesAtomic`, and
+  the legacy best-effort batch path whenever `success > 0`.
 
 ## Open decisions (deferred to future asks)
 - `--purge` flag on rm to also delete the on-disk video file.
 - Cross-folder global JSON cache (current scope = per-folder only).
-- Auto-regenerate `report.html` immediately after rm/move.
