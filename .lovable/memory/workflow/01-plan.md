@@ -124,13 +124,14 @@ All P0/P1/P2/P3 code work is complete. Recent hardening (May-2026):
 - v2.305.0 — proactive Season/Episode audit fix for same anti-pattern
 - v2.306.0 — CI lint guard `scripts/check-lastinsertid-anti-pattern.sh`
 - v2.307.0 — CI lint guard `scripts/check-boolean-naming.sh`
-  enforces `mem://constraints/boolean-no-negative-words`
-- v2.308.0 — TV season/episode ingestion wired into live scan path
-  (`cmd/movie_scan_tv_seasons.go`); side-fix telemetry build error
+- v2.308.0 — TV season/episode ingestion wired into live scan
+- v2.309.0 — `movie tv [seasons|episodes|mark|unmark]` CLI surface
+  surfaces the Season/Episode data populated by v2.308.0
 
-Backlog is now empty. Only manual/user-side items remain:
+Backlog is empty. Only manual/user-side items remain:
 
 1. **Real-OS QA** — run `spec/08-app/11-context-menu-qa-checklist.md`
-   and 50+ file scan on user machine (now exercises TV ingestion too)
+   and 50+ file scan on user machine (now exercises TV ingestion +
+   `movie tv` end-to-end)
 2. **Resolve stale local repo** — user must run
    `git fetch origin && git reset --hard origin/main && git clean -fd`

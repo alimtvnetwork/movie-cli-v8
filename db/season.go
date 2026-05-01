@@ -140,10 +140,25 @@ func (d *DB) MarkEpisodeWatched(episodeID int64) error {
 	return err
 }
 
-// MarkEpisodeUnwatched reverts an episode to unwatched.
-func (d *DB) MarkEpisodeUnwatched(episodeID int64) error {
+// MarkEpisodePending reverts an episode back to the unwatched/pending
+// state. Name avoids the negative `Unwatched` prefix per
+// mem://constraints/boolean-no-negative-words.
+func (d *DB) MarkEpisodePending(episodeID int64) error {
 	_, err := d.Exec(
 		"UPDATE Episode SET IsWatched = 0, WatchedAt = NULL WHERE EpisodeId = ?",
 		episodeID)
 	return err
+}
+
+// FindEpisodeByMediaAndCode resolves an episode from a media id plus a
+// season+episode pair. Returns the canonical EpisodeId.
+func (d *DB) FindEpisodeByMediaAndCode(mediaID int64, seasonNumber, episodeNumber int) (int64, error) {
+	var id int64
+	err := d.QueryRow(`
+		SELECT e.EpisodeId
+		FROM Episode e
+		JOIN Season s ON s.SeasonId = e.SeasonId
+		WHERE s.MediaId = ? AND s.SeasonNumber = ? AND e.EpisodeNumber = ?`,
+		mediaID, seasonNumber, episodeNumber).Scan(&id)
+	return id, err
 }
