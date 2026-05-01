@@ -15,25 +15,39 @@ import (
 var moveAllFlag bool
 
 var movieMoveCmd = &cobra.Command{
-	Use:   "move [directory]",
-	Short: "Browse a local directory and move a movie/TV show file",
-	Long: `Browse a local directory for video files, select one, and move it
-to a configured destination (Movies, TV Shows, Archive, or custom path).
-The move is logged for undo support.
+	Use:   "move [directory] | <selector> <dest>",
+	Short: "Move video files (interactive) or bulk-move by selector",
+	Long: `Two modes:
 
-Use --all to move all video files at once. Movies go to movies_dir,
-TV shows go to tv_dir (auto-detected from filename).
+  1. Interactive (0–1 args): browse a directory and pick files to move.
+       movie move
+       movie move /Volumes/Drive
+       movie move ~/Downloads --all
 
-If no directory is given, you'll be prompted to choose one.`,
-	Args: cobra.MaximumNArgs(1),
+  2. Selector (2 args): bulk-move matches of an id/title/expression to a dest.
+       movie move 42 ~/Movies
+       movie move "Inception" ~/Movies
+       movie move "rating < 5 AND year >= 2010" ~/Archive
+       movie move -g Horror ~/Movies/Horror`,
+	Args: cobra.MaximumNArgs(2),
 	Run:  runMovieMove,
 }
 
 func init() {
 	movieMoveCmd.Flags().BoolVar(&moveAllFlag, "all", false, "Move all video files in the directory at once")
+	movieMoveCmd.Flags().StringVarP(&moveGenreSugar, "genre", "g", "", "Sugar: equivalent to selector \"g = <name>\"")
+	movieMoveCmd.Flags().BoolVarP(&moveAssumeYes, "yes", "y", false, "Skip confirmation prompt (selector mode)")
 }
 
 func runMovieMove(cmd *cobra.Command, args []string) {
+	if isSelectorMoveInvocation(args) {
+		runSelectorMove(args)
+		return
+	}
+	runInteractiveMoveCmd(args)
+}
+
+func runInteractiveMoveCmd(args []string) {
 	database, err := db.Open()
 	if err != nil {
 		errlog.Error(msgDatabaseError, err)
@@ -48,8 +62,6 @@ func runMovieMove(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	// Universal cwd-default rule (mem://constraints/cwd-default-rule).
-	// NEVER fall back to a silent prompt that returns "" on cancel.
 	sourceDir, resolveErr := ResolveTargetDir(args, home)
 	if resolveErr != nil {
 		errlog.Error("Cannot resolve source directory: %v", resolveErr)
