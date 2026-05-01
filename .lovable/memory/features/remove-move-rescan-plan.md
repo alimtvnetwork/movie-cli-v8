@@ -55,7 +55,9 @@ phases. Each phase ends with a version bump and a verification step.
 - Auto report regen ✅ done v2.300.0: `regenerateReports(database)` is now
   called from `applyRm`, `applySelectorMove`, `executeBatchMovesAtomic`, and
   the legacy best-effort batch path whenever `success > 0`.
+- `--purge` flag ✅ done v2.301.0: `movie rm --purge` deletes the on-disk
+  file via `purgeOnDiskFile` after the soft-delete; confirm prompt always
+  fires when --purge is set, regardless of count, with a louder verb.
 
 ## Open decisions (deferred to future asks)
-- `--purge` flag on rm to also delete the on-disk video file.
 - Cross-folder global JSON cache (current scope = per-folder only).
