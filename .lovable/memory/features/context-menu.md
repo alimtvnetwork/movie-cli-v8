@@ -1,6 +1,6 @@
 ---
 name: Context menu integration
-description: `movie add-contextmenu` installs Windows/Linux/macOS shell submenu (Scan/Rescan/Report/Stats); clicks logged to ActionHistory via MAHIN_TRIGGER env var
+description: `movie add-contextmenu` installs Windows/Linux/macOS shell submenu (Scan/Rescan/Report/Stats); clicks logged to ActionHistory via MOVIE_TRIGGER env var
 type: feature
 ---
 
@@ -19,13 +19,13 @@ Defined in `cmd/movie_contextmenu.go` as `contextMenuEntries`:
 4. Show Movie Stats   → `movie stats .`
 
 ## OS Implementations (build-tagged sibling files)
-- **Windows** (`movie_contextmenu_windows.go`): `HKCU\Software\Classes\Directory\shell\Movie` + `Directory\Background\shell\Movie`. `cmd.exe /c "set MAHIN_TRIGGER=contextmenu&& cd /d %V && movie scan . & if errorlevel 1 pause"`. No admin required.
+- **Windows** (`movie_contextmenu_windows.go`): `HKCU\Software\Classes\Directory\shell\Movie` + `Directory\Background\shell\Movie`. `cmd.exe /c "set MOVIE_TRIGGER=contextmenu&& cd /d %V && movie scan . & if errorlevel 1 pause"`. No admin required.
 - **Linux** (`movie_contextmenu_linux.go`): `~/.local/share/file-manager/actions/movie-cli.desktop` (XDG-respecting). One `[X-Action-Profile]` per entry, `MimeTypes=inode/directory`.
 - **macOS** (`movie_contextmenu_darwin.go`): one `~/Library/Services/Movie - <key>.workflow` Automator Quick Action per entry. **One-time manual step required:** System Settings → Keyboard → Services → Files & Folders → enable each entry. Cannot be auto-enabled without code-signing (TCC).
 - **Other OS**: returns "not supported" error.
 
 ## Telemetry
-- Installed shortcuts set `MAHIN_TRIGGER=contextmenu` and `MAHIN_CONTEXTMENU_ENTRY=<key>`.
+- Installed shortcuts set `MOVIE_TRIGGER=contextmenu` and `MOVIE_CONTEXTMENU_ENTRY=<key>`.
 - `RecordContextMenuClick(db, cwd)` in `movie_contextmenu_telemetry.go` writes one ActionHistory row per click.
 - Reuses existing `FileActionScanAdd` enum (no migration). Detail format: `trigger=contextmenu;entry=<key>;cwd=<path>`.
 - Currently wired into `movie scan` (covers Scan + Report). Wire into `movie rescan` and `movie stats` if those need separate counts.
