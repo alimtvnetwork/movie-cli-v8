@@ -84,7 +84,7 @@ func reverseStepRewrite(database *db.DB, jsonRoot string,
 		if _, ok := diskSet[r.CurrentFilePath]; !ok {
 			continue
 		}
-		sidecarPath := sidecarPathFor(jsonRoot, r)
+		sidecarPath := sidecarPathFor(database, jsonRoot, r)
 		if !shouldRewriteSidecar(sidecarPath, r.UpdatedAt) {
 			continue
 		}
@@ -112,7 +112,7 @@ func reverseStepPurgeDeleted(database *db.DB, jsonRoot string,
 		if !r.IsDeleted {
 			continue
 		}
-		sidecarPath := sidecarPathFor(jsonRoot, r)
+		sidecarPath := sidecarPathFor(database, jsonRoot, r)
 		if _, ok := sidecarSet[sidecarPath]; !ok {
 			continue
 		}
@@ -150,7 +150,7 @@ func reverseStepDetectMissing(database *db.DB, jsonRoot string,
 			errlog.Warn("reverse-sync: mark missing #%d: %v", r.ID, err)
 			continue
 		}
-		_ = os.Remove(sidecarPathFor(jsonRoot, r))
+		_ = os.Remove(sidecarPathFor(database, jsonRoot, r))
 		_, _ = database.InsertReconciliation(db.ReconInput{
 			MediaID:    sql.NullInt64{Int64: r.ID, Valid: true},
 			ActionType: db.ReconActionReverseDetectedMissing,
@@ -188,7 +188,7 @@ func reverseStepRemoveOrphans(database *db.DB, jsonRoot string,
 func indexKnownSidecars(jsonRoot string, rows []db.ReverseSyncRow) map[string]struct{} {
 	set := make(map[string]struct{}, len(rows))
 	for i := range rows {
-		set[sidecarPathFor(jsonRoot, &rows[i])] = struct{}{}
+		set[sidecarPathFor(database, jsonRoot, &rows[i])] = struct{}{}
 	}
 	return set
 }
