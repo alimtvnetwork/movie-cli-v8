@@ -77,10 +77,25 @@ ROW="$(sqlite3 "$DB_PATH" "
 [[ -z "$ROW" ]] && { note_fail "pick test row" "no active rows under $FOLDER"; exit 1; }
 MEDIA_ID="${ROW%%|*}"; REST="${ROW#*|}"
 ORIG_TITLE="${REST%%|*}"
+MEDIA_FILE="${REST#*|}"
 echo "🎯 Target: MediaId=$MEDIA_ID Title='$ORIG_TITLE'"
+echo "🎬 File:   $MEDIA_FILE"
+
+# Pre-flight: the on-disk media file MUST exist for reverse-sync to act on it.
+if [[ ! -f "$MEDIA_FILE" ]]; then
+  note_fail "media file on disk" "CurrentFilePath missing: $MEDIA_FILE" "$MEDIA_ID"
+  exit 1
+fi
 
 SIDECAR="$(grep -lR "\"title\": \"$ORIG_TITLE\"" "$JSON_DIR" 2>/dev/null | head -1)"
-[[ -z "$SIDECAR" ]] && { note_fail "find sidecar" "no JSON for '$ORIG_TITLE'" "$MEDIA_ID"; exit 1; }
+if [[ -z "$SIDECAR" ]]; then
+  note_fail "find sidecar" "no JSON sidecar for '$ORIG_TITLE' under $JSON_DIR" "$MEDIA_ID"
+  exit 1
+fi
+if [[ ! -f "$SIDECAR" ]]; then
+  note_fail "sidecar file on disk" "sidecar path resolved but missing: $SIDECAR" "$MEDIA_ID"
+  exit 1
+fi
 echo "📄 Sidecar: $SIDECAR"
 
 # ---------------- Test 1: rewrite on DB edit ----------------
@@ -92,17 +107,28 @@ echo "✏️  Title → '$NEW_TITLE'"
 touch -t "$(back_one_minute)" "$SIDECAR"
 
 mahin scan "$FOLDER" --reverse-sync-only
-AFTER_MTIME="$(mtime "$SIDECAR")"
-SIDECAR_TITLE="$(grep -o '"title": *"[^"]*"' "$SIDECAR" | head -1)"
 
 T1_OK=true
-if (( AFTER_MTIME <= BEFORE_MTIME )); then
-  note_fail "T1 mtime advanced" "before=$BEFORE_MTIME after=$AFTER_MTIME" "$MEDIA_ID"
+if [[ ! -f "$MEDIA_FILE" ]]; then
+  note_fail "T1 media file present" "expected on-disk file vanished: $MEDIA_FILE" "$MEDIA_ID"
   T1_OK=false
 fi
-if [[ "$SIDECAR_TITLE" != *"$NEW_TITLE"* ]]; then
-  note_fail "T1 sidecar title updated" "expected substring '$NEW_TITLE' got: $SIDECAR_TITLE" "$MEDIA_ID"
+if [[ ! -f "$SIDECAR" ]]; then
+  note_fail "T1 sidecar present" "expected sidecar missing after rewrite: $SIDECAR" "$MEDIA_ID"
   T1_OK=false
+fi
+
+if $T1_OK; then
+  AFTER_MTIME="$(mtime "$SIDECAR")"
+  SIDECAR_TITLE="$(grep -o '"title": *"[^"]*"' "$SIDECAR" | head -1)"
+  if (( AFTER_MTIME <= BEFORE_MTIME )); then
+    note_fail "T1 mtime advanced" "before=$BEFORE_MTIME after=$AFTER_MTIME" "$MEDIA_ID"
+    T1_OK=false
+  fi
+  if [[ "$SIDECAR_TITLE" != *"$NEW_TITLE"* ]]; then
+    note_fail "T1 sidecar title updated" "expected substring '$NEW_TITLE' got: $SIDECAR_TITLE" "$MEDIA_ID"
+    T1_OK=false
+  fi
 fi
 $T1_OK && note_pass "T1 sidecar rewritten with new title (MediaId=$MEDIA_ID)"
 
@@ -111,6 +137,10 @@ sqlite3 "$DB_PATH" "UPDATE Media SET Title='$ORIG_TITLE', UpdatedAt=datetime('no
 
 # ---------------- Test 2: sidecar removal on soft-delete ----------------
 echo ""; echo "==== Test 2: sidecar removal on soft-delete ===="
+if [[ ! -f "$SIDECAR" ]]; then
+  note_fail "T2 pre-check sidecar present" "sidecar missing before soft-delete: $SIDECAR" "$MEDIA_ID"
+  exit 3
+fi
 sqlite3 "$DB_PATH" "UPDATE Media SET IsDeleted=1, UpdatedAt=datetime('now') WHERE MediaId=$MEDIA_ID;"
 echo "🗑  Row $MEDIA_ID soft-deleted"
 
