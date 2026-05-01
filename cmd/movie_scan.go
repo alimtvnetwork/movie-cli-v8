@@ -63,6 +63,8 @@ func init() {
 		"polling interval in seconds for --watch mode")
 	movieScanCmd.Flags().BoolVar(&scanKeepLogs, "keep-logs", false,
 		"keep the previous run's logs instead of wiping .movie-output/logs/ on start")
+	movieScanCmd.Flags().IntVar(&scanWorkers, "workers", 0,
+		"parallel scan workers (0=auto: NumCPU*2, capped at 32)")
 }
 
 func runMovieScan(cmd *cobra.Command, args []string) {
