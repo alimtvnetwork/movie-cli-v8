@@ -1,11 +1,11 @@
 // movie_scan_reverse_write.go — DB row → JSON sidecar writer used by
-// the reverse-sync pass. Builds a Media struct from a ReverseSyncRow
-// (which carries only the IDs we need) by re-fetching the full row.
+// the reverse-sync pass.
 package cmd
 
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/alimtvnetwork/movie-cli-v7/apperror"
@@ -13,15 +13,14 @@ import (
 )
 
 // sidecarPathFor returns the canonical sidecar path for a Media row,
-// using the same slug rules as writeMediaJSON.
-func sidecarPathFor(jsonRoot string, r *db.ReverseSyncRow) string {
+// using the same slug rules as writeMediaJSON. Falls back to a
+// filename-derived slug when the row cannot be loaded.
+func sidecarPathFor(database *db.DB, jsonRoot string, r *db.ReverseSyncRow) string {
 	subDir := db.JsonSubDir(r.Type)
-	stub := &db.Media{ID: r.ID, Type: r.Type}
-	media, err := loadMediaForSidecar(stub.ID)
+	media, err := database.GetMediaByID(r.ID)
 	if err != nil || media == nil {
-		// Fallback: derive slug from current file path when DB load fails.
 		base := filepath.Base(r.CurrentFilePath)
-		base = base[:len(base)-len(filepath.Ext(base))]
+		base = strings.TrimSuffix(base, filepath.Ext(base))
 		return filepath.Join(jsonRoot, subDir, base+".json")
 	}
 	return filepath.Join(jsonRoot, subDir, mediaSlug(media)+".json")
@@ -32,11 +31,11 @@ func sidecarPathFor(jsonRoot string, r *db.ReverseSyncRow) string {
 func shouldRewriteSidecar(sidecarPath, dbUpdatedAt string) bool {
 	info, err := os.Stat(sidecarPath)
 	if err != nil {
-		return true // missing → rewrite
+		return true
 	}
 	dbTime, parseErr := parseDBTime(dbUpdatedAt)
 	if parseErr != nil {
-		return true // unparseable → safer to rewrite
+		return true
 	}
 	return info.ModTime().Before(dbTime)
 }
@@ -64,15 +63,4 @@ func writeSidecarFromDB(database *db.DB, jsonRoot string, r *db.ReverseSyncRow) 
 	}
 	basePath := filepath.Dir(jsonRoot) // .movie-output
 	return writeMediaJSON(basePath, media)
-}
-
-// loadMediaForSidecar fetches one Media row by ID. Returns (nil, nil)
-// when not found so callers can branch on absence.
-func loadMediaForSidecar(id int64) (*db.Media, error) {
-	database, err := db.Open()
-	if err != nil {
-		return nil, err
-	}
-	defer database.Close()
-	return database.GetMediaByID(id)
 }
