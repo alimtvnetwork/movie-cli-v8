@@ -14,6 +14,9 @@ func (d *DB) LinkMediaDirectors(mediaID int64, directorCSV string) error {
 		if err != nil {
 			return err
 		}
+		if dirID <= 0 {
+			continue
+		}
 		_, err = d.Exec(
 			"INSERT OR IGNORE INTO MediaDirector (MediaId, DirectorId) VALUES (?, ?)",
 			mediaID, dirID)
@@ -53,18 +56,22 @@ func (d *DB) DirectorsByMediaID(mediaID int64) string {
 }
 
 // ensureDirector inserts or finds a director by name, returns DirectorId.
+//
+// IMPORTANT: Never trust res.LastInsertId() after INSERT OR IGNORE — when the
+// UNIQUE(Name) conflict fires, mattn/go-sqlite3 returns the last successful
+// rowid on the connection (potentially from a different table), which would
+// produce a stale DirectorId and trigger MediaDirector FK error 787.
+// Always SELECT the canonical PK back. See spec/09-app-issues/09-director-fk-stale-lastinsertid.md.
 func (d *DB) ensureDirector(name string) (int64, error) {
 	name = strings.TrimSpace(name)
-	res, err := d.Exec("INSERT OR IGNORE INTO Director (Name) VALUES (?)", name)
-	if err != nil {
+	if name == "" {
+		return 0, nil
+	}
+	if _, err := d.Exec("INSERT OR IGNORE INTO Director (Name) VALUES (?)", name); err != nil {
 		return 0, err
 	}
-	id, _ := res.LastInsertId()
-	if id > 0 {
-		return id, nil
-	}
 	var dirID int64
-	err = d.QueryRow("SELECT DirectorId FROM Director WHERE Name = ?", name).Scan(&dirID)
+	err := d.QueryRow("SELECT DirectorId FROM Director WHERE Name = ?", name).Scan(&dirID)
 	return dirID, err
 }
 
