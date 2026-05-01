@@ -112,7 +112,7 @@ func isDestructiveEntry(key string) bool {
 func buildMacDocumentWflow(exePath string, e ContextMenuEntry) string {
 	confirm := macConfirmPrompt(e)
 	script := fmt.Sprintf(
-		`for f in "$@"; do osascript -e 'tell app "Terminal" to do script "export MAHIN_TRIGGER=contextmenu MAHIN_CONTEXTMENU_ENTRY=%s; cd \"'"$f"'\" && %s \"%s\" %s ."'; done`,
+		`for f in "$@"; do osascript -e 'tell app "Terminal" to do script "export MOVIE_TRIGGER=contextmenu MOVIE_CONTEXTMENU_ENTRY=%s; cd \"'"$f"'\" && %s \"%s\" %s ."'; done`,
 		e.Key, confirm, exePath, e.Command,
 	)
 	return fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8"?>
