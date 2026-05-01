@@ -5,6 +5,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/alimtvnetwork/movie-cli-v7/db"
@@ -57,16 +58,17 @@ func confirmRm(count int) bool {
 }
 
 func applyRm(database *db.DB, ids []int64) {
+	batchID := generateBatchID()
 	success := 0
 	for _, id := range ids {
-		if applySingleRm(database, id) {
+		if applySingleRm(database, id, batchID) {
 			success++
 		}
 	}
-	fmt.Printf("\n✅ Soft-deleted %d/%d media.\n", success, len(ids))
+	fmt.Printf("\n✅ Soft-deleted %d/%d media (batch %s).\n", success, len(ids), batchID[:8])
 }
 
-func applySingleRm(database *db.DB, id int64) bool {
+func applySingleRm(database *db.DB, id int64, batchID string) bool {
 	m, err := database.GetMediaByID(id)
 	if err != nil {
 		errlog.Warn("rm: load #%d: %v", id, err)
@@ -76,11 +78,20 @@ func applySingleRm(database *db.DB, id int64) bool {
 		errlog.Error("rm: soft-delete #%d: %v", id, delErr)
 		return false
 	}
-	logRmHistory(database, m)
+	removeRmSidecar(m)
+	logRmHistory(database, m, batchID)
 	return true
 }
 
-func logRmHistory(database *db.DB, m *db.Media) {
+func removeRmSidecar(m *db.Media) {
+	if m.CurrentFilePath == "" {
+		return
+	}
+	jsonRoot := filepath.Join(filepath.Dir(m.CurrentFilePath), ".movie-output", "json")
+	deleteSidecarFor(jsonRoot, m)
+}
+
+func logRmHistory(database *db.DB, m *db.Media, batchID string) {
 	snap, snapErr := db.MediaToJSON(m)
 	if snapErr != nil {
 		errlog.Warn("rm: snapshot #%d: %v", m.ID, snapErr)
@@ -90,6 +101,7 @@ func logRmHistory(database *db.DB, m *db.Media) {
 		FileAction: db.FileActionDelete,
 		MediaID:    m.ID,
 		Snapshot:   snap,
+		BatchID:    batchID,
 		Detail:     fmt.Sprintf("Soft-deleted: %s (%d)", m.Title, m.Year),
 	})
 	if histErr != nil {
