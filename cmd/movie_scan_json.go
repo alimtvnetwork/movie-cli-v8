@@ -64,6 +64,7 @@ func writeMediaJSON(basePath string, m *db.Media) error {
 		return err
 	}
 
+	MirrorToGlobalCache(data)
 	fmt.Printf("     📝 JSON metadata saved: %s\n", jsonPath)
 	return nil
 }
