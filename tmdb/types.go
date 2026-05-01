@@ -67,7 +67,29 @@ type TVDetails struct {
 	Seasons          int      `json:"number_of_seasons"`
 }
 
-// Genre is a TMDb genre.
+// TVSeason holds a single season of a TV show with its episode list.
+// Mirrors TMDb's /tv/{id}/season/{season_number} response.
+type TVSeason struct {
+	Name         string      `json:"name"`
+	Overview     string      `json:"overview"`
+	PosterPath   string      `json:"poster_path"`
+	AirDate      string      `json:"air_date"`
+	Episodes     []TVEpisode `json:"episodes"`
+	ID           int         `json:"id"`
+	SeasonNumber int         `json:"season_number"`
+}
+
+// TVEpisode holds a single episode within a TVSeason.
+type TVEpisode struct {
+	Name          string  `json:"name"`
+	Overview      string  `json:"overview"`
+	AirDate       string  `json:"air_date"`
+	StillPath     string  `json:"still_path"`
+	VoteAvg       float64 `json:"vote_average"`
+	ID            int     `json:"id"`
+	EpisodeNumber int     `json:"episode_number"`
+	Runtime       int     `json:"runtime"`
+}
 type Genre struct {
 	Name string `json:"name"`
 	ID   int    `json:"id"`
