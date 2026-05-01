@@ -3,7 +3,7 @@
 // from the right-click menu?".
 //
 // Detection: when the OS-installed shortcut runs `movie scan`, it sets the
-// env var MAHIN_TRIGGER=contextmenu (and MAHIN_CONTEXTMENU_ENTRY=<key>).
+// env var MOVIE_TRIGGER=contextmenu (and MOVIE_CONTEXTMENU_ENTRY=<key>).
 // recordContextMenuClick is called from the relevant command's entry
 // point and writes a single ActionHistory row reusing existing FileAction
 // enums (no schema migration required).
@@ -19,10 +19,10 @@ import (
 )
 
 // EnvContextMenuTrigger is set to "contextmenu" by the installed shortcut.
-const EnvContextMenuTrigger = "MAHIN_TRIGGER"
+const EnvContextMenuTrigger = "MOVIE_TRIGGER"
 
 // EnvContextMenuEntry tells us which submenu item was clicked.
-const EnvContextMenuEntry = "MAHIN_CONTEXTMENU_ENTRY"
+const EnvContextMenuEntry = "MOVIE_CONTEXTMENU_ENTRY"
 
 // triggerValueContextMenu is the single accepted trigger value.
 const triggerValueContextMenu = "contextmenu"

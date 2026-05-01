@@ -63,6 +63,9 @@ func runMovieStats(cmd *cobra.Command, args []string) {
 	}
 	defer database.Close()
 
+	cwd, _ := os.Getwd()
+	RecordContextMenuClick(database, cwd)
+
 	totalMovies, _ := database.CountMedia(string(db.MediaTypeMovie))
 	totalTV, _ := database.CountMedia(string(db.MediaTypeTV))
 	total, err := database.CountMedia("")

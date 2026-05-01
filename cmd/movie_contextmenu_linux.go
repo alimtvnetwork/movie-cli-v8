@@ -81,7 +81,7 @@ func writeLinuxHeader(b *strings.Builder) {
 
 func writeLinuxAction(b *strings.Builder, exePath string, e ContextMenuEntry) {
 	cmdLine := fmt.Sprintf(
-		`bash -c 'export MAHIN_TRIGGER=contextmenu MAHIN_CONTEXTMENU_ENTRY=%s; cd "%%f" && "%s" %s . || (echo Press enter to close; read)'`,
+		`bash -c 'export MOVIE_TRIGGER=contextmenu MOVIE_CONTEXTMENU_ENTRY=%s; cd "%%f" && "%s" %s . || (echo Press enter to close; read)'`,
 		e.Key, exePath, e.Command,
 	)
 	fmt.Fprintf(b, "[X-Action-Profile %s]\nName=%s\nExec=%s\nMimeTypes=inode/directory\n\n",
