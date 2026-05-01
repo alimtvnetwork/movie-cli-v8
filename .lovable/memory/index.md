@@ -34,3 +34,4 @@ No magic strings — use constants/enums. No fmt.Errorf — use apperror.Wrap().
 - [Parallel scan](mem://features/parallel-scan) — Worker pool (NumCPU*2, cap 32), TMDb 40 req/s limiter, batch progress, auto-open report.html
 - [Context menu](mem://features/context-menu) — `movie add-contextmenu` for Windows/Linux/macOS submenu (Scan/Rescan/Report/Stats), clicks logged to action_history
 - [Remove/Move/SmartRescan plan](mem://features/remove-move-rescan-plan) — Spec at spec/08-app/10-remove-move-rescan/; 6 phases mapped onto existing Media schema (no parallel Movie table)
+- [Global JSON cache](mem://features/global-json-cache) — Per-user TmdbID-keyed mirror at ~/.movie/cache/json; survives folder moves; disable via MOVIE_NO_GLOBAL_CACHE=1
