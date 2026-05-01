@@ -1,3 +1,4 @@
+// SHARED HELPER: movie_move_helpers.go — shared helpers for move/rename/undo operations.
 // movie_move_helpers.go — shared helpers for move/rename/undo operations.
 //
 // SHARED: filesystem move + size + path-rewrite helpers.

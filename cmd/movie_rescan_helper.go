@@ -1,3 +1,4 @@
+// SHARED HELPER: movie_rescan_helper.go — shared rescan logic used by both scan and rescan commands.
 // movie_rescan_helper.go — shared rescan logic used by both scan and rescan commands.
 //
 // SHARED: title parsing + TMDb resolve + DB upsert pipeline.

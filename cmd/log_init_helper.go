@@ -1,3 +1,4 @@
+// SHARED HELPER: log_init_helper.go — shared helper that initializes errlog for long-running
 // log_init_helper.go — shared helper that initializes errlog for long-running
 // commands (scan, rescan, rescan-failed). When keepLogs is false the logs
 // directory is wiped so each run starts with a clean error.txt; when true the

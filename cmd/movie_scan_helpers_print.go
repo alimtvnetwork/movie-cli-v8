@@ -1,3 +1,4 @@
+// SHARED HELPER: movie_scan_helpers_print.go — print helpers for scan footer (extracted from movie_scan_helpers.go).
 // movie_scan_helpers_print.go — print helpers for scan footer (extracted from movie_scan_helpers.go).
 //
 // SHARED: scan summary footer rendering (counts, sizes, durations).

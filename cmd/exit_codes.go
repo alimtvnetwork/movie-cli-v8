@@ -1,3 +1,4 @@
+// SHARED HELPER: exit_codes.go — distinct, documented exit codes for scriptable
 // exit_codes.go — distinct, documented exit codes for scriptable
 // undo/redo runs. Importable from anywhere in cmd/.
 //

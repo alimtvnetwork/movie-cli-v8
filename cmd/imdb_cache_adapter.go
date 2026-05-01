@@ -1,3 +1,4 @@
+// SHARED HELPER: imdb_cache_adapter.go — adapts *db.DB to the tmdb.ImdbCache interface.
 // imdb_cache_adapter.go — adapts *db.DB to the tmdb.ImdbCache interface.
 //
 // Lives in cmd/ so the db package stays independent of tmdb and vice-versa.

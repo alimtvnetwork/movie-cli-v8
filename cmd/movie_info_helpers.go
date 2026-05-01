@@ -1,3 +1,4 @@
+// SHARED HELPER: movie_info_helpers.go — helpers shared by movie info and scan for thumbnail downloads.
 // movie_info_helpers.go — helpers shared by movie info and scan for thumbnail downloads.
 //
 // SHARED: thumbnail download + cache helpers.

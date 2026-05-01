@@ -1,3 +1,4 @@
+// SHARED HELPER: movie_scan_helpers.go — shared helpers for movie scan (dir resolution, output dirs, print).
 // movie_scan_helpers.go — shared helpers for movie scan (dir resolution, output dirs, print).
 //
 // SHARED: scan-directory resolution + .movie-output dir layout + summary

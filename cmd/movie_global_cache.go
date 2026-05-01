@@ -1,3 +1,4 @@
+// SHARED HELPER: movie_global_cache.go — cross-folder global JSON cache.
 // movie_global_cache.go — cross-folder global JSON cache.
 //
 // The per-folder sidecars at <scanDir>/.movie-output/json/{movie,tv}/<slug>.json

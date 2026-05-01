@@ -1,3 +1,4 @@
+// SHARED HELPER: movie_suggest_helpers.go — helper functions for movie suggest command.
 // movie_suggest_helpers.go — helper functions for movie suggest command.
 //
 // SHARED: TMDb discover + recommendation ranking helpers.
