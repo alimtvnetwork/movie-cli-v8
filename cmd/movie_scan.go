@@ -113,8 +113,18 @@ func runMovieScan(cmd *cobra.Command, args []string) {
 	// Returns nil when --no-reconcile is set OR no JSON sidecars exist.
 	_ = runSmartRescan(database, scanDir)
 
+	// Reverse-sync-only: run the DB→JSON pass and exit before any TMDb work.
+	if scanReverseSyncOnly {
+		_ = runReverseSync(database, scanDir)
+		return
+	}
+
 	ctx := createScanContext(database, creds, outputDir)
 	removed, jsonItems := executeScan(ctx, scanDir, useJson)
+
+	// Reverse-sync pass: DB is authoritative; rewrite/purge sidecars to match.
+	_ = runReverseSync(database, scanDir)
+
 	finalizeScan(cmd, ctx, FinalizeScanInput{
 		ScanDir: scanDir, OutputDir: outputDir, Database: database,
 		Creds: creds, Removed: removed, JsonItems: jsonItems, UseJson: useJson,
