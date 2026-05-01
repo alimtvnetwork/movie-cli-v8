@@ -72,7 +72,7 @@ func init() {
 func resolveTvMedia(query string) (*db.DB, *db.Media, error) {
 	database, err := db.Open()
 	if err != nil {
-		return nil, nil, apperror.Wrap(err, "open database")
+		return nil, nil, apperror.Wrap("open database", err)
 	}
 	media, resolveErr := resolveMediaByQuery(database, query)
 	if resolveErr != nil {
