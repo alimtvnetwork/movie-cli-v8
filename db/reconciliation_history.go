@@ -104,6 +104,14 @@ func ReconActionName(id int) string {
 		return "AddedNew"
 	case ReconActionConverged:
 		return "Converged"
+	case ReconActionReverseSyncedSidecar:
+		return "ReverseSyncedSidecar"
+	case ReconActionRemovedOrphanSidecar:
+		return "RemovedOrphanSidecar"
+	case ReconActionRemovedDeletedSidecar:
+		return "RemovedDeletedSidecar"
+	case ReconActionReverseDetectedMissing:
+		return "ReverseDetectedMissing"
 	}
 	return "Unknown"
 }

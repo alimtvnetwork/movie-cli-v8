@@ -13,10 +13,14 @@ import "github.com/alimtvnetwork/movie-cli-v7/apperror"
 
 // ReconciliationActionTypeId enum values, kept in sync with the seed order.
 const (
-	ReconActionHydratedFromJson = 1
-	ReconActionRemovedMissing   = 2
-	ReconActionAddedNew         = 3
-	ReconActionConverged        = 4
+	ReconActionHydratedFromJson    = 1
+	ReconActionRemovedMissing      = 2
+	ReconActionAddedNew            = 3
+	ReconActionConverged           = 4
+	ReconActionReverseSyncedSidecar = 5
+	ReconActionRemovedOrphanSidecar = 6
+	ReconActionRemovedDeletedSidecar = 7
+	ReconActionReverseDetectedMissing = 8
 )
 
 func migrateV5(d *DB) error {
@@ -39,7 +43,11 @@ func createReconActionTypeTable(d *DB) error {
 }
 
 func seedReconActionType(d *DB) error {
-	names := []string{"HydratedFromJson", "RemovedMissing", "AddedNew", "Converged"}
+	names := []string{
+		"HydratedFromJson", "RemovedMissing", "AddedNew", "Converged",
+		"ReverseSyncedSidecar", "RemovedOrphanSidecar",
+		"RemovedDeletedSidecar", "ReverseDetectedMissing",
+	}
 	for _, name := range names {
 		if _, err := d.Exec(
 			"INSERT OR IGNORE INTO ReconciliationActionType (Name) VALUES (?)", name,
