@@ -60,6 +60,7 @@ func regenerateReportForDir(scanDir string, items []db.Media) {
 		return
 	}
 	fmt.Printf("🌐 Regenerated report.html → %s\n", filepath.Join(outputDir, "report.html"))
+	openScanReport(outputDir)
 }
 
 func countByType(items []db.Media) (int, int) {

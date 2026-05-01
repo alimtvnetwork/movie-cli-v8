@@ -65,6 +65,8 @@ func init() {
 		"keep the previous run's logs instead of wiping .movie-output/logs/ on start")
 	movieScanCmd.Flags().IntVar(&scanWorkers, "workers", 0,
 		"parallel scan workers (0=auto: NumCPU*2, capped at 32)")
+	movieScanCmd.Flags().BoolVar(&scanNoOpen, "no-open", false,
+		"do not auto-open report.html in the browser after the scan")
 }
 
 func runMovieScan(cmd *cobra.Command, args []string) {
@@ -214,6 +216,9 @@ func startPostScanServices(cmd *cobra.Command, cfg ScanServiceConfig, client *tm
 	if scanRest {
 		startRestWithOptionalWatch(cmd, cfg)
 		return
+	}
+	if scanFormat != "json" {
+		openScanReport(cfg.OutputDir)
 	}
 	if scanWatch {
 		runWatchLoop(cfg)
