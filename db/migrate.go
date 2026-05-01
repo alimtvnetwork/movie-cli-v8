@@ -23,6 +23,7 @@ func allMigrations() []Migration {
 		{Version: 3, Description: "ImdbLookupCache: add TmdbId + MediaType to skip /find on hit", Apply: migrateV3},
 		{Version: 4, Description: "MediaStatus lookup + Media.IsDeleted/MediaStatusId for soft-delete", Apply: migrateV4},
 		{Version: 5, Description: "ReconciliationActionType + ReconciliationHistory for SmartRescan", Apply: migrateV5},
+		{Version: 6, Description: "Seed reverse-sync action types into ReconciliationActionType", Apply: migrateV6},
 	}
 }
 
