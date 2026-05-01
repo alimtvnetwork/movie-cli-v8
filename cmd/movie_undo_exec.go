@@ -82,6 +82,7 @@ func undoDelete(database *db.DB, a *db.ActionRecord) error {
 			if restoreErr := database.RestoreMedia(a.MediaId.Int64); restoreErr != nil {
 				return apperror.Wrap("restore soft-deleted media", restoreErr)
 			}
+			regenSidecarFor(existing)
 			return database.MarkActionReverted(a.ActionHistoryId)
 		}
 	}
