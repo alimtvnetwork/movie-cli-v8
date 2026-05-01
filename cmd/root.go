@@ -91,6 +91,9 @@ func init() {
 		movieDiscoverCmd,
 		movieCacheCmd,
 		movieMilestonesCmd,
+		addContextMenuCmd,
+		removeContextMenuCmd,
+		contextMenuStatusCmd,
 	)
 }
 
