@@ -43,15 +43,11 @@ func RecordContextMenuClick(database *db.DB, workDir string) {
 	detail := fmt.Sprintf("trigger=contextmenu;entry=%s;cwd=%s", entry, workDir)
 	_, err := database.InsertActionSimple(db.ActionSimpleInput{
 		FileAction: db.FileActionScanAdd,
-		MediaID:    nullInt64Zero(),
+		MediaID:    0,
 		Detail:     detail,
 		BatchID:    "",
 	})
 	if err != nil {
 		errlog.Warn("Could not log context-menu click: %v", err)
 	}
-}
-
-func nullInt64Zero() sql.NullInt64 {
-	return sql.NullInt64{Valid: false}
 }
