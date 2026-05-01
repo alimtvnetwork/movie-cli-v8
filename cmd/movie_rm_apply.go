@@ -81,13 +81,16 @@ func applySingleRm(database *db.DB, id int64) bool {
 }
 
 func logRmHistory(database *db.DB, m *db.Media) {
-	histErr := database.InsertMoveHistory(db.MoveInput{
-		MediaID:      m.ID,
-		FileActionID: int(db.FileActionDelete),
-		FromPath:     m.CurrentFilePath,
-		ToPath:       "",
-		OrigName:     m.OriginalFileName,
-		NewName:      "",
+	snap, snapErr := db.MediaToJSON(m)
+	if snapErr != nil {
+		errlog.Warn("rm: snapshot #%d: %v", m.ID, snapErr)
+		return
+	}
+	_, histErr := database.InsertActionSimple(db.ActionSimpleInput{
+		FileAction: db.FileActionDelete,
+		MediaID:    m.ID,
+		Snapshot:   snap,
+		Detail:     fmt.Sprintf("Soft-deleted: %s (%d)", m.Title, m.Year),
 	})
 	if histErr != nil {
 		errlog.Warn("rm: history #%d: %v", m.ID, histErr)
