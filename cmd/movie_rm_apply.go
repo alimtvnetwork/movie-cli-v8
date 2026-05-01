@@ -41,10 +41,14 @@ func confirmRm(count int) bool {
 	if rmAssumeYes {
 		return true
 	}
-	if count < rmConfirmThreshold {
+	if count < rmConfirmThreshold && !rmPurge {
 		return true
 	}
-	fmt.Printf("\nProceed with soft-delete of %d items? [y/N]: ", count)
+	verb := "soft-delete"
+	if rmPurge {
+		verb = "PURGE (delete files from disk)"
+	}
+	fmt.Printf("\nProceed with %s of %d items? [y/N]: ", verb, count)
 	scanner := bufio.NewScanner(os.Stdin)
 	if !scanner.Scan() {
 		return false
