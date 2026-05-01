@@ -58,6 +58,10 @@ phases. Each phase ends with a version bump and a verification step.
 - `--purge` flag ✅ done v2.301.0: `movie rm --purge` deletes the on-disk
   file via `purgeOnDiskFile` after the soft-delete; confirm prompt always
   fires when --purge is set, regardless of count, with a louder verb.
+- Global JSON cache ✅ done v2.302.0: `cmd/movie_global_cache.go` mirrors
+  every per-folder sidecar to `~/.movie/cache/json/{movie|tv}/<tmdbid>.json`
+  on write; SmartRescan hydration enriches missing fields from the cache
+  via `enrichFromGlobalCache`. Disable with `MOVIE_NO_GLOBAL_CACHE=1`.
 
 ## Open decisions (deferred to future asks)
-- Cross-folder global JSON cache (current scope = per-folder only).
+(none — epic complete; see Remaining tasks for manual real-OS QA.)
