@@ -1,6 +1,11 @@
 // movie_scan_open_report.go — auto-open the generated report.html in the
 // system browser after a scan or rescan completes.
 //
+// SHARED: openScanReport(outputDir), pathToFileURL(path).
+// Callers: movie scan (post-scan finalize), movie rescan (regenerate path).
+// Do NOT re-implement file:// URL building or the --no-open gate elsewhere
+// — extend this file so all entry points honour the same opt-out flag.
+//
 // Skipped when:
 //   - --dry-run    (nothing was generated)
 //   - --json       (machine output should not spawn UI)
