@@ -87,10 +87,31 @@ func buildMacInfoPlist(e ContextMenuEntry) string {
 </dict></array></dict></plist>`, e.Label)
 }
 
+// macConfirmPrompt returns a bash snippet that prints a confirmation banner
+// and waits for the user to type "y" before running the action. Used for
+// destructive entries on macOS where the Quick Action runs without any
+// native confirm dialog. Non-destructive entries skip the prompt.
+func macConfirmPrompt(e ContextMenuEntry) string {
+	if !isDestructiveEntry(e.Key) {
+		return ""
+	}
+	return fmt.Sprintf(
+		`echo ''; echo '⚠️  About to run: movie %s in '\"$f\"; read -p 'Type y then Enter to continue (anything else cancels): ' a; [ \"$a\" = y ] || { echo 'cancelled'; exit 0; };`,
+		e.Command,
+	)
+}
+
+// isDestructiveEntry lists context-menu keys that mutate the library and
+// therefore deserve a typed confirmation on macOS.
+func isDestructiveEntry(key string) bool {
+	return key == "rescan"
+}
+
 func buildMacDocumentWflow(exePath string, e ContextMenuEntry) string {
+	confirm := macConfirmPrompt(e)
 	script := fmt.Sprintf(
-		`for f in "$@"; do osascript -e 'tell app "Terminal" to do script "export MAHIN_TRIGGER=contextmenu MAHIN_CONTEXTMENU_ENTRY=%s; cd \"'"$f"'\" && \"%s\" %s ."'; done`,
-		e.Key, exePath, e.Command,
+		`for f in "$@"; do osascript -e 'tell app "Terminal" to do script "export MAHIN_TRIGGER=contextmenu MAHIN_CONTEXTMENU_ENTRY=%s; cd \"'"$f"'\" && %s \"%s\" %s ."'; done`,
+		e.Key, confirm, exePath, e.Command,
 	)
 	return fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
