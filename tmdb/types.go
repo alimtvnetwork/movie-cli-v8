@@ -90,6 +90,8 @@ type TVEpisode struct {
 	EpisodeNumber int     `json:"episode_number"`
 	Runtime       int     `json:"runtime"`
 }
+
+// Genre is a TMDb genre.
 type Genre struct {
 	Name string `json:"name"`
 	ID   int    `json:"id"`
