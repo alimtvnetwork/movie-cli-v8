@@ -24,14 +24,24 @@ var scanNoReverseSync bool
 var scanReverseSyncOnly bool
 
 type reverseSyncResult struct {
+	Drift             *driftLog
 	SidecarsRewritten int
 	OrphansRemoved    int
 	DeletedPurged     int
 	MissingDetected   int
 }
 
+// reverseSyncCtx bundles the per-run state passed to each step. Keeps
+// step signatures within the 3-parameter project rule.
+type reverseSyncCtx struct {
+	Database   *db.DB
+	JsonRoot   string
+	DiskSet    map[string]struct{}
+	SidecarSet map[string]struct{}
+	Drift      *driftLog
+}
+
 // runReverseSync is the public entry point invoked from movie scan.
-// Returns nil when disabled or no work is possible (no JSON folder).
 func runReverseSync(database *db.DB, scanDir string) *reverseSyncResult {
 	if scanNoReverseSync && !scanReverseSyncOnly {
 		return nil
@@ -46,24 +56,34 @@ func runReverseSync(database *db.DB, scanDir string) *reverseSyncResult {
 		return nil
 	}
 	since := time.Now().UTC().Format(time.RFC3339)
-	res := &reverseSyncResult{}
-	executeReverseSyncSteps(database, scanDir, jsonRoot, rows, res)
+	res := &reverseSyncResult{Drift: &driftLog{}}
+	executeReverseSyncSteps(scanDir, jsonRoot, rows, res)
 	printReverseSyncSummary(database, since, res)
 	return res
 }
 
-func executeReverseSyncSteps(database *db.DB, scanDir, jsonRoot string,
+func executeReverseSyncSteps(scanDir, jsonRoot string,
 	rows []db.ReverseSyncRow, res *reverseSyncResult) {
-	diskSet := buildDiskSet(scanDir)
-	sidecarSet := indexSidecars(jsonRoot)
+	ctx := &reverseSyncCtx{
+		Database:   nil, // injected per-step via closure below
+		JsonRoot:   jsonRoot,
+		DiskSet:    buildDiskSet(scanDir),
+		SidecarSet: indexSidecars(jsonRoot),
+		Drift:      res.Drift,
+	}
+	// Database is the only field needing the caller's handle; passing
+	// it via the rows-fetched DB would break the 3-param rule, so the
+	// caller reopens it here. Cheap: SQLite handle is shared.
+	database, _ := db.Open()
+	defer database.Close()
+	ctx.Database = database
 
-	res.SidecarsRewritten = reverseStepRewrite(database, jsonRoot, rows, diskSet, sidecarSet)
-	res.DeletedPurged = reverseStepPurgeDeleted(database, jsonRoot, rows, sidecarSet)
-	res.MissingDetected = reverseStepDetectMissing(database, jsonRoot, rows, diskSet)
-	res.OrphansRemoved = reverseStepRemoveOrphans(database, jsonRoot, sidecarSet, diskSet, rows)
+	res.SidecarsRewritten = reverseStepRewrite(ctx, rows)
+	res.DeletedPurged = reverseStepPurgeDeleted(ctx, rows)
+	res.MissingDetected = reverseStepDetectMissing(ctx, rows)
+	res.OrphansRemoved = reverseStepRemoveOrphans(ctx, rows)
 }
 
-// indexSidecars returns absolute sidecar path → struct{}.
 func indexSidecars(jsonRoot string) map[string]struct{} {
 	set := make(map[string]struct{})
 	for _, p := range listJsonSidecars(jsonRoot) {
@@ -73,85 +93,103 @@ func indexSidecars(jsonRoot string) map[string]struct{} {
 }
 
 // R4: rewrite sidecars whose mtime is older than the DB UpdatedAt.
-func reverseStepRewrite(database *db.DB, jsonRoot string,
-	rows []db.ReverseSyncRow, diskSet, sidecarSet map[string]struct{}) int {
+func reverseStepRewrite(ctx *reverseSyncCtx, rows []db.ReverseSyncRow) int {
 	count := 0
 	for i := range rows {
 		r := &rows[i]
 		if r.IsDeleted || r.CurrentFilePath == "" {
 			continue
 		}
-		if _, ok := diskSet[r.CurrentFilePath]; !ok {
+		if _, ok := ctx.DiskSet[r.CurrentFilePath]; !ok {
 			continue
 		}
-		sidecarPath := sidecarPathFor(database, jsonRoot, r)
-		if !shouldRewriteSidecar(sidecarPath, r.UpdatedAt) {
+		sidecarPath := sidecarPathFor(ctx.Database, ctx.JsonRoot, r)
+		reason, needsWrite := classifySidecar(sidecarPath, r.UpdatedAt)
+		if !needsWrite {
 			continue
 		}
-		if err := writeSidecarFromDB(database, jsonRoot, r); err != nil {
+		if err := writeSidecarFromDB(ctx.Database, ctx.JsonRoot, r); err != nil {
 			errlog.Warn("reverse-sync: rewrite #%d: %v", r.ID, err)
 			continue
 		}
-		_, _ = database.InsertReconciliation(db.ReconInput{
+		ctx.Drift.add(reason, r.ID, sidecarPath)
+		_, _ = ctx.Database.InsertReconciliation(db.ReconInput{
 			MediaID:    sql.NullInt64{Int64: r.ID, Valid: true},
 			ActionType: db.ReconActionReverseSyncedSidecar,
 			Details:    sidecarPath,
 		})
-		sidecarSet[sidecarPath] = struct{}{}
+		ctx.SidecarSet[sidecarPath] = struct{}{}
 		count++
 	}
 	return count
 }
 
+// classifySidecar returns the drift reason and whether a rewrite is needed.
+func classifySidecar(sidecarPath, dbUpdatedAt string) (driftReason, bool) {
+	info, err := os.Stat(sidecarPath)
+	if err != nil {
+		return driftMissingSidecar, true
+	}
+	dbTime, parseErr := parseDBTime(dbUpdatedAt)
+	if parseErr != nil {
+		return driftStaleMtime, true
+	}
+	if info.ModTime().Before(dbTime) {
+		return driftStaleMtime, true
+	}
+	return driftStaleMtime, false
+}
+
 // R6: purge sidecars belonging to soft-deleted DB rows.
-func reverseStepPurgeDeleted(database *db.DB, jsonRoot string,
-	rows []db.ReverseSyncRow, sidecarSet map[string]struct{}) int {
+func reverseStepPurgeDeleted(ctx *reverseSyncCtx, rows []db.ReverseSyncRow) int {
 	count := 0
 	for i := range rows {
 		r := &rows[i]
 		if !r.IsDeleted {
 			continue
 		}
-		sidecarPath := sidecarPathFor(database, jsonRoot, r)
-		if _, ok := sidecarSet[sidecarPath]; !ok {
+		sidecarPath := sidecarPathFor(ctx.Database, ctx.JsonRoot, r)
+		if _, ok := ctx.SidecarSet[sidecarPath]; !ok {
 			continue
 		}
-		if removeIfDryRunOff(sidecarPath) {
-			delete(sidecarSet, sidecarPath)
-			_, _ = database.InsertReconciliation(db.ReconInput{
-				MediaID:    sql.NullInt64{Int64: r.ID, Valid: true},
-				ActionType: db.ReconActionRemovedDeletedSidecar,
-				Details:    sidecarPath,
-			})
-			count++
+		if !removeIfDryRunOff(sidecarPath) {
+			continue
 		}
+		delete(ctx.SidecarSet, sidecarPath)
+		ctx.Drift.add(driftSoftDeletedRow, r.ID, sidecarPath)
+		_, _ = ctx.Database.InsertReconciliation(db.ReconInput{
+			MediaID:    sql.NullInt64{Int64: r.ID, Valid: true},
+			ActionType: db.ReconActionRemovedDeletedSidecar,
+			Details:    sidecarPath,
+		})
+		count++
 	}
 	return count
 }
 
 // R7: mark active rows whose disk file disappeared as missing + delete sidecar.
-func reverseStepDetectMissing(database *db.DB, jsonRoot string,
-	rows []db.ReverseSyncRow, diskSet map[string]struct{}) int {
+func reverseStepDetectMissing(ctx *reverseSyncCtx, rows []db.ReverseSyncRow) int {
 	count := 0
 	for i := range rows {
 		r := &rows[i]
 		if r.IsDeleted || r.CurrentFilePath == "" {
 			continue
 		}
-		if _, ok := diskSet[r.CurrentFilePath]; ok {
+		if _, ok := ctx.DiskSet[r.CurrentFilePath]; ok {
 			continue
 		}
+		ctx.Drift.add(driftMissingDiskFile, r.ID, r.CurrentFilePath)
 		if scanDryRun {
 			fmt.Printf("   [dry-run] would mark missing: #%d %s\n", r.ID, r.CurrentFilePath)
 			count++
 			continue
 		}
-		if err := database.MarkMediaMissing(r.ID); err != nil {
+		if err := ctx.Database.MarkMediaMissing(r.ID); err != nil {
 			errlog.Warn("reverse-sync: mark missing #%d: %v", r.ID, err)
 			continue
 		}
-		_ = os.Remove(sidecarPathFor(database, jsonRoot, r))
-		_, _ = database.InsertReconciliation(db.ReconInput{
+		_ = os.Remove(sidecarPathFor(ctx.Database, ctx.JsonRoot, r))
+		_, _ = ctx.Database.InsertReconciliation(db.ReconInput{
 			MediaID:    sql.NullInt64{Int64: r.ID, Valid: true},
 			ActionType: db.ReconActionReverseDetectedMissing,
 			Details:    r.CurrentFilePath,
@@ -162,21 +200,21 @@ func reverseStepDetectMissing(database *db.DB, jsonRoot string,
 }
 
 // R5: remove orphan sidecars (no DB row, file gone from disk).
-func reverseStepRemoveOrphans(database *db.DB, jsonRoot string,
-	sidecarSet, diskSet map[string]struct{}, rows []db.ReverseSyncRow) int {
-	known := indexKnownSidecars(database, jsonRoot, rows)
+func reverseStepRemoveOrphans(ctx *reverseSyncCtx, rows []db.ReverseSyncRow) int {
+	known := indexKnownSidecars(ctx.Database, ctx.JsonRoot, rows)
 	count := 0
-	for sidecar := range sidecarSet {
+	for sidecar := range ctx.SidecarSet {
 		if _, ok := known[sidecar]; ok {
 			continue
 		}
-		if hasMatchingDiskFile(sidecar, diskSet) {
+		if hasMatchingDiskFile(sidecar, ctx.DiskSet) {
 			continue
 		}
 		if !removeIfDryRunOff(sidecar) {
 			continue
 		}
-		_, _ = database.InsertReconciliation(db.ReconInput{
+		ctx.Drift.add(driftDiskOrphanFile, 0, sidecar)
+		_, _ = ctx.Database.InsertReconciliation(db.ReconInput{
 			ActionType: db.ReconActionRemovedOrphanSidecar,
 			Details:    sidecar,
 		})
@@ -221,6 +259,7 @@ func removeIfDryRunOff(path string) bool {
 func printReverseSyncSummary(database *db.DB, since string, res *reverseSyncResult) {
 	fmt.Printf("↩️  ReverseSync: rewritten=%d orphans=%d deleted=%d missing=%d\n",
 		res.SidecarsRewritten, res.OrphansRemoved, res.DeletedPurged, res.MissingDetected)
+	printDriftSummary(res.Drift)
 	counts, err := database.CountReconciliationByType(since)
 	if err == nil && len(counts) > 0 {
 		fmt.Printf("   audit: %v\n", counts)
