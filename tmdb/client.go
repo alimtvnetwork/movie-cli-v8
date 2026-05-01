@@ -135,7 +135,8 @@ func (c *Client) GetTVSeason(tmdbID, seasonNumber int) (*TVSeason, error) {
 		return nil, err
 	}
 	return &s, nil
-}
+
+// GetMovieCredits returns cast and crew for a movie.
 func (c *Client) GetMovieCredits(tmdbID int) (*Credits, error) {
 	var cr Credits
 	if err := c.get(c.buildURL(fmt.Sprintf("/movie/%d/credits", tmdbID), nil), &cr); err != nil {
