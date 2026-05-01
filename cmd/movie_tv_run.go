@@ -57,7 +57,7 @@ func runTvEpisodes(cmd *cobra.Command, args []string) {
 func printEpisodesForSeason(database *db.DB, media *db.Media, seasonNumber int) {
 	season := findSeasonByNumber(database, media.ID, seasonNumber)
 	if season == nil {
-		reportTvError(fmt.Errorf("S%02d not found for '%s'", seasonNumber, media.Title))
+		reportTvError(apperror.New("S%02d not found for '%s'", seasonNumber, media.Title))
 		return
 	}
 	eps, err := database.EpisodesBySeasonID(season.ID)
