@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/alimtvnetwork/movie-cli-v7/apperror"
 	"github.com/alimtvnetwork/movie-cli-v7/db"
 	"github.com/spf13/cobra"
 )
