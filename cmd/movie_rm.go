@@ -20,7 +20,10 @@ import (
 	"github.com/alimtvnetwork/movie-cli-v7/errlog"
 )
 
-var rmAssumeYes bool
+var (
+	rmAssumeYes bool
+	rmPurge     bool
+)
 
 var movieRmCmd = &cobra.Command{
 	Use:     "rm <id|title|\"expr\">",
@@ -33,6 +36,11 @@ Examples:
   movie rm "Inception"
   movie rm "rating < 5 AND year >= 2010"
   movie rm "g = Horror" --yes
+  movie rm 42 --purge          # also delete the on-disk video file
+
+The --purge flag removes the underlying file from disk in addition to
+the soft-delete. The DB row is still recoverable via 'movie undo'
+(but the file itself is gone — undo cannot restore it).
 `,
 	Args: cobra.MinimumNArgs(1),
 	Run:  runMovieRm,
@@ -40,6 +48,7 @@ Examples:
 
 func init() {
 	movieRmCmd.Flags().BoolVarP(&rmAssumeYes, "yes", "y", false, "Skip confirmation prompt")
+	movieRmCmd.Flags().BoolVar(&rmPurge, "purge", false, "Also delete the on-disk file (irreversible)")
 }
 
 func runMovieRm(cmd *cobra.Command, args []string) {
