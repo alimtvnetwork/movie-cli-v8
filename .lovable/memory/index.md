@@ -1,8 +1,7 @@
 # Project Memory
 
 ## Core
-Go 1.22 CLI project (NOT web). Binary: `movie`. Ignore Lovable build errors.
-Legacy codename is PERMANENTLY BANNED everywhere — CI guard fails the build on any match.
+Go 1.22 CLI project (NOT web). Binary: `mahin`. Ignore Lovable build errors.
 One file per command, max ~200 lines. Shared helpers in movie_info.go and movie_resolve.go.
 File naming: `01-name-of-file.md`. Keep folder file counts small.
 Plans & suggestions tracked in single files, not per-item files.
@@ -16,13 +15,8 @@ HTML JS: single API_BASE variable for all REST calls. Never repeat URL.
 Boolean names: never use negative words (un/not/no). Use positive semantic synonyms with Is/Has prefix.
 Zero nested if. Max 2 conditions per if. No else after return. Functions ≤15 lines. Files ≤300 lines. Max 3 params.
 No magic strings — use constants/enums. No fmt.Errorf — use apperror.Wrap().
-Questions: never bare. Always full context, layman language, recommended option + why + pros + cons.
-Docs: edit root README.md FIRST, then propagate to QUICKSTART/spec/CONTRIBUTING. Sub-docs never lead.
 
 ## Memories
-- [Question asking style](mem://preferences/question-asking-style) — Full context, layman phrasing, recommendation with pros/cons on every question
-- [README structure](mem://preferences/readme-structure) — Root README order: title → badges → image → install (Windows first, then macOS/Linux) → why this exists; write README first then update sub-docs
-- [Banned legacy name](mem://constraints/banned-legacy-name) — Legacy codename forbidden everywhere; CI guard enforces it
 - [Project overview](mem://01-project-overview) — Go CLI, command tree, architecture, file structure
 - [Conventions](mem://02-conventions) — Code style, naming, build, deploy, config keys
 - [Plan](mem://workflow/01-plan) — Done/pending task tracker, prioritized backlog
@@ -37,3 +31,6 @@ Docs: edit root README.md FIRST, then propagate to QUICKSTART/spec/CONTRIBUTING.
 - [Duplicate TMDb fetch](mem://issues/02-duplicate-tmdb-fetch) — Fixed: shared helpers
 - [Large files](mem://issues/03-large-files) — Fixed: split to <200 lines
 - [CI log commit loop](mem://issues/04-ci-log-commit-loop) — Constraint: CI log commits must never trigger new runs; kill feature if loops occur
+- [Parallel scan](mem://features/parallel-scan) — Worker pool (NumCPU*2, cap 32), TMDb 40 req/s limiter, batch progress, auto-open report.html
+- [Context menu](mem://features/context-menu) — `mahin add-contextmenu` for Windows/Linux/macOS submenu (Scan/Rescan/Report/Stats), clicks logged to action_history
+- [Remove/Move/SmartRescan plan](mem://features/remove-move-rescan-plan) — Spec at spec/08-app/10-remove-move-rescan/; 6 phases mapped onto existing Media schema (no parallel Movie table)
