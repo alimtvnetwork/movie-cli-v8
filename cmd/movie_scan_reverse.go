@@ -57,27 +57,19 @@ func runReverseSync(database *db.DB, scanDir string) *reverseSyncResult {
 	}
 	since := time.Now().UTC().Format(time.RFC3339)
 	res := &reverseSyncResult{Drift: &driftLog{}}
-	executeReverseSyncSteps(scanDir, jsonRoot, rows, res)
-	printReverseSyncSummary(database, since, res)
-	return res
-}
-
-func executeReverseSyncSteps(scanDir, jsonRoot string,
-	rows []db.ReverseSyncRow, res *reverseSyncResult) {
 	ctx := &reverseSyncCtx{
-		Database:   nil, // injected per-step via closure below
+		Database:   database,
 		JsonRoot:   jsonRoot,
 		DiskSet:    buildDiskSet(scanDir),
 		SidecarSet: indexSidecars(jsonRoot),
 		Drift:      res.Drift,
 	}
-	// Database is the only field needing the caller's handle; passing
-	// it via the rows-fetched DB would break the 3-param rule, so the
-	// caller reopens it here. Cheap: SQLite handle is shared.
-	database, _ := db.Open()
-	defer database.Close()
-	ctx.Database = database
+	executeReverseSyncSteps(ctx, rows, res)
+	printReverseSyncSummary(database, since, res)
+	return res
+}
 
+func executeReverseSyncSteps(ctx *reverseSyncCtx, rows []db.ReverseSyncRow, res *reverseSyncResult) {
 	res.SidecarsRewritten = reverseStepRewrite(ctx, rows)
 	res.DeletedPurged = reverseStepPurgeDeleted(ctx, rows)
 	res.MissingDetected = reverseStepDetectMissing(ctx, rows)

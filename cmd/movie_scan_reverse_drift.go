@@ -91,7 +91,10 @@ func printDriftSummary(d *driftLog) {
 
 func printDriftGroup(g driftReasonGroup) {
 	fmt.Printf("   ├─ %-16s ×%d\n", driftReasonLabel(g.Reason), len(g.Entries))
-	limit := minInt(len(g.Entries), driftMaxLines)
+	limit := len(g.Entries)
+	if limit > driftMaxLines {
+		limit = driftMaxLines
+	}
 	for i := 0; i < limit; i++ {
 		fmt.Printf("   │   %s\n", formatDriftEntry(g.Entries[i]))
 	}
@@ -111,9 +114,4 @@ func formatDriftEntry(e driftEntry) string {
 	return subject
 }
 
-func minInt(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
+// (minInt removed: defined in cmd/movie_history.go)
