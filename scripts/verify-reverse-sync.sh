@@ -107,17 +107,28 @@ echo "✏️  Title → '$NEW_TITLE'"
 touch -t "$(back_one_minute)" "$SIDECAR"
 
 mahin scan "$FOLDER" --reverse-sync-only
-AFTER_MTIME="$(mtime "$SIDECAR")"
-SIDECAR_TITLE="$(grep -o '"title": *"[^"]*"' "$SIDECAR" | head -1)"
 
 T1_OK=true
-if (( AFTER_MTIME <= BEFORE_MTIME )); then
-  note_fail "T1 mtime advanced" "before=$BEFORE_MTIME after=$AFTER_MTIME" "$MEDIA_ID"
+if [[ ! -f "$MEDIA_FILE" ]]; then
+  note_fail "T1 media file present" "expected on-disk file vanished: $MEDIA_FILE" "$MEDIA_ID"
   T1_OK=false
 fi
-if [[ "$SIDECAR_TITLE" != *"$NEW_TITLE"* ]]; then
-  note_fail "T1 sidecar title updated" "expected substring '$NEW_TITLE' got: $SIDECAR_TITLE" "$MEDIA_ID"
+if [[ ! -f "$SIDECAR" ]]; then
+  note_fail "T1 sidecar present" "expected sidecar missing after rewrite: $SIDECAR" "$MEDIA_ID"
   T1_OK=false
+fi
+
+if $T1_OK; then
+  AFTER_MTIME="$(mtime "$SIDECAR")"
+  SIDECAR_TITLE="$(grep -o '"title": *"[^"]*"' "$SIDECAR" | head -1)"
+  if (( AFTER_MTIME <= BEFORE_MTIME )); then
+    note_fail "T1 mtime advanced" "before=$BEFORE_MTIME after=$AFTER_MTIME" "$MEDIA_ID"
+    T1_OK=false
+  fi
+  if [[ "$SIDECAR_TITLE" != *"$NEW_TITLE"* ]]; then
+    note_fail "T1 sidecar title updated" "expected substring '$NEW_TITLE' got: $SIDECAR_TITLE" "$MEDIA_ID"
+    T1_OK=false
+  fi
 fi
 $T1_OK && note_pass "T1 sidecar rewritten with new title (MediaId=$MEDIA_ID)"
 
