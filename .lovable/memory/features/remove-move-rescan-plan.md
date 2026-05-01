@@ -16,7 +16,7 @@ phases. Each phase ends with a version bump and a verification step.
 - Update `db/seed.go` for the two new lookups.
 - Verify: open DB, run migrations, `psql/sqlite3 .tables` shows new tables.
 
-## Phase 2 — Condition-expression engine (SHARED for rm + move)
+## Phase 2 — Condition-expression engine (SHARED for rm + move)  ✅ DONE v2.289.0
 - `cmd/movie_condition.go` — tokeniser + SQL builder + safety caps.
 - `cmd/movie_condition_test.go` — table-driven grammar tests.
 - No behaviour change in any existing command.
