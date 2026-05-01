@@ -41,9 +41,11 @@ EXCLUDES=(
   --glob '!**/check-boolean-naming.sh'
 )
 
-# Pattern: Is or Has, then Un|Not|No, then an uppercase letter (start of
-# the next word). \b ensures we start at an identifier boundary.
-PATTERN='\b(Is|Has)(Un|Not|No)[A-Z]'
+# Pattern: Is or Has, then Un|Not|No, then any letter. We accept both
+# `IsUndone` (lowercase tail) and `HasNoChild` (uppercase tail). The
+# `Is`/`Has` prefix itself guarantees a CamelCase identifier boundary, so
+# no leading \b is needed.
+PATTERN='(Is|Has)(Un|Not|No)[A-Za-z]'
 
 # Collect raw matches, then drop:
 #   - lines that are pure Go line comments (`^\s*//`)
