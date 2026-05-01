@@ -46,6 +46,7 @@ func (c *Client) get(reqURL string, target interface{}) error {
 }
 
 func (c *Client) doGet(reqURL string, target interface{}, attempt int) error {
+	DefaultLimiter().Wait()
 	req, reqErr := http.NewRequest(http.MethodGet, reqURL, nil)
 	if reqErr != nil {
 		backoff(attempt)

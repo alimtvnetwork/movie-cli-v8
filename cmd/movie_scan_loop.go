@@ -28,34 +28,53 @@ func runMainScanLoop(ctx *ScanContext, videoFiles []videoFile, cfg ScanLoopConfi
 		existingPaths[existingMedia[i].OriginalFilePath] = &existingMedia[i]
 	}
 
-	client := cfg.Client
+	newFiles := splitNewFromExisting(ctx, videoFiles, existingPaths, cfg)
+	dispatchNewFilesParallel(ctx, newFiles)
+	emitJsonItemsIfNeeded(ctx, existingPaths, cfg)
+	return removed
+}
+
+// splitNewFromExisting handles existing-media rescans serially and returns
+// the slice of files that need fresh enrichment via the worker pool.
+func splitNewFromExisting(ctx *ScanContext, videoFiles []videoFile,
+	existingPaths map[string]*db.Media, cfg ScanLoopConfig) []videoFile {
+	newFiles := make([]videoFile, 0, len(videoFiles))
 	for _, vf := range videoFiles {
-		if em, found := existingPaths[vf.FullPath]; found {
-			processExistingMedia(ctx, ProcessExistingInput{
-				EM:       em,
-				VF:       vf,
-				Client:   client,
-				Database: database,
-				Opts:     ScanOutputOpts{UseTable: cfg.UseTable, UseJson: cfg.UseJson},
-				BatchID:  cfg.BatchID,
-				HasTMDb:  cfg.HasTMDb,
-			})
+		em, found := existingPaths[vf.FullPath]
+		if !found {
+			newFiles = append(newFiles, vf)
 			continue
 		}
-		processVideoFile(vf, ctx)
+		processExistingMedia(ctx, ProcessExistingInput{
+			EM: em, VF: vf, Client: cfg.Client, Database: ctx.Database,
+			Opts: ScanOutputOpts{UseTable: cfg.UseTable, UseJson: cfg.UseJson},
+			BatchID: cfg.BatchID, HasTMDb: cfg.HasTMDb,
+		})
 	}
+	return newFiles
+}
 
-	if cfg.UseJson {
-		for i := range ctx.ScannedItems {
-			status := "existing"
-			if existingPaths[ctx.ScannedItems[i].OriginalFilePath] == nil {
-				status = "new"
-			}
-			*cfg.JsonItems = append(*cfg.JsonItems, buildMediaJsonItem(&ctx.ScannedItems[i], status))
+// dispatchNewFilesParallel runs new-file enrichment through the worker pool.
+func dispatchNewFilesParallel(ctx *ScanContext, newFiles []videoFile) {
+	if len(newFiles) == 0 {
+		return
+	}
+	workers := resolveWorkerCount(ctx.Database)
+	runParallelNewFileScan(ctx, newFiles, workers)
+}
+
+// emitJsonItemsIfNeeded appends per-file JSON entries after all processing.
+func emitJsonItemsIfNeeded(ctx *ScanContext, existingPaths map[string]*db.Media, cfg ScanLoopConfig) {
+	if !cfg.UseJson {
+		return
+	}
+	for i := range ctx.ScannedItems {
+		status := "existing"
+		if existingPaths[ctx.ScannedItems[i].OriginalFilePath] == nil {
+			status = "new"
 		}
+		*cfg.JsonItems = append(*cfg.JsonItems, buildMediaJsonItem(&ctx.ScannedItems[i], status))
 	}
-
-	return removed
 }
 
 func removeStaleEntries(input RemoveStaleInput) int {
