@@ -86,6 +86,16 @@ jobs:
         if: needs.sha-check.outputs.already-built != 'true'
         run: bash scripts/guard-forbidden-terms.sh
 
+      - name: Stale-LastInsertId anti-pattern guard (db/)
+        if: needs.sha-check.outputs.already-built != 'true'
+        run: |
+          # Forbid the bug class fixed in v2.304.0 / v2.305.0:
+          # any file in db/ that mixes INSERT OR IGNORE / ON CONFLICT with
+          # res.LastInsertId() (in real code, not comments). Always SELECT
+          # the canonical PK back. Reference impl: db/genre.go::EnsureGenre.
+          # Full RCA: spec/09-app-issues/09-director-fk-stale-lastinsertid.md
+          bash scripts/check-lastinsertid-anti-pattern.sh db
+
       - name: Stale-repo diagnose (main only)
         if: needs.sha-check.outputs.already-built != 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
