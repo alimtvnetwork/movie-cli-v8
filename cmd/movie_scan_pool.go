@@ -1,5 +1,11 @@
 // movie_scan_pool.go — parallel worker-pool dispatcher for new-file scanning.
 //
+// SHARED: runParallelNewFileScan, resolveWorkerCount, MaxScanWorkers.
+// Callers today: movie scan (via movie_scan_loop.go). Future callers
+// (movie rescan parallel mode, movie cache backfill) MUST reuse these
+// helpers instead of spinning up their own goroutines so the global
+// TMDb rate limiter and the NumCPU*2/cap-32 worker policy stay consistent.
+//
 // Workers do the slow I/O (TMDb search + details + thumbnail download) in
 // parallel. The main goroutine serializes DB inserts, sidecar writes, and
 // stdout prints — SQLite is single-writer and serialized output reads
