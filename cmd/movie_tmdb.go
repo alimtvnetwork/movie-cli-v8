@@ -1,4 +1,10 @@
-// movie_tmdb.go — TMDb credential helpers for interactive commands
+// movie_tmdb.go — TMDb credential helpers for interactive commands.
+//
+// SHARED: resolveScanTmdbCredentials, readTmdbCredentials, tmdbCredentials.
+// Callers: movie scan, movie rescan, movie rescan-failed.
+// Do NOT re-read TMDb config keys directly in command files — go through
+// these helpers so credential resolution (DB → env → prompt) stays
+// consistent and the prompt is only shown once per command lifecycle.
 package cmd
 
 import (
