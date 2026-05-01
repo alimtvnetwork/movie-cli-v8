@@ -31,6 +31,12 @@ _Scan folders, clean filenames, fetch TMDb metadata, organize files, and track y
 
 <br><br>
 
+<img src="assets/screenshots/movie-cli-report-preview.png" alt="Movie CLI auto-generated HTML report" width="780">
+
+<sub>↑ Every <code>mahin scan</code> writes <code>.movie-output/report.html</code> and opens it in your default browser automatically.</sub>
+
+<br><br>
+
 <!-- README-INSTALL:BEGIN -->
 **🚀 Install in 10 seconds — anyone, any OS:**
 
