@@ -1,0 +1,38 @@
+erDiagram
+    Media ||--o{ MediaGenre : has
+    Genre ||--o{ MediaGenre : tags
+    Media }o--|| MediaStatus : status
+    Media ||--o{ ActionHistory : "audit (Delete/Restore/Move)"
+    FileAction ||--o{ ActionHistory : kind
+    Media ||--o{ MoveHistory : moved
+    Media ||--o{ ReconciliationHistory : reconciled
+    ReconciliationActionType ||--o{ ReconciliationHistory : kind
+
+    Media {
+        int MediaId PK
+        text Title
+        text CurrentFilePath
+        real TmdbRating
+        int Year
+        int MediaStatusId FK
+        bool IsDeleted
+        bool HasArtwork
+    }
+
+    MediaStatus {
+        int MediaStatusId PK
+        text Name "Active|Removed|Moved|Missing"
+    }
+
+    ReconciliationHistory {
+        int ReconciliationHistoryId PK
+        int MediaId FK "nullable for AddedNew"
+        int ReconciliationActionTypeId FK
+        text Details
+        datetime OccurredAt
+    }
+
+    ReconciliationActionType {
+        int ReconciliationActionTypeId PK
+        text Name "HydratedFromJson|RemovedMissing|AddedNew|Converged"
+    }

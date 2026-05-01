@@ -111,3 +111,33 @@
 6. README update (Phase 3.4)
 
 *Pick a task and I'll implement it.*
+
+---
+
+## Phase 5: Remove · Selector-Move · Smart Rescan (P1, in progress)
+
+> **Spec**: `spec/08-app/10-remove-move-rescan/`
+> **Memory**: `mem://features/remove-move-rescan-plan`
+> **Status**: spec written; implementation phased — user drives via `next`.
+
+### 5.1 Schema migrations (`migrate_v4`, `migrate_v5`)
+- `MediaStatus` lookup + `Media.IsDeleted` + `Media.MediaStatusId`
+- `ReconciliationActionType` lookup + `ReconciliationHistory` table
+
+### 5.2 Condition-expression engine (`cmd/movie_condition.go`)
+- Tokeniser + parameterised SQL `WHERE` builder, SHARED by rm + move
+
+### 5.3 `movie rm` / `remove` / `delete`
+- Aliases, name/filename/expression resolution, soft-delete, JSON unlink, html regen
+- Reuses existing `FileActionDelete` so `movie undo` works for free
+
+### 5.4 `movie move <selector> <destination>` (selector mode)
+- Backward compat: argc 0–1 stays interactive, argc 2 enters selector mode
+- `-g <genre>` sugar → `genre = <genre>`
+
+### 5.5 SmartRescan reconciliation
+- Pre-check `.movie-output/` cache; hydrate empty DB from JSON
+- Detect Missing / AddedNew / Converged; log to `ReconciliationHistory`
+- Goal: zero TMDb calls when nothing changed
+
+### 5.6 README + acceptance-criteria QA pass
