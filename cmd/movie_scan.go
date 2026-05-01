@@ -217,6 +217,9 @@ func startPostScanServices(cmd *cobra.Command, cfg ScanServiceConfig, client *tm
 		startRestWithOptionalWatch(cmd, cfg)
 		return
 	}
+	if scanFormat != "json" {
+		openScanReport(cfg.OutputDir)
+	}
 	if scanWatch {
 		runWatchLoop(cfg)
 	}
