@@ -21,11 +21,12 @@ phases. Each phase ends with a version bump and a verification step.
 - `cmd/movie_condition_test.go` — table-driven grammar tests.
 - No behaviour change in any existing command.
 
-## Phase 3 — `movie rm` / `remove` / `delete`
-- `cmd/movie_rm.go` (cobra root + aliases + help examples).
-- `cmd/movie_rm_resolve.go` (delegate to `resolveMediaByQuery` or expr).
-- `cmd/movie_rm_apply.go` (soft-delete + JSON unlink + audit + html regen).
-- Wire into `root.go`. Verify undo restores via existing `FileActionDelete` handler.
+## Phase 3 — `movie rm` / `remove` / `delete`  ✅ DONE v2.291.0
+- `cmd/movie_rm.go` (cobra root + aliases + auto-detected resolution mode).
+- `cmd/movie_rm_apply.go` (preview + confirm + soft-delete + snapshot audit).
+- `db/media_softdelete.go` (SoftDeleteMedia / RestoreMedia / QueryMediaIDsByWhere).
+- `cmd/movie_undo_exec.go` patched: undoDelete restores existing soft-deleted row first.
+- Wired into `root.go` as `movieRmCmd`.
 
 ## Phase 4 — `movie move <selector> <dest>` (selector mode)
 - `cmd/movie_move_selector.go` (argc dispatcher + `-g` sugar expander).

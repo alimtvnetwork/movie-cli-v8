@@ -94,6 +94,7 @@ func init() {
 		addContextMenuCmd,
 		removeContextMenuCmd,
 		contextMenuStatusCmd,
+		movieRmCmd,
 	)
 }
 

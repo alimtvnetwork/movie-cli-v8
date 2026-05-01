@@ -75,6 +75,16 @@ func undoDelete(database *db.DB, a *db.ActionRecord) error {
 	if a.MediaSnapshot == "" {
 		return apperror.New("no snapshot available for action %d — cannot restore", a.ActionHistoryId)
 	}
+	// Soft-delete path: if the original row still exists with IsDeleted=1,
+	// just flip it back to Active instead of inserting a duplicate.
+	if a.MediaId.Valid {
+		if existing, getErr := database.GetMediaByID(a.MediaId.Int64); getErr == nil && existing != nil {
+			if restoreErr := database.RestoreMedia(a.MediaId.Int64); restoreErr != nil {
+				return apperror.Wrap("restore soft-deleted media", restoreErr)
+			}
+			return database.MarkActionReverted(a.ActionHistoryId)
+		}
+	}
 	media, err := db.MediaFromJSON(a.MediaSnapshot)
 	if err != nil {
 		return apperror.Wrapf(err, "parse snapshot for action %d", a.ActionHistoryId)
