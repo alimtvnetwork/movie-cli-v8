@@ -41,11 +41,19 @@ phases. Each phase ends with a version bump and a verification step.
 - `--no-reconcile` flag added to `movie scan`.
 - Wired into `runMovieScan` BEFORE `executeScan`.
 
-## Phase 6 — QA + docs + cleanup
-- README section: rm/remove/delete examples + smart rescan note.
-- Acceptance-criteria test pass on a real folder of 50+ video files.
-- Bump to `v2.290.0` (minor for the feature set).
+## Phase 6 — QA + docs + cleanup  ✅ DONE v2.294.0
+- README: added File Management table rows + condition grammar callout + SmartRescan note.
+- AC walk-through done. Closed gaps:
+  - R3 batch-id: `applyRm` now generates one BatchID for all rows in a batch.
+  - R1 sidecar removal: `removeRmSidecar` deletes the JSON sidecar on rm.
+  - R6 sidecar regen: `regenSidecarFor` recreates sidecar after `movie undo`.
+- Deferred to follow-up tasks (filed below):
+  - M5 atomic batched move (rollback on partial failure).
+  - report.html regen after rm/move (currently relies on next `--rest`/scan).
+  - Real 50+ file QA on user machine (cannot run in sandbox).
 
 ## Open decisions (deferred to future asks)
 - `--purge` flag on rm to also delete the on-disk video file.
 - Cross-folder global JSON cache (current scope = per-folder only).
+- Atomic batched move with rollback (M5).
+- Auto-regenerate `report.html` immediately after rm/move.
