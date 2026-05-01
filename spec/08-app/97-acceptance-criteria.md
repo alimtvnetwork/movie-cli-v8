@@ -1,7 +1,7 @@
 # Application Commands — Acceptance Criteria
 
-**Version:** 1.2.0  
-**Last Updated:** 2026-04-24  
+**Version:** 1.3.0  
+**Last Updated:** 2026-05-01  
 **Format:** GIVEN/WHEN/THEN (E2E-test-ready)
 
 ---
