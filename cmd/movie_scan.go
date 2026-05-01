@@ -85,6 +85,8 @@ func runMovieScan(cmd *cobra.Command, args []string) {
 		return
 	}
 
+	RecordContextMenuClick(database, scanDir)
+
 	creds := resolveScanTmdbCredentials(database)
 	outputDir := filepath.Join(scanDir, ".movie-output")
 
