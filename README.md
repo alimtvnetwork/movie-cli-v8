@@ -1218,6 +1218,9 @@ Select [a]ll, [n]one, or numbers (e.g. 1,3): a
 |---|---|
 | `movie move [directory]` | Browse, select, move with clean name |
 | `movie move --all` | Batch move all files (auto-route by type) |
+| `movie move <selector> <dest>` | Bulk-move by id, title, or condition expression |
+| `movie move -g <genre> <dest>` | Sugar for `movie move "g = <genre>" <dest>` |
+| `movie rm <id\|title\|"expr">` | Soft-delete (aliases: `remove`, `delete`); reversible via `movie undo` |
 | `movie rename` | Batch rename to clean format |
 | `movie popout [directory]` | Extract video files from subfolders to root |
 | `movie play <id>` | Open with default video player |
@@ -1226,11 +1229,26 @@ Select [a]ll, [n]one, or numbers (e.g. 1,3): a
 ```bash
 movie move ~/Downloads            # interactive single-file move
 movie move --all ~/Downloads      # batch move all files
+movie move 42 ~/Movies            # bulk move by media id
+movie move "rating < 5" ~/Archive # bulk move by condition expression
+movie move -g Horror ~/Movies/Horror
+movie rm 42                       # soft-delete one item
+movie rm "rating < 5 AND year >= 2010" --yes
 movie rename                      # clean all filenames
 movie popout ~/Downloads          # flatten nested subfolders
 movie play 1                      # play with system player
 cd $(movie cd Movies)             # navigate to scanned folder
 ```
+
+> **🔄 SmartRescan (auto, since v2.293):** every `movie scan` first reconciles
+> disk ⇄ JSON sidecars ⇄ database. Unchanged files are skipped — zero TMDb
+> calls — and missing files are flagged automatically. Disable for debugging
+> with `movie scan --no-reconcile`.
+
+> **Condition grammar:** `rating|year|duration|size|resolution|genre` (or
+> aliases `r|y|d|s|res|g`) with `< <= = >= > !=` and `AND`/`OR`. Size
+> accepts `MB`/`GB` suffix. See
+> [spec/08-app/10-remove-move-rescan/03-condition-expression-grammar.md](spec/08-app/10-remove-move-rescan/03-condition-expression-grammar.md).
 
 ---
 
