@@ -107,7 +107,7 @@ func applyWatchedState(database *db.DB, media *db.Media,
 	episodeID, lookupErr := database.FindEpisodeByMediaAndCode(
 		media.ID, seasonNumber, episodeNumber)
 	if lookupErr != nil || episodeID <= 0 {
-		reportTvError(fmt.Errorf("S%02dE%02d not found for '%s'",
+		reportTvError(apperror.New("S%02dE%02d not found for '%s'",
 			seasonNumber, episodeNumber, media.Title))
 		return
 	}
