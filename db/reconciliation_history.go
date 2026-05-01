@@ -66,3 +66,44 @@ func (d *DB) CountReconciliationByType(since string) (map[int]int, error) {
 	}
 	return out, nil
 }
+
+// ListReconciliation returns the most recent ReconciliationHistory rows,
+// joined with the action-type name. Limit caps the row count.
+func (d *DB) ListReconciliation(limit int) ([]ReconRecord, error) {
+	rows, err := d.Query(`
+		SELECT rh.ReconciliationHistoryId, rh.MediaId,
+		       rh.ReconciliationActionTypeId, rh.OccurredAt,
+		       COALESCE(rh.Details, '')
+		FROM   ReconciliationHistory rh
+		ORDER  BY rh.OccurredAt DESC, rh.ReconciliationHistoryId DESC
+		LIMIT  ?`, limit)
+	if err != nil {
+		return nil, apperror.Wrap("list ReconciliationHistory", err)
+	}
+	defer rows.Close()
+	var out []ReconRecord
+	for rows.Next() {
+		var r ReconRecord
+		if scanErr := rows.Scan(&r.ReconciliationHistoryId, &r.MediaId,
+			&r.ReconciliationActionTypeId, &r.OccurredAt, &r.Details); scanErr != nil {
+			return nil, apperror.Wrap("scan ReconciliationHistory row", scanErr)
+		}
+		out = append(out, r)
+	}
+	return out, nil
+}
+
+// ReconActionName maps a ReconciliationActionTypeId to its display name.
+func ReconActionName(id int) string {
+	switch id {
+	case ReconActionHydratedFromJson:
+		return "HydratedFromJson"
+	case ReconActionRemovedMissing:
+		return "RemovedMissing"
+	case ReconActionAddedNew:
+		return "AddedNew"
+	case ReconActionConverged:
+		return "Converged"
+	}
+	return "Unknown"
+}
