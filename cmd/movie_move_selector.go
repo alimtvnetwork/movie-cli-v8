@@ -16,6 +16,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/alimtvnetwork/movie-cli-v7/apperror"
 	"github.com/alimtvnetwork/movie-cli-v7/db"
 	"github.com/alimtvnetwork/movie-cli-v7/errlog"
 )
@@ -77,7 +78,7 @@ func buildSelectorAndDest(args []string) (string, string, error) {
 }
 
 func apperrorMoveUsage() error {
-	return fmt.Errorf("usage: movie move <selector> <dest>  OR  movie move -g <genre> <dest>")
+	return apperror.New("usage: movie move <selector> <dest>  OR  movie move -g <genre> <dest>")
 }
 
 func resolveMoveTargets(database *db.DB, selector string) ([]int64, error) {
