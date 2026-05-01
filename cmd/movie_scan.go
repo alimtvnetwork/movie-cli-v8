@@ -67,6 +67,8 @@ func init() {
 		"parallel scan workers (0=auto: NumCPU*2, capped at 32)")
 	movieScanCmd.Flags().BoolVar(&scanNoOpen, "no-open", false,
 		"do not auto-open report.html in the browser after the scan")
+	movieScanCmd.Flags().BoolVar(&scanNoReconcile, "no-reconcile", false,
+		"skip SmartRescan reconciliation (debug; default: enabled)")
 }
 
 func runMovieScan(cmd *cobra.Command, args []string) {
@@ -102,6 +104,10 @@ func runMovieScan(cmd *cobra.Command, args []string) {
 	if !useJson {
 		printScanHeader(scanDir, outputDir)
 	}
+
+	// SmartRescan: reconcile disk ⇄ JSON ⇄ DB before the heavy scan.
+	// Returns nil when --no-reconcile is set OR no JSON sidecars exist.
+	_ = runSmartRescan(database, scanDir)
 
 	ctx := createScanContext(database, creds, outputDir)
 	removed, jsonItems := executeScan(ctx, scanDir, useJson)
