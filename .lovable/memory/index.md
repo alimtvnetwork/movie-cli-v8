@@ -33,6 +33,7 @@ No magic strings — use constants/enums. No fmt.Errorf — use apperror.Wrap().
 - [CI log commit loop](mem://issues/04-ci-log-commit-loop) — Constraint: CI log commits must never trigger new runs; kill feature if loops occur
 - [Director FK 787](mem://issues/05-director-fk-stale-lastinsertid) — Fixed v2.304.0: ensureDirector trusted LastInsertId after INSERT OR IGNORE → stale rowid → MediaDirector FK 787; now SELECTs canonical PK like EnsureGenre
 - [Season/Episode audit](mem://issues/06-season-episode-stale-lastinsertid) — Fixed v2.305.0: InsertSeason/InsertEpisode had same latent bug; now SELECT canonical PK. Rule: any INSERT OR IGNORE / ON CONFLICT DO UPDATE whose PK is used as FK MUST SELECT PK back, never trust LastInsertId.
+- [LastInsertId lint guard](mem://features/lastinsertid-lint-guard) — v2.306.0 CI guard scripts/check-lastinsertid-anti-pattern.sh fails if any db/ file mixes INSERT OR IGNORE / ON CONFLICT with LastInsertId() in real code; comment-aware; wired into ci.yml lint job
 - [Parallel scan](mem://features/parallel-scan) — Worker pool (NumCPU*2, cap 32), TMDb 40 req/s limiter, batch progress, auto-open report.html
 - [Context menu](mem://features/context-menu) — `movie add-contextmenu` for Windows/Linux/macOS submenu (Scan/Rescan/Report/Stats), clicks logged to action_history
 - [Remove/Move/SmartRescan plan](mem://features/remove-move-rescan-plan) — Spec at spec/08-app/10-remove-move-rescan/; 6 phases mapped onto existing Media schema (no parallel Movie table)
