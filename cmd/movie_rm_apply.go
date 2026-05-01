@@ -82,8 +82,25 @@ func applySingleRm(database *db.DB, id int64, batchID string) bool {
 		return false
 	}
 	removeRmSidecar(m)
+	purgeOnDiskFile(m)
 	logRmHistory(database, m, batchID)
 	return true
+}
+
+// purgeOnDiskFile deletes the underlying video file when --purge is set.
+// Silently no-ops when the flag is off or the path is empty/missing.
+func purgeOnDiskFile(m *db.Media) {
+	if !rmPurge {
+		return
+	}
+	if m.CurrentFilePath == "" {
+		return
+	}
+	if err := os.Remove(m.CurrentFilePath); err != nil && !os.IsNotExist(err) {
+		errlog.Warn("rm --purge: delete %s: %v", m.CurrentFilePath, err)
+		return
+	}
+	fmt.Printf("  🔥 purged file: %s\n", m.CurrentFilePath)
 }
 
 func removeRmSidecar(m *db.Media) {
