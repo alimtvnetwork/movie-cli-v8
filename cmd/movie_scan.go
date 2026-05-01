@@ -69,6 +69,10 @@ func init() {
 		"do not auto-open report.html in the browser after the scan")
 	movieScanCmd.Flags().BoolVar(&scanNoReconcile, "no-reconcile", false,
 		"skip SmartRescan reconciliation (debug; default: enabled)")
+	movieScanCmd.Flags().BoolVar(&scanNoReverseSync, "no-reverse-sync", false,
+		"skip the DB→JSON reverse-sync pass (debug; default: enabled)")
+	movieScanCmd.Flags().BoolVar(&scanReverseSyncOnly, "reverse-sync-only", false,
+		"only run the reverse-sync pass; skip forward scan and TMDb fetches")
 }
 
 func runMovieScan(cmd *cobra.Command, args []string) {
