@@ -40,7 +40,39 @@ func readSidecarFile(path string) (scanMediaJSON, bool) {
 		errlog.Warn("recon: sidecar %s missing required fields", path)
 		return scanMediaJSON{}, false
 	}
-	return item, true
+	return enrichFromGlobalCache(item), true
+}
+
+// enrichFromGlobalCache overlays richer fields from the global cache when
+// the per-folder sidecar lacks them (e.g. older format, partial write).
+// Path-related fields stay local; metadata fields prefer the cache.
+func enrichFromGlobalCache(local scanMediaJSON) scanMediaJSON {
+	cached, ok := LookupGlobalCache(local.Type, local.TmdbID)
+	if !ok {
+		return local
+	}
+	if local.Description == "" {
+		local.Description = cached.Description
+	}
+	if local.Genre == "" {
+		local.Genre = cached.Genre
+	}
+	if local.Director == "" {
+		local.Director = cached.Director
+	}
+	if local.CastList == "" {
+		local.CastList = cached.CastList
+	}
+	if local.ImdbID == "" {
+		local.ImdbID = cached.ImdbID
+	}
+	if local.ImdbRating == 0 {
+		local.ImdbRating = cached.ImdbRating
+	}
+	if local.TmdbRating == 0 {
+		local.TmdbRating = cached.TmdbRating
+	}
+	return local
 }
 
 func hydrateAllFromJson(database *db.DB, items []scanMediaJSON) int {
