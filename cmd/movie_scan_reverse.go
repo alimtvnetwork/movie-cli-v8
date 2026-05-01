@@ -164,7 +164,7 @@ func reverseStepDetectMissing(database *db.DB, jsonRoot string,
 // R5: remove orphan sidecars (no DB row, file gone from disk).
 func reverseStepRemoveOrphans(database *db.DB, jsonRoot string,
 	sidecarSet, diskSet map[string]struct{}, rows []db.ReverseSyncRow) int {
-	known := indexKnownSidecars(jsonRoot, rows)
+	known := indexKnownSidecars(database, jsonRoot, rows)
 	count := 0
 	for sidecar := range sidecarSet {
 		if _, ok := known[sidecar]; ok {
@@ -185,7 +185,7 @@ func reverseStepRemoveOrphans(database *db.DB, jsonRoot string,
 	return count
 }
 
-func indexKnownSidecars(jsonRoot string, rows []db.ReverseSyncRow) map[string]struct{} {
+func indexKnownSidecars(database *db.DB, jsonRoot string, rows []db.ReverseSyncRow) map[string]struct{} {
 	set := make(map[string]struct{}, len(rows))
 	for i := range rows {
 		set[sidecarPathFor(database, jsonRoot, &rows[i])] = struct{}{}
