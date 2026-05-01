@@ -32,9 +32,14 @@ type Episode struct {
 	IsWatched     bool
 }
 
-// InsertSeason upserts a season for a media entry.
+// InsertSeason upserts a season and returns its canonical PK.
+//
+// IMPORTANT: Never trust res.LastInsertId() after ON CONFLICT DO UPDATE — on
+// the conflict path the driver may return a rowid from a different table on
+// the same connection (parallel scans). Always SELECT the canonical PK back.
+// See spec/09-app-issues/09-director-fk-stale-lastinsertid.md.
 func (d *DB) InsertSeason(s *Season) (int64, error) {
-	res, err := d.Exec(`
+	_, err := d.Exec(`
 		INSERT INTO Season (MediaId, SeasonNumber, TmdbSeasonId, Name, Overview, PosterPath, AirDate, EpisodeCount)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT (MediaId, SeasonNumber) DO UPDATE SET
@@ -46,11 +51,6 @@ func (d *DB) InsertSeason(s *Season) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	id, _ := res.LastInsertId()
-	if id > 0 {
-		return id, nil
-	}
-	// Get existing ID on conflict
 	var seasonID int64
 	err = d.QueryRow(
 		"SELECT SeasonId FROM Season WHERE MediaId = ? AND SeasonNumber = ?",
@@ -58,9 +58,12 @@ func (d *DB) InsertSeason(s *Season) (int64, error) {
 	return seasonID, err
 }
 
-// InsertEpisode upserts an episode for a season.
+// InsertEpisode upserts an episode and returns its canonical PK.
+//
+// IMPORTANT: Same rule as InsertSeason — SELECT the canonical PK back instead
+// of trusting LastInsertId() after ON CONFLICT DO UPDATE.
 func (d *DB) InsertEpisode(e *Episode) (int64, error) {
-	res, err := d.Exec(`
+	_, err := d.Exec(`
 		INSERT INTO Episode (SeasonId, EpisodeNumber, TmdbEpisodeId, Name, Overview, AirDate, Runtime, StillPath, VoteAvg)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT (SeasonId, EpisodeNumber) DO UPDATE SET
@@ -73,8 +76,11 @@ func (d *DB) InsertEpisode(e *Episode) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	id, _ := res.LastInsertId()
-	return id, nil
+	var episodeID int64
+	err = d.QueryRow(
+		"SELECT EpisodeId FROM Episode WHERE SeasonId = ? AND EpisodeNumber = ?",
+		e.SeasonID, e.EpisodeNumber).Scan(&episodeID)
+	return episodeID, err
 }
 
 // SeasonsByMediaID returns all seasons for a media entry.
