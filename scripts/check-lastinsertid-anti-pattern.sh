@@ -15,10 +15,11 @@
 # ON CONFLICT must NOT call res.LastInsertId(). Always SELECT the
 # canonical PK back via the natural unique key, like db/genre.go::EnsureGenre.
 #
-# This script greps every .go file in db/ for the dangerous combo and
-# fails the build if it finds one. It deliberately scans per-file rather
-# than per-function so it is dialect-free and impossible to game with
-# helper indirection.
+# Implementation note: we strip line comments (`// …`) before matching so
+# that doc/banner comments warning future contributors NOT to use
+# LastInsertId don't themselves trip the guard. Block comments
+# (`/* … */`) are rare in this codebase and intentionally NOT stripped —
+# anyone using one is opting in to the lint.
 
 set -e
 
@@ -31,11 +32,18 @@ fi
 
 violations=0
 while IFS= read -r -d '' file; do
-  # Only flag files that contain BOTH the danger source and the danger sink.
-  if grep -qiE '(INSERT OR IGNORE|ON CONFLICT)' "$file" \
-     && grep -q 'LastInsertId' "$file"; then
-    echo "::error file=${file}::Stale-LastInsertId anti-pattern: file uses INSERT OR IGNORE / ON CONFLICT AND calls LastInsertId(). SELECT the canonical PK back instead. See spec/09-app-issues/09-director-fk-stale-lastinsertid.md."
-    grep -nE 'INSERT OR IGNORE|ON CONFLICT|LastInsertId' "$file" | sed "s|^|  ${file}:|"
+  # Strip Go line comments so warning banners that mention LastInsertId
+  # don't false-positive. sed pattern removes everything from `//` to EOL.
+  stripped=$(sed -E 's://.*$::' "$file")
+
+  has_unsafe_sql=$(printf '%s' "$stripped" | grep -ciE 'INSERT OR IGNORE|ON CONFLICT' || true)
+  has_lastinsert=$(printf '%s' "$stripped" | grep -c 'LastInsertId' || true)
+
+  if [ "$has_unsafe_sql" -gt 0 ] && [ "$has_lastinsert" -gt 0 ]; then
+    echo "::error file=${file}::Stale-LastInsertId anti-pattern: file uses INSERT OR IGNORE / ON CONFLICT AND calls LastInsertId() in real code. SELECT the canonical PK back instead. See spec/09-app-issues/09-director-fk-stale-lastinsertid.md."
+    grep -nE 'INSERT OR IGNORE|ON CONFLICT|LastInsertId' "$file" \
+      | grep -vE '^\s*[0-9]+:\s*//' \
+      | sed "s|^|  ${file}:|"
     violations=$((violations + 1))
   fi
 done < <(find "$ROOT" -type f -name '*.go' -print0)
