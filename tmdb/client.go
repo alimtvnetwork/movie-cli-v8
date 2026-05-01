@@ -135,6 +135,7 @@ func (c *Client) GetTVSeason(tmdbID, seasonNumber int) (*TVSeason, error) {
 		return nil, err
 	}
 	return &s, nil
+}
 
 // GetMovieCredits returns cast and crew for a movie.
 func (c *Client) GetMovieCredits(tmdbID int) (*Credits, error) {
