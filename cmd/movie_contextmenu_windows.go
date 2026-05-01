@@ -51,10 +51,10 @@ func installWinEntry(exePath string, e ContextMenuEntry) error {
 }
 
 // buildWinCommand returns the cmd.exe invocation that the registry will run.
-// %V is the clicked folder; we cd there, set MAHIN_TRIGGER, and pause on error.
+// %V is the clicked folder; we cd there, set MOVIE_TRIGGER, and pause on error.
 func buildWinCommand(exePath string, e ContextMenuEntry) string {
 	return fmt.Sprintf(
-		`cmd.exe /c "set MAHIN_TRIGGER=contextmenu&& set MAHIN_CONTEXTMENU_ENTRY=%s&& cd /d "%%V" && "%s" %s . & if errorlevel 1 pause"`,
+		`cmd.exe /c "set MOVIE_TRIGGER=contextmenu&& set MOVIE_CONTEXTMENU_ENTRY=%s&& cd /d "%%V" && "%s" %s . & if errorlevel 1 pause"`,
 		e.Key, exePath, e.Command,
 	)
 }
