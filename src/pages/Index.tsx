@@ -8,6 +8,7 @@ import { TypeFilter } from "@/components/dashboard/TypeFilter";
 import { SortSelect } from "@/components/dashboard/SortSelect";
 import { StatsPanel } from "@/components/dashboard/StatsPanel";
 import { ReadmePreview } from "@/components/dashboard/ReadmePreview";
+import { ReportPreviewCard } from "@/components/dashboard/ReportPreviewCard";
 import { JumpToCommandTable } from "@/components/dashboard/JumpToCommandTable";
 import { StaleRepoPlanDialog } from "@/components/dashboard/StaleRepoPlanDialog";
 import { useMediaFilters } from "@/components/dashboard/useMediaFilters";
@@ -63,6 +64,8 @@ const Index = () => {
       </Collapsible>
 
       <ReadmePreview media={filtered} />
+
+      <ReportPreviewCard />
 
       <JumpToCommandTable />
 
