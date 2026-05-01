@@ -66,6 +66,9 @@ func applyRm(database *db.DB, ids []int64) {
 		}
 	}
 	fmt.Printf("\n✅ Soft-deleted %d/%d media (batch %s).\n", success, len(ids), batchID[:8])
+	if success > 0 {
+		regenerateReports(database)
+	}
 }
 
 func applySingleRm(database *db.DB, id int64, batchID string) bool {
