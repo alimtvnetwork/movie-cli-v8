@@ -107,6 +107,17 @@ func previewBatchMoves(input BatchMovePreview) []moveItem {
 }
 
 func executeBatchMoves(database *db.DB, moves []moveItem) {
+	if !moveAtomicOff {
+		executeBatchMovesAtomic(database, moves)
+		return
+	}
+	executeBatchMovesBestEffort(database, moves)
+}
+
+// executeBatchMovesBestEffort is the legacy non-atomic flow (continues
+// past failures). Kept behind --no-atomic for users who prefer partial
+// progress over rollback.
+func executeBatchMovesBestEffort(database *db.DB, moves []moveItem) {
 	success := 0
 	failed := 0
 

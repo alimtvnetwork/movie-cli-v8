@@ -37,6 +37,7 @@ func init() {
 	movieMoveCmd.Flags().BoolVar(&moveAllFlag, "all", false, "Move all video files in the directory at once")
 	movieMoveCmd.Flags().StringVarP(&moveGenreSugar, "genre", "g", "", "Sugar: equivalent to selector \"g = <name>\"")
 	movieMoveCmd.Flags().BoolVarP(&moveAssumeYes, "yes", "y", false, "Skip confirmation prompt (selector mode)")
+	movieMoveCmd.Flags().BoolVar(&moveAtomicOff, "no-atomic", false, "Disable atomic batch (continue past failures instead of rolling back)")
 }
 
 func runMovieMove(cmd *cobra.Command, args []string) {
