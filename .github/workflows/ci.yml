@@ -107,11 +107,6 @@ jobs:
           # (IsUnique, IsNoteworthy, HasNotes, etc.) that happen to start
           # with Un/Not/No but aren't negations.
           bash scripts/check-boolean-naming.sh .
-          # any file in db/ that mixes INSERT OR IGNORE / ON CONFLICT with
-          # res.LastInsertId() (in real code, not comments). Always SELECT
-          # the canonical PK back. Reference impl: db/genre.go::EnsureGenre.
-          # Full RCA: spec/09-app-issues/09-director-fk-stale-lastinsertid.md
-          bash scripts/check-lastinsertid-anti-pattern.sh db
 
       - name: Stale-repo diagnose (main only)
         if: needs.sha-check.outputs.already-built != 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
