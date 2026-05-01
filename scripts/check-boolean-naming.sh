@@ -47,14 +47,21 @@ EXCLUDES=(
 # no leading \b is needed.
 PATTERN='(Is|Has)(Un|Not|No)[A-Za-z]'
 
+# False-positive allow-list: English words that legitimately start with
+# Un/Not/No and are NOT negations. Match the WHOLE word that follows the
+# Is/Has prefix, anchored so partial collisions don't slip through.
+SAFE_TAILS='\b(Is|Has)(Unique|Universal|Universe|Until|Union|Unit|Units|Unified|Uniform|Unknown|Untitled|Unread|Underway|Undef|Undefined|Undo|Undoable|Notice|Notable|Noteworthy|Notes|Notified|Notification|Notifications|Notion|Note|Nominal|None|Normal|Normative|Notch|Nose|Notary|Notarized|Northern|North)\b'
+
 # Collect raw matches, then drop:
 #   - lines that are pure Go line comments (`^\s*//`)
-#   - the stdlib os.IsNotExist family (os\.Is(Not|No)\w+)
+#   - the stdlib os.IsNotExist family
+#   - the SAFE_TAILS allow-list (legitimate English words, not negations)
 raw=$(rg -n "$PATTERN" "$ROOT" --glob '*.go' "${EXCLUDES[@]}" 2>/dev/null || true)
 
 violations=$(printf '%s\n' "$raw" \
   | grep -vE ':[[:space:]]*//' \
   | grep -vE '\bos\.Is(Not|No)[A-Z][A-Za-z]*' \
+  | grep -vE "$SAFE_TAILS" \
   | sed '/^$/d')
 
 if [ -n "$violations" ]; then
