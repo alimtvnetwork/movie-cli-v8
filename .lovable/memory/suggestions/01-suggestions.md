@@ -44,6 +44,9 @@
 | S30 | Single PascalCase DB | 24-Apr-2026 | 21 tables + 8 views in `db/schema_tables.go`, `db/views.go` |
 | S31 | Migration runner + SchemaVersion | 24-Apr-2026 | `db/migrate.go`, `db/schema_version.go`, 3 versioned migrations |
 | S32 | FileAction seed (15 actions) | 24-Apr-2026 | `db/seed.go` seeds Move/Rename/Delete/Popout/Restore/etc. |
+| S33 | REST API server mode | shipped earlier | `cmd/movie_rest*.go` — HTML dashboard + JSON endpoints. Tracker was stale. |
+| S34 | Remove/Move/SmartRescan epic | 01-May-2026 | M5 atomic move + rollback, --purge, auto report regen, global JSON cache. |
+| S35 | Acceptance criteria docs | 01-May-2026 | spec/08-app/97-acceptance-criteria.md v1.3.0 — added AC-36..AC-40 covering rm/--purge, atomic move, history reconcile, contextmenu+telemetry, global cache. |
 
 ---
 
@@ -51,8 +54,7 @@
 
 | # | Suggestion | Priority | Description |
 |---|-----------|----------|-------------|
-| S33 | REST API server mode | Medium | HTML dashboard over existing DB (P3) |
-| S35 | Acceptance criteria docs | Low | GIVEN/WHEN/THEN per command (P2) |
+| — | (none open — backlog drained) | — | Add new suggestions here as they arise. |
 
 ## 🚫 Forbidden — Do NOT Suggest
 
@@ -60,4 +62,4 @@
 
 ---
 
-*Tracker updated: 24-Apr-2026*
+*Tracker updated: 01-May-2026*
