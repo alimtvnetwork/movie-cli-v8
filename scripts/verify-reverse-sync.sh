@@ -137,6 +137,10 @@ sqlite3 "$DB_PATH" "UPDATE Media SET Title='$ORIG_TITLE', UpdatedAt=datetime('no
 
 # ---------------- Test 2: sidecar removal on soft-delete ----------------
 echo ""; echo "==== Test 2: sidecar removal on soft-delete ===="
+if [[ ! -f "$SIDECAR" ]]; then
+  note_fail "T2 pre-check sidecar present" "sidecar missing before soft-delete: $SIDECAR" "$MEDIA_ID"
+  exit 3
+fi
 sqlite3 "$DB_PATH" "UPDATE Media SET IsDeleted=1, UpdatedAt=datetime('now') WHERE MediaId=$MEDIA_ID;"
 echo "🗑  Row $MEDIA_ID soft-deleted"
 
