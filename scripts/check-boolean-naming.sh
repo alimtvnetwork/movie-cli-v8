@@ -48,7 +48,7 @@ PATTERN='\b(Is|Has)(Un|Not|No)[A-Z]'
 # Collect raw matches, then drop:
 #   - lines that are pure Go line comments (`^\s*//`)
 #   - the stdlib os.IsNotExist family (os\.Is(Not|No)\w+)
-raw=$(rg -nE "$PATTERN" "$ROOT" --glob '*.go' "${EXCLUDES[@]}" 2>/dev/null || true)
+raw=$(rg -n "$PATTERN" "$ROOT" --glob '*.go' "${EXCLUDES[@]}" 2>/dev/null || true)
 
 violations=$(printf '%s\n' "$raw" \
   | grep -vE ':[[:space:]]*//' \
