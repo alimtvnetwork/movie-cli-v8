@@ -125,13 +125,12 @@ All P0/P1/P2/P3 code work is complete. Recent hardening (May-2026):
 - v2.306.0 — CI lint guard `scripts/check-lastinsertid-anti-pattern.sh`
 - v2.307.0 — CI lint guard `scripts/check-boolean-naming.sh`
   enforces `mem://constraints/boolean-no-negative-words`
+- v2.308.0 — TV season/episode ingestion wired into live scan path
+  (`cmd/movie_scan_tv_seasons.go`); side-fix telemetry build error
 
-Only manual/user-side items + one open feature remain:
+Backlog is now empty. Only manual/user-side items remain:
 
-1. **Wire Season/Episode into TV-show ingestion** — `db/season.go`
-   helpers exist and are FK-safe but have zero callers in `cmd/`.
-   First real feature work on the backlog.
-2. **Real-OS QA** — run `spec/08-app/11-context-menu-qa-checklist.md`
-   and 50+ file scan on user machine
-3. **Resolve stale local repo** — user must run
+1. **Real-OS QA** — run `spec/08-app/11-context-menu-qa-checklist.md`
+   and 50+ file scan on user machine (now exercises TV ingestion too)
+2. **Resolve stale local repo** — user must run
    `git fetch origin && git reset --hard origin/main && git clean -fd`
