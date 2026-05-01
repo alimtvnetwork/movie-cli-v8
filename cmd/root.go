@@ -38,6 +38,8 @@ Management:
 Discovery:
   movie suggest                             Get recommendations
   movie tag add 1 favorite                  Tag your movies
+  movie tv seasons "Breaking Bad"          List TV show seasons
+  movie tv mark "Breaking Bad" S01E03      Mark an episode watched
   movie stats                               Library statistics
 
 System:
