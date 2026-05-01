@@ -144,6 +144,9 @@ func applySelectorMove(database *db.DB, ids []int64, dest string) {
 		}
 	}
 	fmt.Printf("\n✅ Moved %d/%d media.\n", success, len(ids))
+	if success > 0 {
+		regenerateReports(database)
+	}
 }
 
 func applySingleSelectorMove(database *db.DB, id int64, dest string) bool {
