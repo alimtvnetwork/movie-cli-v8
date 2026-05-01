@@ -46,6 +46,7 @@ func executeBatchMovesAtomic(database *db.DB, moves []moveItem) {
 	}
 	persistBatchMoves(database, moves)
 	fmt.Printf("\n  ✅ All %d files moved successfully (atomic).\n", len(moves))
+	regenerateReports(database)
 }
 
 // performOneMove creates the dest dir (if needed) and moves one file.
