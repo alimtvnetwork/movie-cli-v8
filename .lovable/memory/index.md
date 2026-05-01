@@ -1,7 +1,7 @@
 # Project Memory
 
 ## Core
-Go 1.22 CLI project (NOT web). Binary: `mahin`. Ignore Lovable build errors.
+Go 1.22 CLI project (NOT web). Binary: `movie`. Ignore Lovable build errors.
 One file per command, max ~200 lines. Shared helpers in movie_info.go and movie_resolve.go.
 File naming: `01-name-of-file.md`. Keep folder file counts small.
 Plans & suggestions tracked in single files, not per-item files.
@@ -32,5 +32,5 @@ No magic strings — use constants/enums. No fmt.Errorf — use apperror.Wrap().
 - [Large files](mem://issues/03-large-files) — Fixed: split to <200 lines
 - [CI log commit loop](mem://issues/04-ci-log-commit-loop) — Constraint: CI log commits must never trigger new runs; kill feature if loops occur
 - [Parallel scan](mem://features/parallel-scan) — Worker pool (NumCPU*2, cap 32), TMDb 40 req/s limiter, batch progress, auto-open report.html
-- [Context menu](mem://features/context-menu) — `mahin add-contextmenu` for Windows/Linux/macOS submenu (Scan/Rescan/Report/Stats), clicks logged to action_history
+- [Context menu](mem://features/context-menu) — `movie add-contextmenu` for Windows/Linux/macOS submenu (Scan/Rescan/Report/Stats), clicks logged to action_history
 - [Remove/Move/SmartRescan plan](mem://features/remove-move-rescan-plan) — Spec at spec/08-app/10-remove-move-rescan/; 6 phases mapped onto existing Media schema (no parallel Movie table)
