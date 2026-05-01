@@ -22,14 +22,26 @@ PASS_LIST=()  # collected for the final summary
 FAIL_LIST=()
 
 note_pass() { PASS_LIST+=("$1"); echo "✅ PASS: $1"; }
+
+# Resolved test context — populated once pre-flight has chosen a target.
+# Exposed as globals so note_fail can always include them in every FAIL line,
+# even when the caller forgets to pass MediaId.
+MEDIA_ID=""
+MEDIA_FILE=""
+SIDECAR=""
+
 note_fail() {
-  # $1 = check label   $2 = reason   $3 (optional) = MediaId
-  local label="$1" reason="$2" mid="${3:-}"
-  FAIL_LIST+=("$label | reason=$reason | MediaId=${mid:-N/A}")
+  # $1 = check label   $2 = reason   $3 (optional) = MediaId override
+  local label="$1" reason="$2" mid="${3:-$MEDIA_ID}"
+  local mfile="${MEDIA_FILE:-N/A}" sfile="${SIDECAR:-N/A}"
+  local ctx="MediaId=${mid:-N/A} | media=$mfile | sidecar=$sfile"
+  FAIL_LIST+=("$label | reason=$reason | $ctx")
   echo "❌ FAIL: $label"
-  echo "        reason: $reason"
-  [[ -n "$mid" ]] && {
-    echo "        MediaId: $mid"
+  echo "        reason:   $reason"
+  echo "        MediaId:  ${mid:-N/A}"
+  echo "        media:    $mfile"
+  echo "        sidecar:  $sfile"
+  [[ -n "$mid" && -f "${DB_PATH:-}" ]] && {
     echo "        --- DB row snapshot ---"
     sqlite3 -header -column "$DB_PATH" \
       "SELECT MediaId, Title, IsDeleted, UpdatedAt, CurrentFilePath
