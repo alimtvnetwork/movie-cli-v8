@@ -74,6 +74,8 @@ func contextMenuStatus() (bool, string) {
 func printPostInstallHint() {
 	fmt.Println("ℹ️  One-time step: System Settings → Keyboard → Keyboard Shortcuts")
 	fmt.Println("    → Services → Files & Folders → enable each \"Movie - ...\" entry.")
+	fmt.Println("ℹ️  Destructive actions (Rescan) will prompt for typed 'y' confirmation")
+	fmt.Println("    in the opened Terminal window before executing.")
 }
 
 func buildMacInfoPlist(e ContextMenuEntry) string {
