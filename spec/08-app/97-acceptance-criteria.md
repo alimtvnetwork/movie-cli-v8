@@ -612,9 +612,96 @@ See [Self-Update Acceptance Criteria](../13-self-update-app-update/07-acceptance
 
 ---
 
+## AC-36: Rm / Remove / Delete Command
+
+**GIVEN** the database contains a Media row with `MediaId = 42`  
+**WHEN** the user runs `movie rm 42`  
+**THEN** the row is soft-deleted (`Status` flipped to `Removed`)  
+**AND** its JSON sidecar under `<scanDir>/.movie-output/json/<type>/<slug>.json` is removed  
+**AND** an `ActionHistory` row is written with `FileAction = Delete`, a snapshot, and a shared `BatchId`  
+**AND** `report.html` is regenerated when at least one row succeeded
+
+**Edge Cases:**
+- **GIVEN** a condition expression `"rating < 5 AND year >= 2010"` **WHEN** `movie rm "<expr>"` runs **THEN** every matching MediaId is soft-deleted under one `BatchId`
+- **GIVEN** the count is ≥ 5 **WHEN** the user is prompted **THEN** the operation aborts unless they answer `y`/`yes`
+- **GIVEN** `--purge` is set **WHEN** rm runs **THEN** the on-disk file at `CurrentFilePath` is also deleted via `os.Remove`, the confirm prompt fires regardless of count, and the prompt verb reads "PURGE (delete files from disk)"
+- **GIVEN** `--purge` is set and the file is missing **WHEN** rm runs **THEN** the missing file is silently ignored and soft-delete still succeeds
+- **GIVEN** `movie undo` is run after a soft-delete **THEN** the row is restored AND `regenSidecarFor` recreates the JSON sidecar (note: `--purge`d files cannot be restored)
+
+---
+
+## AC-37: Move Command — Atomic Batch + Rollback
+
+**GIVEN** a batch of N video files is queued via `movie move --all` or `movie move <selector> <dest>`  
+**WHEN** every file moves successfully  
+**THEN** all `MoveHistory` rows are written, `regenerateReports` runs, and the success line reports `All N files moved successfully (atomic).`
+
+**Edge Cases:**
+- **GIVEN** the K-th file fails to move **WHEN** atomic mode is on (default) **THEN** every previously-completed move is reversed in reverse order via `MoveFile(dest, src)` and any directories created by this batch are removed; **NO** `MoveHistory` rows are written for the aborted run; output reads `Aborted at file K/N. Rolled back K-1 move(s).`
+- **GIVEN** `--no-atomic` is set **WHEN** a file fails **THEN** the legacy best-effort flow continues past the failure, writes `MoveHistory` rows for successes only, and prints `M moved, F failed`
+- **GIVEN** rollback itself fails for a file **WHEN** the recovery move errors **THEN** a warning is logged via `errlog.Warn` and rollback continues with the remaining files
+- **GIVEN** the move target dir was created by this batch **WHEN** rollback runs **THEN** that empty dir is removed via `os.Remove`
+
+---
+
+## AC-38: History Reconcile Subcommand
+
+**GIVEN** `ReconciliationHistory` rows exist from prior SmartRescan runs  
+**WHEN** the user runs `movie history reconcile` (aliases: `recon`, `rescan-audit`)  
+**THEN** rows are aggregated by **scanDir** and **ActionType** and printed as a grouped audit table  
+**AND** the default row cap is 500, controllable via `--limit N`
+
+**Edge Cases:**
+- **GIVEN** `--dir <prefix>` is provided **WHEN** the command runs **THEN** only scanDirs whose path starts with `<prefix>` appear
+- **GIVEN** a row's MediaId is null or its Media row is gone (Converged/orphan) **WHEN** the row is bucketed **THEN** it appears under the synthetic `(global)` scanDir
+- **GIVEN** zero matching rows **THEN** the command prints `📭 No reconciliation history.` and exits 0
+
+---
+
+## AC-39: Context Menu Commands + Telemetry
+
+**GIVEN** the user runs `movie add-contextmenu` on a supported OS  
+**WHEN** the install completes  
+**THEN** four shell entries (Scan / Rescan / Report / Stats) are registered for the OS:
+- macOS: 4 `~/Library/Services/Movie - *.workflow` bundles
+- Linux: 4 `~/.local/share/file-manager/actions/movie-*.desktop` files
+- Windows: subkeys under `HKCU\Software\Classes\Directory\shell\Movie\shell\`
+
+**AND** each shortcut sets `MOVIE_TRIGGER=contextmenu` and `MOVIE_CONTEXTMENU_ENTRY=<key>` before invoking the binary
+
+**Telemetry:**
+- **GIVEN** `MOVIE_TRIGGER=contextmenu` is set in the environment **WHEN** `movie scan`, `movie rescan`, or `movie stats` runs **THEN** `RecordContextMenuClick` writes one `ActionHistory` row with `FileAction = ScanAdd` and `Detail = trigger=contextmenu;entry=<key>;cwd=<path>`
+- **GIVEN** the env var is absent **WHEN** the command runs **THEN** `RecordContextMenuClick` is a no-op
+
+**macOS confirmation gate:**
+- **GIVEN** the user clicks the **Rescan** entry on macOS **WHEN** the workflow runs **THEN** Terminal opens, prints `⚠️  About to run: movie rescan in <folder>`, and blocks on `read -p "Type y then Enter to continue (anything else cancels):"`
+- **GIVEN** the user types anything other than `y` **THEN** the workflow exits 0 with `cancelled` and no DB mutation occurs
+
+**Removal:**
+- **GIVEN** `movie remove-contextmenu` runs **THEN** all four entries for the current OS are deleted and `movie contextmenu-status` reports `❌ Not installed`
+
+---
+
+## AC-40: Global JSON Cache
+
+**GIVEN** the user has a writable home directory  
+**WHEN** `movie scan` writes a per-folder JSON sidecar with a non-zero `TmdbId`  
+**THEN** an identical copy is mirrored to `~/.movie/cache/json/{movie|tv}/<tmdbid>.json` via `MirrorToGlobalCache`
+
+**Edge Cases:**
+- **GIVEN** `MOVIE_NO_GLOBAL_CACHE=1` is set **WHEN** any cache helper runs **THEN** both `MirrorToGlobalCache` and `LookupGlobalCache` are no-ops
+- **GIVEN** `TmdbId ≤ 0` or `Type` is empty **WHEN** the helper runs **THEN** the path resolves to `""` and the operation is skipped
+- **GIVEN** SmartRescan reads a per-folder sidecar with empty `Description`/`Genre`/`Director`/`CastList`/`ImdbId`/`ImdbRating`/`TmdbRating` **AND** the global cache has a richer entry for the same `TmdbId` **WHEN** `enrichFromGlobalCache` runs **THEN** the missing fields are overlaid from the cache; path/file fields stay local
+- **GIVEN** the cache file is corrupt or empty **WHEN** `LookupGlobalCache` runs **THEN** it returns `(zero, false)` and the local sidecar is used unchanged
+- **GIVEN** the cache write fails (FS error, permission denied) **WHEN** `MirrorToGlobalCache` runs **THEN** the error is silently swallowed and the per-folder sidecar still succeeds
+
+---
+
 ## Cross-References
 
 - [Overview](./00-overview.md)
 - [Project Spec](./01-project-spec.md)
+- [Remove/Move/SmartRescan Spec](./10-remove-move-rescan/)
+- [Context Menu QA Checklist](./11-context-menu-qa-checklist.md)
 - [Error Management AC](../02-error-manage-spec/97-acceptance-criteria.md)
 - [Seedable Config AC](../04-seedable-config-architecture/98-acceptance-criteria.md)
