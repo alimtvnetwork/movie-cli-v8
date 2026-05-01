@@ -184,6 +184,7 @@ func (c *Client) DownloadPoster(posterPath, dst string) error {
 	}
 
 	imgURL := imageBaseURL + posterPath
+	DefaultLimiter().Wait()
 	resp, err := c.HttpClient.Get(imgURL)
 	if err != nil {
 		if IsNetworkError(err) {
