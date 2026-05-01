@@ -21,6 +21,8 @@ func allMigrations() []Migration {
 		{Version: 1, Description: "Initial PascalCase schema", Apply: migrateV1},
 		{Version: 2, Description: "ImdbLookupCache table for cached DuckDuckGo→IMDb lookups", Apply: migrateV2},
 		{Version: 3, Description: "ImdbLookupCache: add TmdbId + MediaType to skip /find on hit", Apply: migrateV3},
+		{Version: 4, Description: "MediaStatus lookup + Media.IsDeleted/MediaStatusId for soft-delete", Apply: migrateV4},
+		{Version: 5, Description: "ReconciliationActionType + ReconciliationHistory for SmartRescan", Apply: migrateV5},
 	}
 }
 
