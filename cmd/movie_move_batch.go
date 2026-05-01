@@ -144,9 +144,12 @@ func executeBatchMovesBestEffort(database *db.DB, moves []moveItem) {
 	fmt.Println()
 	if failed == 0 {
 		fmt.Printf("  ✅ All %d files moved successfully!\n", success)
-		return
+	} else {
+		fmt.Printf("  ⚠️  %d moved, %d failed\n", success, failed)
 	}
-	fmt.Printf("  ⚠️  %d moved, %d failed\n", success, failed)
+	if success > 0 {
+		regenerateReports(database)
+	}
 }
 
 // runInteractiveMove is the original single-file interactive flow.
