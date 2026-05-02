@@ -67,9 +67,9 @@ func atoiSafe(s string) int {
 // enrichedFile is a videoFile that has finished worker-side enrichment and
 // is ready for the serializer (DB insert + sidecar + print).
 type enrichedFile struct {
+	Media  *db.Media // nil if enrichment skipped (e.g. file stat failed)
 	VF     videoFile
 	Result cleaner.Result
-	Media  *db.Media // nil if enrichment skipped (e.g. file stat failed)
 }
 
 // runParallelNewFileScan dispatches new files to N workers and serializes

@@ -35,10 +35,10 @@ type reverseSyncResult struct {
 // step signatures within the 3-parameter project rule.
 type reverseSyncCtx struct {
 	Database   *db.DB
-	JsonRoot   string
 	DiskSet    map[string]struct{}
 	SidecarSet map[string]struct{}
 	Drift      *driftLog
+	JsonRoot   string
 }
 
 // runReverseSync is the public entry point invoked from movie scan.

@@ -58,8 +58,8 @@ func init() {
 type reconcileBucket struct {
 	ScanDir string
 	Action  string
-	Count   int
 	Latest  string
+	Count   int
 }
 
 func runMovieHistoryReconcile(cmd *cobra.Command, args []string) {

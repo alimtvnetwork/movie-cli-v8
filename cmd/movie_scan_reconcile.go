@@ -24,10 +24,10 @@ var scanNoReconcile bool
 
 // reconcileResult is the summary returned to the scan footer.
 type reconcileResult struct {
+	NewPaths  []string // paths to feed to executeScan; empty = nothing new
 	Hydrated  int
 	Missing   int
 	Converged int
-	NewPaths  []string // paths to feed to executeScan; empty = nothing new
 }
 
 // runSmartRescan is the public entry point. Returns nil result when the
@@ -77,9 +77,9 @@ func buildDiskSet(scanDir string) map[string]struct{} {
 
 func listJsonSidecars(jsonRoot string) []string {
 	var out []string
-	_ = filepath.WalkDir(jsonRoot, func(path string, d os.DirEntry, err error) error {
-		if err != nil {
-			return nil
+	walkErr := filepath.WalkDir(jsonRoot, func(path string, d os.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return nil //nolint:nilerr // skip unreadable entries silently
 		}
 		if d.IsDir() || !strings.HasSuffix(path, ".json") {
 			return nil
@@ -87,6 +87,7 @@ func listJsonSidecars(jsonRoot string) []string {
 		out = append(out, path)
 		return nil
 	})
+	_ = walkErr
 	return out
 }
 
