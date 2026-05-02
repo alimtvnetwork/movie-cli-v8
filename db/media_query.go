@@ -276,7 +276,7 @@ func scanMediaRow(row *sql.Row) (*Media, error) {
 		&m.OriginalFileName, &m.OriginalFilePath, &m.CurrentFilePath,
 		&m.FileExtension, &m.FileSizeMb,
 		&m.Runtime, &m.Budget, &m.Revenue, &m.TrailerURL, &m.Tagline,
-		&m.ScanHistoryId)
+		&m.ScanHistoryId, &m.UpdatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -313,7 +313,7 @@ func scanMediaRows(rows *sql.Rows) ([]Media, error) {
 			&m.OriginalFileName, &m.OriginalFilePath, &m.CurrentFilePath,
 			&m.FileExtension, &m.FileSizeMb,
 			&m.Runtime, &m.Budget, &m.Revenue, &m.TrailerURL, &m.Tagline,
-			&m.ScanHistoryId); err != nil {
+			&m.ScanHistoryId, &m.UpdatedAt); err != nil {
 			return nil, err
 		}
 		list = append(list, m)

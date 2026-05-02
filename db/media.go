@@ -18,9 +18,10 @@ type Media struct {
 
 	// Compat fields — populated from views or for legacy cmd code.
 	// These are NOT stored in the Media table directly.
-	Genre    string `json:"genre,omitempty"`     // aggregated from MediaGenre+Genre
-	CastList string `json:"cast_list,omitempty"` // aggregated from MediaCast+Cast
-	Language string `json:"language,omitempty"`  // resolved from Language.Code
+	Genre     string `json:"genre,omitempty"`      // aggregated from MediaGenre+Genre
+	CastList  string `json:"cast_list,omitempty"`  // aggregated from MediaCast+Cast
+	Language  string `json:"language,omitempty"`   // resolved from Language.Code
+	UpdatedAt string `json:"updated_at,omitempty"` // RFC3339-ish; populated by SELECT only
 
 	ID            int64
 	Budget        int64
@@ -49,7 +50,8 @@ const mediaColumns = `MediaId, Title, CleanTitle, Year, Type,
 	COALESCE(FileSizeMb, 0),
 	COALESCE(Runtime, 0), COALESCE(Budget, 0), COALESCE(Revenue, 0),
 	COALESCE(TrailerUrl, ''), COALESCE(Tagline, ''),
-	COALESCE(ScanHistoryId, 0)`
+	COALESCE(ScanHistoryId, 0),
+	COALESCE(UpdatedAt, '')`
 
 // InsertMedia inserts a new media record and returns the ID.
 func (d *DB) InsertMedia(m *Media) (int64, error) {

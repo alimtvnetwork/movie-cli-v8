@@ -11,16 +11,42 @@ package cmd
 import (
 	"regexp"
 	"strconv"
+	"time"
 
 	"github.com/alimtvnetwork/movie-cli-v8/db"
 	"github.com/alimtvnetwork/movie-cli-v8/errlog"
 	"github.com/alimtvnetwork/movie-cli-v8/tmdb"
 )
 
-// mediaNeedsRescan returns true if the entry is missing genre, rating, or description.
+// MaxRescanAge is the staleness threshold for cached metadata.
+// Rows older than this are re-fetched from TMDb even when complete.
+// Spec: spec/08-app/10-remove-move-rescan/rescan-reconciliation/03-staleness-rule.md
+const MaxRescanAge = 365 * 24 * time.Hour
+
+// mediaNeedsRescan returns true when the entry is missing core fields OR
+// the cached metadata is older than MaxRescanAge (1 year).
 // Genre is populated from the M:N Genre/MediaGenre tables via the compat field.
 func mediaNeedsRescan(m *db.Media) bool {
-	return m.Genre == "" || m.TmdbRating == 0 || m.Description == ""
+	if m.Genre == "" || m.TmdbRating == 0 || m.Description == "" {
+		return true
+	}
+	return isMediaStale(m.UpdatedAt)
+}
+
+// isMediaStale parses the SQLite UpdatedAt timestamp and compares to the
+// 1-year threshold. Unparseable / empty timestamps are treated as stale
+// so legacy rows get refreshed once.
+func isMediaStale(updatedAt string) bool {
+	if updatedAt == "" {
+		return true
+	}
+	layouts := []string{time.RFC3339, "2006-01-02 15:04:05"}
+	for _, layout := range layouts {
+		if t, err := time.Parse(layout, updatedAt); err == nil {
+			return time.Since(t) > MaxRescanAge
+		}
+	}
+	return true
 }
 
 // rescanMediaEntry re-fetches TMDb metadata for a single media entry.

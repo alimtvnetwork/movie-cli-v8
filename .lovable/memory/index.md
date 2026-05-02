@@ -42,3 +42,4 @@ No magic strings — use constants/enums. No fmt.Errorf — use apperror.Wrap().
 - [Context menu](mem://features/context-menu) — `movie add-contextmenu` for Windows/Linux/macOS submenu (Scan/Rescan/Report/Stats), clicks logged to action_history
 - [Remove/Move/SmartRescan plan](mem://features/remove-move-rescan-plan) — Spec at spec/08-app/10-remove-move-rescan/; 6 phases mapped onto existing Media schema (no parallel Movie table)
 - [Global JSON cache](mem://features/global-json-cache) — Per-user TmdbID-keyed mirror at ~/.movie/cache/json; survives folder moves; disable via MOVIE_NO_GLOBAL_CACHE=1
+- [Rescan staleness](mem://features/rescan-staleness) — v2.321.0 1-year freshness rule: existing Media rows skip TMDb only when complete AND UpdatedAt < 365d; Media.UpdatedAt now selected; legacy/empty timestamp = stale. Spec 03-staleness-rule.md
