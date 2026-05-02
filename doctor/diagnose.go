@@ -13,7 +13,7 @@
 package doctor
 
 import (
-	"github.com/alimtvnetwork/movie-cli-v7/apperror"
+	"github.com/alimtvnetwork/movie-cli-v8/apperror"
 )
 
 // Severity describes how serious a finding is.

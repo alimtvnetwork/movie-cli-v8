@@ -79,7 +79,7 @@ jobs:
           for f in "${SURFACES[@]}"; do
             [ -f "$f" ] || continue
             if grep -nE 'github\.com/alimtvnetwork/movie-cli(-v[1-6])?(@v[0-9]|[^v0-9-]|$)' "$f" \
-                 | grep -vE 'movie-cli-v7' >/dev/null 2>&1; then
+                 | grep -vE 'movie-cli-v8' >/dev/null 2>&1; then
               BAD+=("$f")
             fi
           done
@@ -119,9 +119,9 @@ jobs:
           COMMIT="${GITHUB_SHA:0:10}"
           BUILD_DATE="$(date -u '+%Y-%m-%d')"
           LDFLAGS="-s -w \
-            -X 'github.com/alimtvnetwork/movie-cli-v7/version.Version=$VERSION' \
-            -X 'github.com/alimtvnetwork/movie-cli-v7/version.Commit=$COMMIT' \
-            -X 'github.com/alimtvnetwork/movie-cli-v7/version.BuildDate=$BUILD_DATE'"
+            -X 'github.com/alimtvnetwork/movie-cli-v8/version.Version=$VERSION' \
+            -X 'github.com/alimtvnetwork/movie-cli-v8/version.Commit=$COMMIT' \
+            -X 'github.com/alimtvnetwork/movie-cli-v8/version.BuildDate=$BUILD_DATE'"
 
           TARGETS=(
             "windows/amd64/.exe"

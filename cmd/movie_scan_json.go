@@ -17,9 +17,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/alimtvnetwork/movie-cli-v7/apperror"
-	"github.com/alimtvnetwork/movie-cli-v7/cleaner"
-	"github.com/alimtvnetwork/movie-cli-v7/db"
+	"github.com/alimtvnetwork/movie-cli-v8/apperror"
+	"github.com/alimtvnetwork/movie-cli-v8/cleaner"
+	"github.com/alimtvnetwork/movie-cli-v8/db"
 )
 
 // scanMediaJSON is the JSON representation written to disk.

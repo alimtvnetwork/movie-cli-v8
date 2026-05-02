@@ -50,13 +50,13 @@ Markers: `[PASS]` green, `[WARN]` yellow, `[FAIL]` red.
 Append to the install one-liner:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v7/main/install.sh | bash \
-  && curl -fsSL https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v7/main/verify.sh | bash
+curl -fsSL https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v8/main/install.sh | bash \
+  && curl -fsSL https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v8/main/verify.sh | bash
 ```
 
 ```powershell
-irm https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v7/main/install.ps1 | iex
-irm https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v7/main/verify.ps1 | iex
+irm https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v8/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v8/main/verify.ps1 | iex
 ```
 
 ## Constraints

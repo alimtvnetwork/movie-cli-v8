@@ -8,7 +8,7 @@ import (
 
 	_ "modernc.org/sqlite"
 
-	"github.com/alimtvnetwork/movie-cli-v7/apperror"
+	"github.com/alimtvnetwork/movie-cli-v8/apperror"
 )
 
 const dbFile = "movie.db"

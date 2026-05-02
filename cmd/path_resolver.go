@@ -34,7 +34,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/alimtvnetwork/movie-cli-v7/apperror"
+	"github.com/alimtvnetwork/movie-cli-v8/apperror"
 )
 
 // ResolveTargetDir is the canonical entry point for resolving a directory

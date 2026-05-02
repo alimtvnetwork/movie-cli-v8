@@ -10,8 +10,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/alimtvnetwork/movie-cli-v7/apperror"
-	"github.com/alimtvnetwork/movie-cli-v7/updater"
+	"github.com/alimtvnetwork/movie-cli-v8/apperror"
+	"github.com/alimtvnetwork/movie-cli-v8/updater"
 )
 
 // Fix walks fixable findings and applies their repair action.

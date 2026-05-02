@@ -151,7 +151,7 @@ jobs:
         run: |
           # The project went through multiple module path iterations:
           #   v2, v3, v4, v5, v6: all retired
-          # Current (v7): github.com/alimtvnetwork/movie-cli-v7
+          # Current (v7): github.com/alimtvnetwork/movie-cli-v8
           # Any reference to old v2-v6 module paths is a regression.
           #
           # Historical records (CHANGELOG.md, spec/) and this workflow file
@@ -178,9 +178,9 @@ jobs:
               echo "::error file=${file},line=${lineno}::Old module path (v2-v6): ${content}"
             done <<< "$violations"
             echo ""
-            echo "Current module: github.com/alimtvnetwork/movie-cli-v7"
+            echo "Current module: github.com/alimtvnetwork/movie-cli-v8"
             echo "Old modules v2-v6 must never be referenced."
-            echo "Fix: update all imports and references to movie-cli-v7."
+            echo "Fix: update all imports and references to movie-cli-v8."
             exit 1
           fi
           echo "✅ No old module path (v2-v6) regressions."
@@ -211,7 +211,7 @@ jobs:
         if: needs.sha-check.outputs.already-built != 'true'
         run: |
           # Ensure no user-facing doc or install script still points users at
-          # github.com/alimtvnetwork/movie-cli-v6. The broader v2-v6 guard
+          # github.com/alimtvnetwork/movie-cli-v8. The broader v2-v6 guard
           # excludes README.md, scripts, and root install/get/verify/bootstrap
           # files via its include filters, so this targeted guard catches any
           # regression in exactly the surfaces a new user copy-pastes from.
@@ -231,10 +231,10 @@ jobs:
           # Add scripts/ directory if it exists.
           [ -d scripts ] && existing+=(scripts)
 
-          PATTERN='github\.com/alimtvnetwork/movie-cli-v6\b'
+          PATTERN='github\.com/alimtvnetwork/movie-cli-v8\b'
           violations=$(grep -rnE "$PATTERN" "${existing[@]}" 2>/dev/null || true)
           if [ -n "$violations" ]; then
-            echo "User-facing v6 references found (must be movie-cli-v7):"
+            echo "User-facing v6 references found (must be movie-cli-v8):"
             echo "$violations"
             echo ""
             while IFS= read -r line; do
@@ -242,13 +242,13 @@ jobs:
               file=$(printf '%s' "$line" | cut -d: -f1)
               lineno=$(printf '%s' "$line" | cut -d: -f2)
               content=$(printf '%s' "$line" | cut -d: -f3-)
-              echo "::error file=${file},line=${lineno}::User-facing doc still points to movie-cli-v6: ${content}"
+              echo "::error file=${file},line=${lineno}::User-facing doc still points to movie-cli-v8: ${content}"
             done <<< "$violations"
             echo ""
-            echo "Fix: replace github.com/alimtvnetwork/movie-cli-v6 with github.com/alimtvnetwork/movie-cli-v7."
+            echo "Fix: replace github.com/alimtvnetwork/movie-cli-v8 with github.com/alimtvnetwork/movie-cli-v8."
             exit 1
           fi
-          echo "✅ No user-facing references to movie-cli-v6 in README, QUICKSTART, or install scripts."
+          echo "✅ No user-facing references to movie-cli-v8 in README, QUICKSTART, or install scripts."
 
       - name: Legacy module-path auditor (strict)
         id: legacy-audit
@@ -496,9 +496,9 @@ jobs:
         run: |
           VERSION="dev-${GITHUB_SHA::10}"
           LDFLAGS="-s -w \
-            -X 'github.com/alimtvnetwork/movie-cli-v7/version.Version=$VERSION' \
-            -X 'github.com/alimtvnetwork/movie-cli-v7/version.Commit=${GITHUB_SHA::10}' \
-            -X 'github.com/alimtvnetwork/movie-cli-v7/version.BuildDate=$(date -u +%Y-%m-%d)'"
+            -X 'github.com/alimtvnetwork/movie-cli-v8/version.Version=$VERSION' \
+            -X 'github.com/alimtvnetwork/movie-cli-v8/version.Commit=${GITHUB_SHA::10}' \
+            -X 'github.com/alimtvnetwork/movie-cli-v8/version.BuildDate=$(date -u +%Y-%m-%d)'"
           OUTPUT="movie-${VERSION}-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext }}"
           CGO_ENABLED=0 GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} go build -ldflags "$LDFLAGS" -o "$OUTPUT" .
           echo "Built: $OUTPUT ($(stat --format='%s' "$OUTPUT" | numfmt --to=iec --suffix=B))"

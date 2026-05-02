@@ -7,11 +7,11 @@
 #
 #   <file>:<line>  [VARIANT]  '<old>' -> '<new>'
 #
-# Replacement rules per variant (canonical = github.com/alimtvnetwork/movie-cli-v7):
+# Replacement rules per variant (canonical = github.com/alimtvnetwork/movie-cli-v8):
 #
-#   VERSIONED     movie-cli-v[1-6]            -> movie-cli-v7   (drop @vX.Y.Z if any)
-#   UNVERSIONED   .../movie-cli (no -vN)      -> .../movie-cli-v7
-#   TAGGED        movie-cli(-v7)?@vX.Y.Z      -> movie-cli-v7   (drop the tag)
+#   VERSIONED     movie-cli-v[1-6]            -> movie-cli-v8   (drop @vX.Y.Z if any)
+#   UNVERSIONED   .../movie-cli (no -vN)      -> .../movie-cli-v8
+#   TAGGED        movie-cli(-v7)?@vX.Y.Z      -> movie-cli-v8   (drop the tag)
 #   REPLACE       go.mod replace ... movie-cli*   -> REMOVE the directive
 #
 # Usage:
@@ -27,7 +27,7 @@
 set -uo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-CANONICAL='github.com/alimtvnetwork/movie-cli-v7'
+CANONICAL='github.com/alimtvnetwork/movie-cli-v8'
 AUDITOR="${ROOT}/scripts/audit-legacy-paths.sh"
 
 JSON_OUT=0
@@ -88,7 +88,7 @@ def derive(variant, content):
         for m in re_unversioned.finditer(content):
             old = m.group(0)
             # Skip if it's actually the canonical (shouldn't be, but safe).
-            if old.endswith("movie-cli-v7"): continue
+            if old.endswith("movie-cli-v8"): continue
             pairs.append((old, canonical))
         if pairs: return pairs
     # Fallback: any movie-cli mention.

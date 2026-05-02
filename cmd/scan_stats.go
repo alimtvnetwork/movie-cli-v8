@@ -1,7 +1,7 @@
 // scan_stats.go — ScanStats struct shared by scan report functions.
 package cmd
 
-import "github.com/alimtvnetwork/movie-cli-v7/db"
+import "github.com/alimtvnetwork/movie-cli-v8/db"
 
 // ScanStats holds aggregate counts for scan output functions.
 type ScanStats struct {

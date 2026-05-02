@@ -43,7 +43,7 @@
 **Sample error:**
 ```
 db/action_history.go:5:1: File is not properly formatted (gofmt)
-    "github.com/alimtvnetwork/movie-cli-v7/apperror"
+    "github.com/alimtvnetwork/movie-cli-v8/apperror"
 ```
 
 **Root cause**: Internal package import (`apperror`) placed inside the stdlib block, or stdlib and third-party imports mixed without the required blank-line separator. `gofmt` (and `goimports`) require:
@@ -54,8 +54,8 @@ import (
     "os"
     "strings"
                         // ← blank line REQUIRED
-    "github.com/alimtvnetwork/movie-cli-v7/apperror"   // external/internal block
-    "github.com/alimtvnetwork/movie-cli-v7/db"
+    "github.com/alimtvnetwork/movie-cli-v8/apperror"   // external/internal block
+    "github.com/alimtvnetwork/movie-cli-v8/db"
 )
 ```
 
@@ -161,7 +161,7 @@ grep -rn "InsertActionSimple(" --include="*.go"
 
 **Sample error:**
 ```
-cmd/movie_history_table.go:8:2: "github.com/alimtvnetwork/movie-cli-v7/db" imported and not used
+cmd/movie_history_table.go:8:2: "github.com/alimtvnetwork/movie-cli-v8/db" imported and not used
 ```
 
 **Root cause**: A refactor removed the last reference to a package, but the import line was left behind.

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/alimtvnetwork/movie-cli-v7/cleaner"
-	"github.com/alimtvnetwork/movie-cli-v7/db"
+	"github.com/alimtvnetwork/movie-cli-v8/cleaner"
+	"github.com/alimtvnetwork/movie-cli-v8/db"
 )
 
 // scanTableRow holds data for one row in the scan table output.

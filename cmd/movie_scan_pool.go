@@ -17,8 +17,8 @@ import (
 	"runtime"
 	"sync"
 
-	"github.com/alimtvnetwork/movie-cli-v7/cleaner"
-	"github.com/alimtvnetwork/movie-cli-v7/db"
+	"github.com/alimtvnetwork/movie-cli-v8/cleaner"
+	"github.com/alimtvnetwork/movie-cli-v8/db"
 )
 
 // MaxScanWorkers is the absolute cap on parallel scan workers.

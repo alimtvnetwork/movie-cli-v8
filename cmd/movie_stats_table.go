@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/alimtvnetwork/movie-cli-v7/db"
+	"github.com/alimtvnetwork/movie-cli-v8/db"
 )
 
 const statsLabelW = 20

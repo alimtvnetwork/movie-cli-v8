@@ -20,8 +20,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/alimtvnetwork/movie-cli-v7/apperror"
-	"github.com/alimtvnetwork/movie-cli-v7/db"
+	"github.com/alimtvnetwork/movie-cli-v8/apperror"
+	"github.com/alimtvnetwork/movie-cli-v8/db"
 )
 
 // compactSnapshot is the on-disk JSON shape emitted by compactFolder().

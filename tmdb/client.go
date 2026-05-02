@@ -10,7 +10,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/alimtvnetwork/movie-cli-v7/apperror"
+	"github.com/alimtvnetwork/movie-cli-v8/apperror"
 )
 
 const baseURL = "https://api.themoviedb.org/3"

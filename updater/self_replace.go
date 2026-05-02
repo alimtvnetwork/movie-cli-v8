@@ -22,7 +22,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/alimtvnetwork/movie-cli-v7/apperror"
+	"github.com/alimtvnetwork/movie-cli-v8/apperror"
 )
 
 // SelfReplace copies sourcePath over targetPath using rename-first semantics.

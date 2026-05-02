@@ -18,7 +18,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/alimtvnetwork/movie-cli-v7/apperror"
+	"github.com/alimtvnetwork/movie-cli-v8/apperror"
 )
 
 // ---- field map -------------------------------------------------------------

@@ -9,8 +9,8 @@
 package cmd
 
 import (
-	"github.com/alimtvnetwork/movie-cli-v7/db"
-	"github.com/alimtvnetwork/movie-cli-v7/errlog"
+	"github.com/alimtvnetwork/movie-cli-v8/db"
+	"github.com/alimtvnetwork/movie-cli-v8/errlog"
 )
 
 // imdbCacheAdapter wraps *db.DB so it satisfies tmdb.ImdbCache.

@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/alimtvnetwork/movie-cli-v7/apperror"
+	"github.com/alimtvnetwork/movie-cli-v8/apperror"
 )
 
 func installContextMenu(exePath string) error {

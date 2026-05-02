@@ -9,8 +9,8 @@ import (
 	"encoding/json"
 	"os"
 
-	"github.com/alimtvnetwork/movie-cli-v7/db"
-	"github.com/alimtvnetwork/movie-cli-v7/errlog"
+	"github.com/alimtvnetwork/movie-cli-v8/db"
+	"github.com/alimtvnetwork/movie-cli-v8/errlog"
 )
 
 func loadJsonItems(paths []string) []scanMediaJSON {

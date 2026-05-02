@@ -6,18 +6,18 @@
 
 **Personal movie & TV show library manager — from the terminal**
 
-[![CI](https://github.com/alimtvnetwork/movie-cli-v7/actions/workflows/ci.yml/badge.svg)](https://github.com/alimtvnetwork/movie-cli-v7/actions/workflows/ci.yml)
-[![Release](https://github.com/alimtvnetwork/movie-cli-v7/actions/workflows/release.yml/badge.svg)](https://github.com/alimtvnetwork/movie-cli-v7/actions/workflows/release.yml)
-[![GitHub Release](https://img.shields.io/github/v/release/alimtvnetwork/movie-cli-v7?style=flat-square&label=version)](https://github.com/alimtvnetwork/movie-cli-v7/releases)
-[![Downloads](https://img.shields.io/github/downloads/alimtvnetwork/movie-cli-v7/total?style=flat-square&label=downloads&color=success)](https://github.com/alimtvnetwork/movie-cli-v7/releases)
+[![CI](https://github.com/alimtvnetwork/movie-cli-v8/actions/workflows/ci.yml/badge.svg)](https://github.com/alimtvnetwork/movie-cli-v8/actions/workflows/ci.yml)
+[![Release](https://github.com/alimtvnetwork/movie-cli-v8/actions/workflows/release.yml/badge.svg)](https://github.com/alimtvnetwork/movie-cli-v8/actions/workflows/release.yml)
+[![GitHub Release](https://img.shields.io/github/v/release/alimtvnetwork/movie-cli-v8?style=flat-square&label=version)](https://github.com/alimtvnetwork/movie-cli-v8/releases)
+[![Downloads](https://img.shields.io/github/downloads/alimtvnetwork/movie-cli-v8/total?style=flat-square&label=downloads&color=success)](https://github.com/alimtvnetwork/movie-cli-v8/releases)
 [![Go](https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat-square&logo=go&logoColor=white)](https://go.dev/)
-[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey?style=flat-square)](https://github.com/alimtvnetwork/movie-cli-v7)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey?style=flat-square)](https://github.com/alimtvnetwork/movie-cli-v8)
 [![SQLite](https://img.shields.io/badge/SQLite-WAL-003B57?style=flat-square&logo=sqlite&logoColor=white)](https://www.sqlite.org/)
-[![Go Report Card](https://goreportcard.com/badge/github.com/alimtvnetwork/movie-cli-v7?style=flat-square)](https://goreportcard.com/report/github.com/alimtvnetwork/movie-cli-v7)
-[![Last commit](https://img.shields.io/github/last-commit/alimtvnetwork/movie-cli-v7?style=flat-square)](https://github.com/alimtvnetwork/movie-cli-v7/commits/main)
-[![Code size](https://img.shields.io/github/languages/code-size/alimtvnetwork/movie-cli-v7?style=flat-square)](https://github.com/alimtvnetwork/movie-cli-v7)
-[![Open issues](https://img.shields.io/github/issues/alimtvnetwork/movie-cli-v7?style=flat-square)](https://github.com/alimtvnetwork/movie-cli-v7/issues)
-[![Stars](https://img.shields.io/github/stars/alimtvnetwork/movie-cli-v7?style=flat-square&logo=github)](https://github.com/alimtvnetwork/movie-cli-v7/stargazers)
+[![Go Report Card](https://goreportcard.com/badge/github.com/alimtvnetwork/movie-cli-v8?style=flat-square)](https://goreportcard.com/report/github.com/alimtvnetwork/movie-cli-v8)
+[![Last commit](https://img.shields.io/github/last-commit/alimtvnetwork/movie-cli-v8?style=flat-square)](https://github.com/alimtvnetwork/movie-cli-v8/commits/main)
+[![Code size](https://img.shields.io/github/languages/code-size/alimtvnetwork/movie-cli-v8?style=flat-square)](https://github.com/alimtvnetwork/movie-cli-v8)
+[![Open issues](https://img.shields.io/github/issues/alimtvnetwork/movie-cli-v8?style=flat-square)](https://github.com/alimtvnetwork/movie-cli-v8/issues)
+[![Stars](https://img.shields.io/github/stars/alimtvnetwork/movie-cli-v8?style=flat-square&logo=github)](https://github.com/alimtvnetwork/movie-cli-v8/stargazers)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square)](CONTRIBUTING.md)
 [![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
 
@@ -46,7 +46,7 @@ _Scan folders, clean filenames, fetch TMDb metadata, organize files, and track y
 <td>
 
 ```powershell
-irm https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v7/main/get.ps1 | iex
+irm https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v8/main/get.ps1 | iex
 ```
 
 </td>
@@ -56,7 +56,7 @@ irm https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v7/main/get.ps1 | 
 <td>
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v7/main/get.sh | bash
+curl -fsSL https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v8/main/get.sh | bash
 ```
 
 </td>
@@ -151,31 +151,31 @@ Picks up whatever is currently tagged `latest` on GitHub — and if no release h
 **Windows (PowerShell)**
 
 ```powershell
-irm https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v7/main/get.ps1 | iex
+irm https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v8/main/get.ps1 | iex
 ```
 
 **Linux / macOS**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v7/main/get.sh | bash
+curl -fsSL https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v8/main/get.sh | bash
 ```
 
 > The bootstrap probes `releases/latest/download/install.{ps1,sh}` first. If a release exists, it installs the pre-built binary. If not, it transparently falls back to cloning and building from `main` — and prints exactly which path it took. See [Installation](#installation) for flags and details.
 
 ### Install a specific version (pinned)
 
-Installs exactly the version in the URL — never auto-upgrades. Use this for CI pipelines, Dockerfiles, reproducible setups, or when you need to roll back. Replace `v2.130.0` with the [release tag](https://github.com/alimtvnetwork/movie-cli-v7/releases) you want.
+Installs exactly the version in the URL — never auto-upgrades. Use this for CI pipelines, Dockerfiles, reproducible setups, or when you need to roll back. Replace `v2.130.0` with the [release tag](https://github.com/alimtvnetwork/movie-cli-v8/releases) you want.
 
 **Windows (PowerShell)**
 
 ```powershell
-irm https://github.com/alimtvnetwork/movie-cli-v7/releases/download/v2.130.0/install.ps1 | iex
+irm https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.130.0/install.ps1 | iex
 ```
 
 **Linux / macOS**
 
 ```bash
-curl -fsSL https://github.com/alimtvnetwork/movie-cli-v7/releases/download/v2.130.0/install.sh | bash
+curl -fsSL https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.130.0/install.sh | bash
 ```
 
 > **Which one should I use?** Use **latest** for personal machines so you stay current. Use **pinned** anywhere reproducibility matters — the pinned script is hard-locked to the version in the URL and will install that exact tag forever, even after newer releases ship. ([contract spec](spec/12-ci-cd-pipeline/06-version-pinned-install-scripts.md))
@@ -798,11 +798,11 @@ $ movie version
 movie v2.191.0  (commit a1b2c3d, built 2025-04-26)
 
 $ movie update
-→ checking github.com/alimtvnetwork/movie-cli-v7 for newer releases…
+→ checking github.com/alimtvnetwork/movie-cli-v8 for newer releases…
 ✓ already on the latest version (v2.191.0)
 ```
 
-> **If it differs:** `movie config` showing `tmdb_api_key = (unset)` is the #1 cause of every other failure in this README — set it now. `movie update` failing with a network error usually means GitHub is unreachable from your network or a corporate proxy is blocking it; download the latest binary from the [Releases page](https://github.com/alimtvnetwork/movie-cli-v7/releases) instead. A version older than what `movie update` reports means the upgrade succeeded but your shell is still pointing at the old binary — open a fresh terminal.
+> **If it differs:** `movie config` showing `tmdb_api_key = (unset)` is the #1 cause of every other failure in this README — set it now. `movie update` failing with a network error usually means GitHub is unreachable from your network or a corporate proxy is blocking it; download the latest binary from the [Releases page](https://github.com/alimtvnetwork/movie-cli-v8/releases) instead. A version older than what `movie update` reports means the upgrade succeeded but your shell is still pointing at the old binary — open a fresh terminal.
 
 #### 🚑 [Troubleshooting](#troubleshooting)
 Common errors and how to fix them — `tmdb_api_key not set`, `429`, `database is locked`, stale entries.
@@ -909,13 +909,13 @@ Two flavours — pick based on whether you want auto-updates or a frozen version
 **Windows (PowerShell)**
 
 ```powershell
-irm https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v7/main/get.ps1 | iex
+irm https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v8/main/get.ps1 | iex
 ```
 
 **Linux / macOS (Bash)**
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v7/main/get.sh | bash
+curl -fsSL https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v8/main/get.sh | bash
 ```
 
 `get.{ps1,sh}` first checks `releases/latest/download/install.{ps1,sh}`. If a release is published it installs the pre-built binary; otherwise it falls back to a source-build from `main`, prints exactly which path it took, and tells the maintainer how to publish a release so future installs skip the build step.
@@ -925,16 +925,16 @@ curl -fsSL https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v7/main/get
 **Windows (PowerShell)**
 
 ```powershell
-irm https://github.com/alimtvnetwork/movie-cli-v7/releases/download/v2.130.0/install.ps1 | iex
+irm https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.130.0/install.ps1 | iex
 ```
 
 **Linux / macOS (Bash)**
 
 ```bash
-curl -fsSL https://github.com/alimtvnetwork/movie-cli-v7/releases/download/v2.130.0/install.sh | bash
+curl -fsSL https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.130.0/install.sh | bash
 ```
 
-The script attached to each release has the version baked in (`PINNED_VERSION="v2.130.0"`) and will install **exactly** that tag — it never falls back to "latest" and never delegates to the bootstrap scripts. Replace `v2.130.0` with any [published release](https://github.com/alimtvnetwork/movie-cli-v7/releases).
+The script attached to each release has the version baked in (`PINNED_VERSION="v2.130.0"`) and will install **exactly** that tag — it never falls back to "latest" and never delegates to the bootstrap scripts. Replace `v2.130.0` with any [published release](https://github.com/alimtvnetwork/movie-cli-v8/releases).
 
 > **When to use which**
 > - **Latest** — personal machines, demos, "just give me the newest one"
@@ -971,8 +971,8 @@ The script attached to each release has the version baked in (`PINNED_VERSION="v
 | **PowerShell** | 5.1+ (Win) / 7+ (Unix) | `$PSVersionTable.PSVersion` |
 
 ```bash
-git clone https://github.com/alimtvnetwork/movie-cli-v7.git
-cd movie-cli-v7
+git clone https://github.com/alimtvnetwork/movie-cli-v8.git
+cd movie-cli-v8
 pwsh run.ps1
 ```
 
@@ -1939,7 +1939,7 @@ See [spec/12-ci-cd-pipeline/02-release-pipeline.md](spec/12-ci-cd-pipeline/02-re
 </div>
 
 ```
-movie-cli-v7/
+movie-cli-v8/
 ├── main.go                        # Entry point
 ├── cmd/                           # Cobra commands (one file per command)
 │   ├── root.go                    # Root command, registers subcommands
@@ -2216,8 +2216,8 @@ Contributions are welcome! Here's how to get started:
 ### Development Setup
 
 ```bash
-git clone https://github.com/alimtvnetwork/movie-cli-v7.git
-cd movie-cli-v7
+git clone https://github.com/alimtvnetwork/movie-cli-v8.git
+cd movie-cli-v8
 make tidy
 make build
 ```

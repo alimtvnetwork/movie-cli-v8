@@ -7,7 +7,7 @@ package cmd
 import (
 	"testing"
 
-	"github.com/alimtvnetwork/movie-cli-v7/db"
+	"github.com/alimtvnetwork/movie-cli-v8/db"
 )
 
 // previewEligibleMoves is the filter pipeline used by --list moves.

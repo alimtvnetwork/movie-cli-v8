@@ -2,7 +2,7 @@
 package db
 
 import (
-	"github.com/alimtvnetwork/movie-cli-v7/apperror"
+	"github.com/alimtvnetwork/movie-cli-v8/apperror"
 )
 
 // TagCount holds a tag name and its usage count.

@@ -13,8 +13,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/alimtvnetwork/movie-cli-v7/db"
-	"github.com/alimtvnetwork/movie-cli-v7/errlog"
+	"github.com/alimtvnetwork/movie-cli-v8/db"
+	"github.com/alimtvnetwork/movie-cli-v8/errlog"
 )
 
 // moveAtomicOff lets the user opt out of atomic semantics.

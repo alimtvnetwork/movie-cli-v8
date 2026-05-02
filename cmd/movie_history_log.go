@@ -15,7 +15,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/alimtvnetwork/movie-cli-v7/db"
+	"github.com/alimtvnetwork/movie-cli-v8/db"
 )
 
 // Sentinels used when an action does not have real before/after paths.

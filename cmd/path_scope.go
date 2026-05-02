@@ -18,7 +18,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/alimtvnetwork/movie-cli-v7/db"
+	"github.com/alimtvnetwork/movie-cli-v8/db"
 )
 
 // ScopeFilter bundles the directory scope plus optional include/exclude

@@ -9,12 +9,12 @@
 #   2. Source-build    → raw.githubusercontent.com/…/main/install.sh (needs Git+Go)
 #
 # Invoked via:
-#   curl -fsSL https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v7/main/get.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v8/main/get.sh | bash
 
 set -euo pipefail
 
 OWNER='alimtvnetwork'
-REPO='movie-cli-v7'
+REPO='movie-cli-v8'
 BRANCH='main'
 RELEASE_URL="https://github.com/${OWNER}/${REPO}/releases/latest/download/install.sh"
 SOURCE_URL="https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/install.sh"

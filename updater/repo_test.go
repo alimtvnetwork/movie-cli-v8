@@ -11,7 +11,7 @@ func TestIsValidRepoRequiresV5Module(t *testing.T) {
 	if err := os.Mkdir(filepath.Join(repoDir, ".git"), 0o755); err != nil {
 		t.Fatalf("mkdir .git: %v", err)
 	}
-	goMod := []byte("module github.com/alimtvnetwork/movie-cli-v7\n\ngo 1.22\n")
+	goMod := []byte("module github.com/alimtvnetwork/movie-cli-v8\n\ngo 1.22\n")
 	if err := os.WriteFile(filepath.Join(repoDir, "go.mod"), goMod, 0o644); err != nil {
 		t.Fatalf("write go.mod: %v", err)
 	}

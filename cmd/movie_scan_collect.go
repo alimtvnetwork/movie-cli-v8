@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/alimtvnetwork/movie-cli-v7/cleaner"
+	"github.com/alimtvnetwork/movie-cli-v8/cleaner"
 )
 
 // videoFile holds a discovered video file's display name and full path.

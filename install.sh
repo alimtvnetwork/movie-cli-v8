@@ -2,7 +2,7 @@
 # install.sh — One-step bootstrap: clone (if needed), build, and deploy movie CLI.
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v7/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v8/main/install.sh | bash
 #   bash install.sh
 #   bash install.sh --dir ~/bin
 #
@@ -11,8 +11,8 @@
 set -euo pipefail
 
 # ── Config ────────────────────────────────────────────────────
-REPO_NAME="movie-cli-v7"
-REPO_URL="https://github.com/alimtvnetwork/movie-cli-v7.git"
+REPO_NAME="movie-cli-v8"
+REPO_URL="https://github.com/alimtvnetwork/movie-cli-v8.git"
 BINARY_NAME="movie"
 DEFAULT_INSTALL_DIR="$HOME/.local/bin"
 INSTALL_DIR=""
@@ -107,9 +107,9 @@ COMMIT="$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")"
 BUILD_DATE="$(date -u +%Y-%m-%d)"
 
 LDFLAGS="-s -w \
-  -X 'github.com/alimtvnetwork/movie-cli-v7/version.Version=$VERSION' \
-  -X 'github.com/alimtvnetwork/movie-cli-v7/version.Commit=$COMMIT' \
-  -X 'github.com/alimtvnetwork/movie-cli-v7/version.BuildDate=$BUILD_DATE'"
+  -X 'github.com/alimtvnetwork/movie-cli-v8/version.Version=$VERSION' \
+  -X 'github.com/alimtvnetwork/movie-cli-v8/version.Commit=$COMMIT' \
+  -X 'github.com/alimtvnetwork/movie-cli-v8/version.BuildDate=$BUILD_DATE'"
 
 # Detect OS/arch
 OS="$(uname -s | tr '[:upper:]' '[:lower:]')"

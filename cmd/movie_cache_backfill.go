@@ -17,9 +17,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/alimtvnetwork/movie-cli-v7/db"
-	"github.com/alimtvnetwork/movie-cli-v7/errlog"
-	"github.com/alimtvnetwork/movie-cli-v7/tmdb"
+	"github.com/alimtvnetwork/movie-cli-v8/db"
+	"github.com/alimtvnetwork/movie-cli-v8/errlog"
+	"github.com/alimtvnetwork/movie-cli-v8/tmdb"
 )
 
 // pause between /find calls so we don't burst against TMDb's rate limit.

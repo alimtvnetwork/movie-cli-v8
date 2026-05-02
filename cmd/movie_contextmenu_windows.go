@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"os/exec"
 
-	"github.com/alimtvnetwork/movie-cli-v7/apperror"
+	"github.com/alimtvnetwork/movie-cli-v8/apperror"
 )
 
 const winRegRoot = `HKCU\Software\Classes\Directory\shell\Movie`

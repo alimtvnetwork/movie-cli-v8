@@ -24,7 +24,7 @@
 
 [CmdletBinding()]
 param(
-    [string]$RepoUrl = "https://github.com/alimtvnetwork/movie-cli-v7"
+    [string]$RepoUrl = "https://github.com/alimtvnetwork/movie-cli-v8"
 )
 
 # Do NOT use 'Stop' at script scope — when run via `irm | iex` an uncaught

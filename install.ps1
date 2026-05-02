@@ -116,8 +116,8 @@ Write-Host ""
 Write-Host " [2/4] Locating repository" -ForegroundColor Magenta
 Write-Host (" " + ("-" * 50)) -ForegroundColor DarkGray
 
-$RepoName = "movie-cli-v7"
-$RepoUrl  = "https://github.com/alimtvnetwork/movie-cli-v7.git"
+$RepoName = "movie-cli-v8"
+$RepoUrl  = "https://github.com/alimtvnetwork/movie-cli-v8.git"
 
 # Check if we're already inside the repo
 $inRepo = (Test-Path "go.mod") -and (Test-Path "run.ps1")

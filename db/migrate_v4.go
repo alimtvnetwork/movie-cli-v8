@@ -12,7 +12,7 @@
 // defaults so existing rows remain valid Active media.
 package db
 
-import "github.com/alimtvnetwork/movie-cli-v7/apperror"
+import "github.com/alimtvnetwork/movie-cli-v8/apperror"
 
 // MediaStatusId enum values, kept in sync with the seed order below.
 const (

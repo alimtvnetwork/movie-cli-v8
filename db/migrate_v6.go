@@ -4,7 +4,7 @@
 // Spec: spec/08-app/10-remove-move-rescan/rescan-reconciliation/02-reverse-sync-spec.md
 package db
 
-import "github.com/alimtvnetwork/movie-cli-v7/apperror"
+import "github.com/alimtvnetwork/movie-cli-v8/apperror"
 
 func migrateV6(d *DB) error {
 	names := []string{

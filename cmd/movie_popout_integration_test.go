@@ -29,7 +29,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/alimtvnetwork/movie-cli-v7/db"
+	"github.com/alimtvnetwork/movie-cli-v8/db"
 )
 
 // ---------------------------------------------------------------------------

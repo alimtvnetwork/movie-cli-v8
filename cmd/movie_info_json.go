@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/alimtvnetwork/movie-cli-v7/db"
+	"github.com/alimtvnetwork/movie-cli-v8/db"
 )
 
 // infoJSONOutput represents a media item in JSON output for movie info.

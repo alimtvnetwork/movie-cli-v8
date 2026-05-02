@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/alimtvnetwork/movie-cli-v7/apperror"
+	"github.com/alimtvnetwork/movie-cli-v8/apperror"
 )
 
 func (c *Client) buildURL(path string, params url.Values) string {

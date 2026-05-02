@@ -34,8 +34,8 @@ pwsh
 ### Step 1 — Clone the Repository
 
 ```powershell
-git clone https://https://github.com/alimtvnetwork/movie-cli-v7.git
-cd movie-cli-v7
+git clone https://https://github.com/alimtvnetwork/movie-cli-v8.git
+cd movie-cli-v8
 ```
 
 ### Step 2 — Set Execution Policy (Windows only)
@@ -89,7 +89,7 @@ $env:PATH += ";E:\bin-run"
 <td>
 
 ```powershell
-irm https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v7/main/get.ps1 | iex
+irm https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v8/main/get.ps1 | iex
 ```
 
 </td>
@@ -99,7 +99,7 @@ irm https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v7/main/get.ps1 | 
 <td>
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v7/main/get.sh | bash
+curl -fsSL https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v8/main/get.sh | bash
 ```
 
 </td>

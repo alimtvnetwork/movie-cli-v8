@@ -28,9 +28,9 @@ Windows uses `.zip` because it is natively supported by PowerShell and Explorer.
 ```bash
 CGO_ENABLED=0 GOOS=<os> GOARCH=<arch> go build \
     -ldflags "-s -w \
-        -X 'github.com/alimtvnetwork/movie-cli-v7/version.Version=<version>' \
-        -X 'github.com/alimtvnetwork/movie-cli-v7/version.Commit=<commit>' \
-        -X 'github.com/alimtvnetwork/movie-cli-v7/version.BuildDate=<date>'" \
+        -X 'github.com/alimtvnetwork/movie-cli-v8/version.Version=<version>' \
+        -X 'github.com/alimtvnetwork/movie-cli-v8/version.Commit=<commit>' \
+        -X 'github.com/alimtvnetwork/movie-cli-v8/version.BuildDate=<date>'" \
     -o <output> .
 ```
 

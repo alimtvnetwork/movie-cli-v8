@@ -1,7 +1,7 @@
 # 05 — Install Latest Sibling Repo (Version-Discovery Bootstrap)
 
 > **Purpose**: When a user runs the install one-liner against a repo URL like
-> `…/movie-cli-v7`, the installer should not blindly install **v5**. It should
+> `…/movie-cli-v8`, the installer should not blindly install **v5**. It should
 > first probe sibling repositories (`v6`, `v7`, …) on the same GitHub owner,
 > pick the **highest existing** one, and delegate to **that** repo's installer
 > script. This way an old install link auto-upgrades to the newest generation
@@ -9,7 +9,7 @@
 >
 > This spec is **generic**: the rules apply to any repo whose name ends in a
 > `-v<N>` suffix (e.g. `gitmap-v2`, `coding-guidelines-v35`,
-> `movie-cli-v7`). Any AI implementing this MUST be able to do so from this
+> `movie-cli-v8`). Any AI implementing this MUST be able to do so from this
 > document alone.
 
 ---
@@ -18,8 +18,8 @@
 
 | Term | Meaning |
 |------|---------|
-| **Base name** | The repo name with the trailing `-v<N>` stripped. e.g. `movie-cli-v7` → `movie-cli` |
-| **Current version** | The `<N>` in the URL the user invoked. e.g. `movie-cli-v7` → `5` |
+| **Base name** | The repo name with the trailing `-v<N>` stripped. e.g. `movie-cli-v8` → `movie-cli` |
+| **Current version** | The `<N>` in the URL the user invoked. e.g. `movie-cli-v8` → `5` |
 | **Candidate** | A repo URL of the form `https://github.com/<owner>/<base>-v<N+k>` for `k = 0..MAX_LOOKAHEAD` |
 | **Winner** | The candidate with the **largest** `N+k` whose repo exists AND whose `install.ps1` is reachable |
 | **Delegation** | The act of running the winner's `install.ps1` via `irm | iex`, replacing the current install attempt |
@@ -38,7 +38,7 @@ Examples (all valid starting URLs):
 
 | Starting URL | Owner | Base | N |
 |--------------|-------|------|---|
-| `https://github.com/alimtvnetwork/movie-cli-v7` | `alimtvnetwork` | `movie-cli` | `5` |
+| `https://github.com/alimtvnetwork/movie-cli-v8` | `alimtvnetwork` | `movie-cli` | `5` |
 | `https://github.com/acme/coding-guidelines-v35` | `acme` | `coding-guidelines` | `35` |
 | `https://github.com/foo/gitmap-v2` | `foo` | `gitmap` | `2` |
 
@@ -110,15 +110,15 @@ future AIs debugging) can see exactly what was probed and chosen.
 ### Required log lines
 
 ```
-[bootstrap] starting URL: https://github.com/alimtvnetwork/movie-cli-v7
+[bootstrap] starting URL: https://github.com/alimtvnetwork/movie-cli-v8
 [bootstrap] parsed: owner=alimtvnetwork base=movie-cli current=v5
 [bootstrap] probing v30 ... miss (404)
 [bootstrap] probing v29 ... miss (timeout)
 ...
 [bootstrap] probing v7  ... HIT
-[bootstrap] selected: https://github.com/alimtvnetwork/movie-cli-v7
+[bootstrap] selected: https://github.com/alimtvnetwork/movie-cli-v8
 [bootstrap] auto-upgrade: v5 -> v7
-[bootstrap] delegating to: https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v7/main/install.ps1
+[bootstrap] delegating to: https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v8/main/install.ps1
 ```
 
 ### Log destinations
@@ -228,13 +228,13 @@ any one of them and it still works), the public install command becomes:
 ### Windows / PowerShell
 
 ```powershell
-irm https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v7/main/bootstrap.ps1 | iex
+irm https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v8/main/bootstrap.ps1 | iex
 ```
 
 ### macOS / Linux
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v7/main/bootstrap.sh | bash
+curl -fsSL https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v8/main/bootstrap.sh | bash
 ```
 
 The user can paste the v5 URL forever — bootstrap will silently jump to
@@ -268,15 +268,15 @@ copy-pasteable refresh hint.
 
 ## 10. Acceptance Criteria
 
-- GIVEN URL `…/movie-cli-v7` AND v7 is the highest existing sibling
+- GIVEN URL `…/movie-cli-v8` AND v7 is the highest existing sibling
   WHEN bootstrap runs
   THEN it logs probes for v30..v8 as misses, v7 as HIT, and delegates to v7's `install.ps1`.
 
-- GIVEN URL `…/movie-cli-v7` AND only v5 exists
+- GIVEN URL `…/movie-cli-v8` AND only v5 exists
   WHEN bootstrap runs
   THEN it logs misses for v30..v6, HIT for v5, and delegates to v5's `install.ps1`.
 
-- GIVEN URL `…/movie-cli-v7` AND no sibling exists (network failure or all 404)
+- GIVEN URL `…/movie-cli-v8` AND no sibling exists (network failure or all 404)
   WHEN bootstrap runs
   THEN it logs the failure and falls back to the starting URL's `install.ps1`.
 

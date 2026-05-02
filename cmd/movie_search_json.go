@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/alimtvnetwork/movie-cli-v7/db"
-	"github.com/alimtvnetwork/movie-cli-v7/tmdb"
+	"github.com/alimtvnetwork/movie-cli-v8/db"
+	"github.com/alimtvnetwork/movie-cli-v8/tmdb"
 )
 
 // searchJSONItem represents a single TMDb search result in JSON output.

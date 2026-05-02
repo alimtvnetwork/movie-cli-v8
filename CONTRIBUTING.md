@@ -37,8 +37,8 @@ Thank you for your interest in contributing! This guide covers everything you ne
 
 ```bash
 # Fork the repo on GitHub, then:
-git clone https://github.com/<your-username>/movie-cli-v7.git
-cd movie-cli-v7
+git clone https://github.com/<your-username>/movie-cli-v8.git
+cd movie-cli-v8
 go mod tidy
 make build
 ```
@@ -602,7 +602,7 @@ Include:
 ## Architecture Overview
 
 ```
-movie-cli-v7/
+movie-cli-v8/
 ├── main.go              # Entry point
 ├── cmd/                  # One file per CLI command
 │   ├── scan.go

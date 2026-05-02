@@ -7,7 +7,7 @@
 // Spec: spec/08-app/10-remove-move-rescan/rescan-reconciliation/02-reverse-sync-spec.md
 package db
 
-import "github.com/alimtvnetwork/movie-cli-v7/apperror"
+import "github.com/alimtvnetwork/movie-cli-v8/apperror"
 
 // ReverseSyncRow is the minimal projection used by the reverse-sync loop.
 type ReverseSyncRow struct {

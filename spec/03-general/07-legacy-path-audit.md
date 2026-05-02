@@ -1,8 +1,8 @@
 # 07 — Legacy Module Path Audit
 
 > Read-only auditor that scans the repo for any reference to legacy module
-> paths (`movie-cli-v1` … `movie-cli-v6`) left behind after the migration to
-> `movie-cli-v7`.
+> paths (`movie-cli-v8` … `movie-cli-v8`) left behind after the migration to
+> `movie-cli-v8`.
 
 ## Why
 
@@ -37,7 +37,7 @@ for the regex `movie-cli-v[123456]\b`, then **classifies** each match:
 | Category       | Where | Verdict |
 |----------------|-------|---------|
 | **HISTORICAL** | `CHANGELOG.md`, `spec/**`, `.lovable/**`, this script | ✅ Allowed — these document past renames and rename audits. |
-| **ACTIVE**     | Everything else: `README.md`, `QUICKSTART.md`, `install*.{sh,ps1}`, `get*.{sh,ps1}`, `verify*.{sh,ps1}`, `bootstrap*.{sh,ps1}`, `scripts/`, `*.go`, `go.mod`, `.github/workflows/**`, `Makefile`, `powershell.json`, etc. | ❌ Must fix — replace with `github.com/alimtvnetwork/movie-cli-v7`. |
+| **ACTIVE**     | Everything else: `README.md`, `QUICKSTART.md`, `install*.{sh,ps1}`, `get*.{sh,ps1}`, `verify*.{sh,ps1}`, `bootstrap*.{sh,ps1}`, `scripts/`, `*.go`, `go.mod`, `.github/workflows/**`, `Makefile`, `powershell.json`, etc. | ❌ Must fix — replace with `github.com/alimtvnetwork/movie-cli-v8`. |
 
 ## Sample output
 
@@ -48,7 +48,7 @@ for the regex `movie-cli-v[123456]\b`, then **classifies** each match:
 
 ── HISTORICAL (allowed) ─────────────────  6 match(es)
   ./CHANGELOG.md:76:- **Repo-root `install.ps1`** — `RepoUrl` was pointing …
-  ./CHANGELOG.md:403:- **Module path renamed** — `…movie-cli-v5` → `…v6` …
+  ./CHANGELOG.md:403:- **Module path renamed** — `…movie-cli-v8` → `…v6` …
   ./spec/12-ci-cd-pipeline/05-ci-cd-issues/06-release-missing-asset-404.md:90:…
 
 ── ACTIVE (must fix) ─────────────────────  0 match(es)

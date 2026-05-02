@@ -4,7 +4,7 @@ package cmd
 import (
 	"net/http"
 
-	"github.com/alimtvnetwork/movie-cli-v7/db"
+	"github.com/alimtvnetwork/movie-cli-v8/db"
 )
 
 func handleMediaDetails(w http.ResponseWriter, r *http.Request, database *db.DB) {

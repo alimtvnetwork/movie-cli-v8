@@ -5,7 +5,7 @@
 # This is a READ-ONLY audit tool. It never modifies files.
 #
 # Variants detected (all flagged unless they resolve to the current
-# canonical path `github.com/alimtvnetwork/movie-cli-v7`):
+# canonical path `github.com/alimtvnetwork/movie-cli-v8`):
 #
 #   VERSIONED       movie-cli-v[1-6]                  — old numbered modules
 #   UNVERSIONED     github.com/alimtvnetwork/movie-cli (no -vN suffix)
@@ -27,10 +27,10 @@
 set -uo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-CANONICAL='github.com/alimtvnetwork/movie-cli-v7'
+CANONICAL='github.com/alimtvnetwork/movie-cli-v8'
 
 # Combined pattern, ERE. Each match is later classified by variant.
-#   1) movie-cli-v1..v6 (with optional @vX tag)
+#   1) movie-cli-v8..v6 (with optional @vX tag)
 #   2) movie-cli (no -vN) optionally followed by @vX
 #   3) go.mod `replace` directive on its own line referencing movie-cli*
 PATTERN_VERSIONED='movie-cli-v[123456]\b(@v[0-9][^[:space:]"'"'"']*)?'
@@ -77,11 +77,11 @@ filter_canonical() {
             printf '%s\n' "$line"; continue
         fi
         if echo "$content" | grep -qE 'github\.com/alimtvnetwork/movie-cli(@v[0-9]|[^v0-9-]|$)' \
-           && ! echo "$content" | grep -qE 'github\.com/alimtvnetwork/movie-cli-v7\b' ; then
+           && ! echo "$content" | grep -qE 'github\.com/alimtvnetwork/movie-cli-v8\b' ; then
             printf '%s\n' "$line"; continue
         fi
-        # Tagged canonical (e.g. movie-cli-v7@v1.2.3) — also flag, tags shouldn't be pinned in code.
-        if echo "$content" | grep -qE 'movie-cli-v7@v[0-9]'; then
+        # Tagged canonical (e.g. movie-cli-v8@v1.2.3) — also flag, tags shouldn't be pinned in code.
+        if echo "$content" | grep -qE 'movie-cli-v8@v[0-9]'; then
             printf '%s\n' "$line"; continue
         fi
     done

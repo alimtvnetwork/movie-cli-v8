@@ -8,7 +8,7 @@
 // cmd.BuildConditionSQL and returns the matching MediaIds (capped).
 package db
 
-import "github.com/alimtvnetwork/movie-cli-v7/apperror"
+import "github.com/alimtvnetwork/movie-cli-v8/apperror"
 
 // MaxRemoveMatches caps how many rows a single rm/move can target.
 const MaxRemoveMatches = 10000

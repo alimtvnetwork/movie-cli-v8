@@ -24,7 +24,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/alimtvnetwork/movie-cli-v7/doctor"
+	"github.com/alimtvnetwork/movie-cli-v8/doctor"
 )
 
 var (

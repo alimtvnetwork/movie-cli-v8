@@ -4,7 +4,7 @@ package db
 import (
 	"encoding/json"
 
-	"github.com/alimtvnetwork/movie-cli-v7/apperror"
+	"github.com/alimtvnetwork/movie-cli-v8/apperror"
 )
 
 // MediaToJSON serializes a Media record to JSON for ActionHistory snapshots.

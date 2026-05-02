@@ -5,8 +5,8 @@ import (
 	"bufio"
 	"fmt"
 
-	"github.com/alimtvnetwork/movie-cli-v7/db"
-	"github.com/alimtvnetwork/movie-cli-v7/errlog"
+	"github.com/alimtvnetwork/movie-cli-v8/db"
+	"github.com/alimtvnetwork/movie-cli-v8/errlog"
 )
 
 func showRedoableList(database *db.DB, f ScopeFilter) int {
