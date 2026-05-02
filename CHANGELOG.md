@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## v2.320.0
+
+### Changed
+- **Version bump** — minor version bumped to v2.320.0 to roll up recent lint, formatting, and documentation fixes (golangci-lint cleanup in v2.319.0, README screenshot redaction in v2.318.0, legacy-name purge from temp/log paths in v2.317.0).
+
 ## v2.230.0
 
 ### Changed
