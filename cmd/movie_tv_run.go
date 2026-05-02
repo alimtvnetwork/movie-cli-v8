@@ -67,7 +67,8 @@ func printEpisodesForSeason(database *db.DB, media *db.Media, seasonNumber int) 
 	}
 	fmt.Printf("📺 %s%s — S%02d %s\n",
 		media.Title, formatYearOrDash(media.Year), season.SeasonNumber, season.Name)
-	for _, e := range eps {
+	for i := range eps {
+		e := &eps[i]
 		fmt.Printf("  %s S%02dE%02d  ⭐ %.1f  %-40s  %s\n",
 			watchMarker(e.IsWatched), season.SeasonNumber, e.EpisodeNumber,
 			e.VoteAvg, truncateLine(e.Name, 40), e.AirDate)

@@ -78,7 +78,7 @@ type driftReasonGroup struct {
 }
 
 // printDriftSummary prints a per-reason block with up to driftMaxLines
-// rows; remaining entries are summarised as "...N more".
+// rows; remaining entries are summarized as "...N more".
 func printDriftSummary(d *driftLog) {
 	if len(d.entries) == 0 {
 		return

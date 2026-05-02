@@ -97,11 +97,11 @@ func previewVideoTitles(files []videoFile) string {
 }
 
 func trimForPreview(s string) string {
-	const max = 42
-	if len(s) <= max {
+	const limit = 42
+	if len(s) <= limit {
 		return s
 	}
-	return s[:max-1] + "…"
+	return s[:limit-1] + "…"
 }
 
 func pluralS(n int) string {

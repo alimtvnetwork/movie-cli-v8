@@ -4,7 +4,7 @@
 //
 // Spec: spec/08-app/10-remove-move-rescan/rescan-reconciliation/01-spec.md
 //
-// New artefacts:
+// New artifacts:
 //   - ReconciliationActionType  (lookup, 4 seed rows)
 //   - ReconciliationHistory     (audit rows; MediaId nullable for AddedNew)
 package db

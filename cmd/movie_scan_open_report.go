@@ -4,7 +4,7 @@
 // SHARED: openScanReport(outputDir), pathToFileURL(path).
 // Callers: movie scan (post-scan finalize), movie rescan (regenerate path).
 // Do NOT re-implement file:// URL building or the --no-open gate elsewhere
-// — extend this file so all entry points honour the same opt-out flag.
+// — extend this file so all entry points honor the same opt-out flag.
 //
 // Skipped when:
 //   - --dry-run    (nothing was generated)
@@ -23,7 +23,7 @@ import (
 	"strings"
 )
 
-// scanNoOpen disables the auto-open behaviour when set via --no-open.
+// scanNoOpen disables the auto-open behavior when set via --no-open.
 var scanNoOpen bool
 
 // openScanReport opens the generated report.html for the given scan output dir.
