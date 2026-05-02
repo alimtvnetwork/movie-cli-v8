@@ -2,18 +2,18 @@
 # qa-context-menu-macos.sh — Guided harness for
 # spec/08-app/11-context-menu-qa-checklist.md sections A, B, E, F.
 #
-# Captures a full transcript at /tmp/mahin-contextmenu-qa-<ts>.log
-# AND a markdown report at /tmp/mahin-contextmenu-qa-<ts>.md.
+# Captures a full transcript at /tmp/movie-contextmenu-qa-<ts>.log
+# AND a markdown report at /tmp/movie-contextmenu-qa-<ts>.md.
 # Every FAIL records: section, item, user-supplied reason, the relevant
 # DB rows (ActionHistoryId / ReconciliationHistoryId) and on-disk paths.
 set -uo pipefail
 
 [[ "$(uname)" == "Darwin" ]] || { echo "macOS only"; exit 1; }
-command -v mahin >/dev/null || { echo "mahin not on PATH"; exit 1; }
+command -v movie >/dev/null || { echo "movie not on PATH"; exit 1; }
 
 TS="$(date +%Y%m%d-%H%M%S)"
-LOG="/tmp/mahin-contextmenu-qa-${TS}.log"
-REPORT="/tmp/mahin-contextmenu-qa-${TS}.md"
+LOG="/tmp/movie-contextmenu-qa-${TS}.log"
+REPORT="/tmp/movie-contextmenu-qa-${TS}.md"
 exec > >(tee -a "$LOG") 2>&1
 echo "🗒  Transcript: $LOG"
 echo "🗒  Markdown:   $REPORT"
@@ -88,7 +88,7 @@ ask() {
 cat > "$REPORT" <<EOF
 # Context-Menu QA Report
 - Date: $(date)
-- mahin: $(mahin version 2>&1 | head -1)
+- movie: $(movie version 2>&1 | head -1)
 - macOS: $(sw_vers -productVersion)
 - Test folder: $TEST_DIR
 - Transcript: $LOG
@@ -96,15 +96,15 @@ EOF
 
 # ---------------- A. preconditions ----------------
 section "A. Common preconditions"
-ver="$(mahin version 2>&1 | head -1)"
-ask "mahin on PATH and version printed: $ver" "yes"
-status_pre="$(mahin contextmenu-status 2>&1 || true)"
+ver="$(movie version 2>&1 | head -1)"
+ask "movie on PATH and version printed: $ver" "yes"
+status_pre="$(movie contextmenu-status 2>&1 || true)"
 echo "  status: $status_pre"
 if echo "$status_pre" | grep -qi "not installed"; then
   ask "contextmenu-status reports Not installed" "yes"
 else
   echo "  ⚠️  Already installed — uninstalling for clean run"
-  mahin remove-contextmenu >/dev/null 2>&1 || true
+  movie remove-contextmenu >/dev/null 2>&1 || true
   ask "contextmenu-status reports Not installed (after cleanup)" "yes"
 fi
 leftovers="$(ls "$SVC_DIR"/Movie\ -\ *.workflow 2>/dev/null | wc -l | tr -d ' ')"
@@ -116,7 +116,7 @@ fi
 
 # ---------------- B1. Install ----------------
 section "B1. Install"
-install_out="$(mahin add-contextmenu 2>&1)"; rc=$?
+install_out="$(movie add-contextmenu 2>&1)"; rc=$?
 echo "$install_out"
 md '```'; md "$install_out"; md '```'
 if [[ $rc -eq 0 ]]; then ask "add-contextmenu exits 0" "yes"
@@ -137,7 +137,7 @@ if [[ $wf_count -eq 4 ]]; then
 else
   ask "4 Movie - *.workflow bundles in ~/Library/Services" "FAIL:found $wf_count bundles, expected 4 — ls $SVC_DIR/Movie*.workflow"
 fi
-status_post="$(mahin contextmenu-status 2>&1 || true)"
+status_post="$(movie contextmenu-status 2>&1 || true)"
 echo "  status: $status_post"
 if echo "$status_post" | grep -qi "all 4 workflows present"; then
   ask "contextmenu-status reports Installed (4 workflows)" "yes"
@@ -166,23 +166,23 @@ done
 section "B4. Destructive action (Rescan) — confirmation gate"
 since=$(last_recon_id)
 ask "Right-click → 'Movie - Rescan with Movie' opens Terminal" "" "$(last_action_id)"
-ask "Banner '⚠️  About to run: mahin rescan in <folder>' is shown"
+ask "Banner '⚠️  About to run: movie rescan in <folder>' is shown"
 ask "Prompt 'Type y then Enter to continue ...' appears and BLOCKS"
 ask "Typing 'n' + Enter prints 'cancelled' and exits 0"
-ask "Typing 'y' + Enter runs mahin rescan to completion"
+ask "Typing 'y' + Enter runs movie rescan to completion"
 new_recon=$(sqlite3 "$DB_PATH" "SELECT COUNT(*) FROM ReconciliationHistory WHERE ReconciliationHistoryId > $since;" 2>/dev/null || echo 0)
 both "  ReconciliationHistory rows added during B4: $new_recon"
 
 # ---------------- B5. Uninstall ----------------
 section "B5. Uninstall"
-uninst="$(mahin remove-contextmenu 2>&1)"; rc=$?
+uninst="$(movie remove-contextmenu 2>&1)"; rc=$?
 echo "$uninst"; md '```'; md "$uninst"; md '```'
 if [[ $rc -eq 0 ]]; then ask "remove-contextmenu exits 0" "yes"
 else ask "remove-contextmenu exits 0" "FAIL:exit code $rc"; fi
 remain="$(ls "$SVC_DIR"/Movie\ -\ *.workflow 2>/dev/null | wc -l | tr -d ' ')"
 if [[ $remain -eq 0 ]]; then ask "All 4 workflow bundles removed" "yes"
 else ask "All 4 workflow bundles removed" "FAIL:$remain bundle(s) remain — ls $SVC_DIR/Movie*.workflow"; fi
-status_final="$(mahin contextmenu-status 2>&1 || true)"
+status_final="$(movie contextmenu-status 2>&1 || true)"
 if echo "$status_final" | grep -qi "not installed"; then
   ask "contextmenu-status reports Not installed" "yes"
 else
@@ -213,7 +213,7 @@ section "F. Sign-off"
 read -r -p "Tester name: " tester </dev/tty
 both "- Tester: $tester"
 both "- Date (UTC+8): $(TZ=Asia/Kuala_Lumpur date '+%Y-%m-%d %H:%M:%S %Z')"
-both "- mahin version: $(mahin version 2>&1 | head -1)"
+both "- movie version: $(movie version 2>&1 | head -1)"
 both "- macOS: $(sw_vers -productVersion)"
 
 both ""

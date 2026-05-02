@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # verify-reverse-sync.sh — Real-OS verification of v2.310.0+ reverse-sync.
 #
-# Captures a complete transcript at /tmp/mahin-reverse-sync-<ts>.log
+# Captures a complete transcript at /tmp/movie-reverse-sync-<ts>.log
 # (every command, every output, every FAIL with the relevant MediaId and
 # DB row context). Restores the touched row to its original state.
 #
@@ -13,7 +13,7 @@
 set -uo pipefail
 
 TS="$(date +%Y%m%d-%H%M%S)"
-LOG="/tmp/mahin-reverse-sync-${TS}.log"
+LOG="/tmp/movie-reverse-sync-${TS}.log"
 exec > >(tee -a "$LOG") 2>&1   # full transcript: stdout + stderr → log
 echo "🗒  Transcript: $LOG"
 echo "🕒 Started: $(date)"
@@ -60,19 +60,19 @@ note_fail() {
 # ---------------- Pre-flight ----------------
 FOLDER="${1:-}"
 [[ -z "$FOLDER" ]] && { echo "Usage: $0 <scanned-folder>"; exit 1; }
-command -v mahin >/dev/null 2>&1 || { note_fail "mahin on PATH" "binary not found"; exit 1; }
+command -v movie >/dev/null 2>&1 || { note_fail "movie on PATH" "binary not found"; exit 1; }
 [[ -d "$FOLDER" ]] || { note_fail "folder exists" "missing: $FOLDER"; exit 1; }
 
 DB_PATH="${MOVIE_DB_PATH:-$HOME/.movie/movie.db}"
 [[ -f "$DB_PATH" ]] || { note_fail "DB exists" "missing: $DB_PATH (set MOVIE_DB_PATH if custom)"; exit 1; }
 echo "📦 Folder: $FOLDER"
 echo "🗄  DB:     $DB_PATH"
-echo "🔧 mahin:  $(mahin version 2>&1 | head -1)"
+echo "🔧 movie:  $(movie version 2>&1 | head -1)"
 
 JSON_DIR="$FOLDER/.movie-output/json"
 if [[ ! -d "$JSON_DIR" ]]; then
   echo "ℹ️  No prior scan; seeding..."
-  mahin scan "$FOLDER"
+  movie scan "$FOLDER"
 fi
 
 mtime() { stat -f %m "$1" 2>/dev/null || stat -c %Y "$1"; }
@@ -118,7 +118,7 @@ sqlite3 "$DB_PATH" "UPDATE Media SET Title='$NEW_TITLE', UpdatedAt=datetime('now
 echo "✏️  Title → '$NEW_TITLE'"
 touch -t "$(back_one_minute)" "$SIDECAR"
 
-mahin scan "$FOLDER" --reverse-sync-only
+movie scan "$FOLDER" --reverse-sync-only
 
 T1_OK=true
 if [[ ! -f "$MEDIA_FILE" ]]; then
@@ -156,7 +156,7 @@ fi
 sqlite3 "$DB_PATH" "UPDATE Media SET IsDeleted=1, UpdatedAt=datetime('now') WHERE MediaId=$MEDIA_ID;"
 echo "🗑  Row $MEDIA_ID soft-deleted"
 
-mahin scan "$FOLDER" --reverse-sync-only
+movie scan "$FOLDER" --reverse-sync-only
 
 T2_OK=true
 if [[ -f "$SIDECAR" ]]; then
@@ -168,7 +168,7 @@ fi
 
 # Restore row + recreate sidecar.
 sqlite3 "$DB_PATH" "UPDATE Media SET IsDeleted=0, UpdatedAt=datetime('now') WHERE MediaId=$MEDIA_ID;"
-mahin scan "$FOLDER" >/dev/null
+movie scan "$FOLDER" >/dev/null
 
 # ---------------- Audit dump ----------------
 echo ""; echo "==== Last 10 ReconciliationHistory rows ===="
