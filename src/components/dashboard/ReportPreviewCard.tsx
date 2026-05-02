@@ -3,7 +3,7 @@ import reportPreview from "@/assets/movie-cli-report-preview.png";
 /**
  * ReportPreviewCard — feature card showcasing the auto-generated HTML
  * report (`.movie-output/report.html`) that opens in the browser at the
- * end of every `mahin scan`. The image's top strip (browser address bar)
+ * end of every `movie scan`. The image's top strip (browser address bar)
  * is blurred via a CSS overlay for privacy.
  */
 export const ReportPreviewCard = () => {
@@ -20,7 +20,7 @@ export const ReportPreviewCard = () => {
           Auto-generated HTML report
         </h2>
         <p className="text-sm text-muted-foreground">
-          Every <code className="rounded bg-muted px-1 py-0.5 text-xs">mahin scan</code>{" "}
+          Every <code className="rounded bg-muted px-1 py-0.5 text-xs">movie scan</code>{" "}
           writes <code className="rounded bg-muted px-1 py-0.5 text-xs">.movie-output/report.html</code>{" "}
           and opens it in your default browser.
         </p>
