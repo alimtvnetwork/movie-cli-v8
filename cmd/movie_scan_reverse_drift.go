@@ -13,11 +13,11 @@ import (
 type driftReason int
 
 const (
-	driftMissingSidecar driftReason = iota // DB row + disk file present, sidecar absent → rewrite
-	driftStaleMtime                        // sidecar mtime < DB UpdatedAt → rewrite
-	driftSoftDeletedRow                    // IsDeleted=1 with sidecar still present → purge
-	driftDiskOrphanFile                    // sidecar present, no DB row + no disk file → purge
-	driftMissingDiskFile                   // active DB row, file gone from disk → mark missing
+	driftMissingSidecar  driftReason = iota // DB row + disk file present, sidecar absent → rewrite
+	driftStaleMtime                         // sidecar mtime < DB UpdatedAt → rewrite
+	driftSoftDeletedRow                     // IsDeleted=1 with sidecar still present → purge
+	driftDiskOrphanFile                     // sidecar present, no DB row + no disk file → purge
+	driftMissingDiskFile                    // active DB row, file gone from disk → mark missing
 )
 
 const driftMaxLines = 20 // cap per-section output to stay concise

@@ -4,6 +4,7 @@
 //   - Batch start:   "🚀 Processing batch of N: <preview titles>"
 //   - Mid-batch:     "➕ Added M more to the queue: <preview titles>"
 //   - Per-completion: "  [k/N] ⭐ <rating> <title>"  (in arrival order)
+//
 // Suppressed entirely when scanFormat is "json" or "table" so machine
 // output stays clean.
 package cmd
