@@ -22,9 +22,9 @@ var moveAtomicOff bool
 
 // completedMove remembers a successful filesystem move so it can be undone.
 type completedMove struct {
-	srcPath  string
-	destPath string
-	destDir  string
+	srcPath    string
+	destPath   string
+	destDir    string
 	createdDir bool
 }
 

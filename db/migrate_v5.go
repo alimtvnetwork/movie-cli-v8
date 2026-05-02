@@ -4,7 +4,7 @@
 //
 // Spec: spec/08-app/10-remove-move-rescan/rescan-reconciliation/01-spec.md
 //
-// New artefacts:
+// New artifacts:
 //   - ReconciliationActionType  (lookup, 4 seed rows)
 //   - ReconciliationHistory     (audit rows; MediaId nullable for AddedNew)
 package db
@@ -13,13 +13,13 @@ import "github.com/alimtvnetwork/movie-cli-v7/apperror"
 
 // ReconciliationActionTypeId enum values, kept in sync with the seed order.
 const (
-	ReconActionHydratedFromJson    = 1
-	ReconActionRemovedMissing      = 2
-	ReconActionAddedNew            = 3
-	ReconActionConverged           = 4
-	ReconActionReverseSyncedSidecar = 5
-	ReconActionRemovedOrphanSidecar = 6
-	ReconActionRemovedDeletedSidecar = 7
+	ReconActionHydratedFromJson       = 1
+	ReconActionRemovedMissing         = 2
+	ReconActionAddedNew               = 3
+	ReconActionConverged              = 4
+	ReconActionReverseSyncedSidecar   = 5
+	ReconActionRemovedOrphanSidecar   = 6
+	ReconActionRemovedDeletedSidecar  = 7
 	ReconActionReverseDetectedMissing = 8
 )
 

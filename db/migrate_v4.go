@@ -3,7 +3,7 @@
 //
 // Spec: spec/08-app/10-remove-move-rescan/00-overview.md
 //
-// New artefacts:
+// New artifacts:
 //   - MediaStatus            (lookup, 4 seed rows: Active|Removed|Moved|Missing)
 //   - Media.IsDeleted        (BOOL; soft-delete flag, default 0 = false)
 //   - Media.MediaStatusId    (INT FK → MediaStatus, default 1 = Active)

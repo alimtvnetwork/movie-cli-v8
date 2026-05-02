@@ -3,7 +3,6 @@
 package cmd
 
 import (
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -24,20 +23,6 @@ func sidecarPathFor(database *db.DB, jsonRoot string, r *db.ReverseSyncRow) stri
 		return filepath.Join(jsonRoot, subDir, base+".json")
 	}
 	return filepath.Join(jsonRoot, subDir, mediaSlug(media)+".json")
-}
-
-// shouldRewriteSidecar returns true when the sidecar is missing or its
-// mtime is older than the DB UpdatedAt timestamp.
-func shouldRewriteSidecar(sidecarPath, dbUpdatedAt string) bool {
-	info, err := os.Stat(sidecarPath)
-	if err != nil {
-		return true
-	}
-	dbTime, parseErr := parseDBTime(dbUpdatedAt)
-	if parseErr != nil {
-		return true
-	}
-	return info.ModTime().Before(dbTime)
 }
 
 // parseDBTime accepts both `datetime('now')` (UTC, no TZ) and RFC3339.

@@ -4,9 +4,9 @@
 // Spec: spec/08-app/10-remove-move-rescan/remove-command/01-spec.md
 //
 // Resolution modes (auto-detected from arg shape):
-//   1. Numeric arg          → single MediaId
-//   2. Title (no operator)  → resolveMediaByQuery
-//   3. Quoted expression    → BuildConditionSQL → bulk match
+//  1. Numeric arg          → single MediaId
+//  2. Title (no operator)  → resolveMediaByQuery
+//  3. Quoted expression    → BuildConditionSQL → bulk match
 package cmd
 
 import (

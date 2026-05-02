@@ -47,7 +47,7 @@ func splitNewFromExisting(ctx *ScanContext, videoFiles []videoFile,
 		}
 		processExistingMedia(ctx, ProcessExistingInput{
 			EM: em, VF: vf, Client: cfg.Client, Database: ctx.Database,
-			Opts: ScanOutputOpts{UseTable: cfg.UseTable, UseJson: cfg.UseJson},
+			Opts:    ScanOutputOpts{UseTable: cfg.UseTable, UseJson: cfg.UseJson},
 			BatchID: cfg.BatchID, HasTMDb: cfg.HasTMDb,
 		})
 	}

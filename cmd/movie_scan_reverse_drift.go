@@ -13,11 +13,11 @@ import (
 type driftReason int
 
 const (
-	driftMissingSidecar driftReason = iota // DB row + disk file present, sidecar absent → rewrite
-	driftStaleMtime                        // sidecar mtime < DB UpdatedAt → rewrite
-	driftSoftDeletedRow                    // IsDeleted=1 with sidecar still present → purge
-	driftDiskOrphanFile                    // sidecar present, no DB row + no disk file → purge
-	driftMissingDiskFile                   // active DB row, file gone from disk → mark missing
+	driftMissingSidecar  driftReason = iota // DB row + disk file present, sidecar absent → rewrite
+	driftStaleMtime                         // sidecar mtime < DB UpdatedAt → rewrite
+	driftSoftDeletedRow                     // IsDeleted=1 with sidecar still present → purge
+	driftDiskOrphanFile                     // sidecar present, no DB row + no disk file → purge
+	driftMissingDiskFile                    // active DB row, file gone from disk → mark missing
 )
 
 const driftMaxLines = 20 // cap per-section output to stay concise
@@ -78,7 +78,7 @@ type driftReasonGroup struct {
 }
 
 // printDriftSummary prints a per-reason block with up to driftMaxLines
-// rows; remaining entries are summarised as "...N more".
+// rows; remaining entries are summarized as "...N more".
 func printDriftSummary(d *driftLog) {
 	if len(d.entries) == 0 {
 		return

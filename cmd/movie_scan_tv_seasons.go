@@ -19,9 +19,9 @@ import (
 type tvIngestInput struct {
 	Client  *tmdb.Client
 	DB      *db.DB
+	Title   string
 	MediaID int64
 	TmdbID  int
-	Title   string
 }
 
 // ingestTVSeasons fetches every season for a TV title and persists its

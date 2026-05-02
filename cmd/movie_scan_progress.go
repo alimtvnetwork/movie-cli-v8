@@ -4,6 +4,7 @@
 //   - Batch start:   "🚀 Processing batch of N: <preview titles>"
 //   - Mid-batch:     "➕ Added M more to the queue: <preview titles>"
 //   - Per-completion: "  [k/N] ⭐ <rating> <title>"  (in arrival order)
+//
 // Suppressed entirely when scanFormat is "json" or "table" so machine
 // output stays clean.
 package cmd
@@ -96,11 +97,11 @@ func previewVideoTitles(files []videoFile) string {
 }
 
 func trimForPreview(s string) string {
-	const max = 42
-	if len(s) <= max {
+	const limit = 42
+	if len(s) <= limit {
 		return s
 	}
-	return s[:max-1] + "…"
+	return s[:limit-1] + "…"
 }
 
 func pluralS(n int) string {
