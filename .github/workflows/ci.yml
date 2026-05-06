@@ -230,10 +230,10 @@ jobs:
           # Add scripts/ directory if it exists.
           [ -d scripts ] && existing+=(scripts)
 
-          PATTERN='github\.com/alimtvnetwork/movie-cli-v8\b'
+          PATTERN='github\.com/alimtvnetwork/movie-cli-v[123456]\b'
           violations=$(grep -rnE "$PATTERN" "${existing[@]}" 2>/dev/null || true)
           if [ -n "$violations" ]; then
-            echo "User-facing v6 references found (must be movie-cli-v8):"
+            echo "User-facing legacy references found (must be movie-cli-v8):"
             echo "$violations"
             echo ""
             while IFS= read -r line; do
@@ -241,13 +241,13 @@ jobs:
               file=$(printf '%s' "$line" | cut -d: -f1)
               lineno=$(printf '%s' "$line" | cut -d: -f2)
               content=$(printf '%s' "$line" | cut -d: -f3-)
-              echo "::error file=${file},line=${lineno}::User-facing doc still points to movie-cli-v8: ${content}"
+              echo "::error file=${file},line=${lineno}::User-facing doc still points to a legacy movie-cli-v[1-6] path: ${content}"
             done <<< "$violations"
             echo ""
-            echo "Fix: replace github.com/alimtvnetwork/movie-cli-v8 with github.com/alimtvnetwork/movie-cli-v8."
+            echo "Fix: replace github.com/alimtvnetwork/movie-cli-v[1-6] with github.com/alimtvnetwork/movie-cli-v8."
             exit 1
           fi
-          echo "✅ No user-facing references to movie-cli-v8 in README, QUICKSTART, or install scripts."
+          echo "✅ No user-facing legacy v1–v6 references in README, QUICKSTART, or install scripts."
 
       - name: Legacy module-path auditor (strict)
         id: legacy-audit
