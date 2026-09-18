@@ -2304,3 +2304,6 @@ Released under the [MIT License](LICENSE) — free for personal and commercial u
 _Built with ❤️ by [Md. Alim Ul Karim](https://alimkarim.com) · [Riseup Asia LLC](https://riseup-asia.com)_
 
 </div>
+
+- [pkg/appfault/appfault.go](pkg/appfault/appfault.go): Core AppError definitions.
+- [02-spec/21-app/99-dry-optimization-plan.md](02-spec/21-app/99-dry-optimization-plan.md): DRY code optimization plan.

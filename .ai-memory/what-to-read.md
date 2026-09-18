@@ -68,3 +68,5 @@
 - .ai-memory/plans/completed/03-fileutil-pathinfo-and-enum-architecture.md
 - .ai-memory/plans/completed/04-applogger-taxonomy-streaming-and-task-db.md
 - .ai-memory/plans/completed/12-regex-centralization-and-generic-dbengine.md
+pkg/appfault/appfault.go
+02-spec/21-app/99-dry-optimization-plan.md
