@@ -221,7 +221,8 @@ func (c *Client) GetRecommendations(tmdbID int, mediaType string, page int) ([]S
 	params.Set("page", fmt.Sprintf("%d", page))
 
 	var resp searchResponse
-	if err := c.get(c.buildURL(fmt.Sprintf("/%s/%d/recommendations", mediaType, tmdbID), params), &resp); err != nil {
+	urlPath := fmt.Sprintf("/%s/%d/recommendations", mediaType, tmdbID)
+	if err := c.get(c.buildURL(urlPath, params), &resp); err != nil {
 		return nil, err
 	}
 	return resp.Results, nil

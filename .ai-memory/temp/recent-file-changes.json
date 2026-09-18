@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "updated_at": "2026-09-18T08:04:36Z",
+  "files": [
+    ".ai-memory/plans/completed/01-delete-old-folders.md",
+    ".ai-memory/plans/completed/02-migrate-new-folders.md",
+    "D:/work/wp-exam/02-spec/21-app/04-quiz-feature/00-overview.md",
+    "D:/work/wp-exam/includes/api/class-wp-exam-rest-api.php",
+    "D:/work/wp-exam/includes/class-wp-exam-activator.php",
+    "D:/work/wp-exam/includes/class-wp-exam-admin.php",
+    "D:/work/wp-exam/src/main.tsx",
+    "D:/work/wp-exam/src/pages/Index.tsx",
+    "D:/work/wp-exam/src/quiz/components/QuizEditor.tsx",
+    "D:/work/wp-exam/src/quiz/store/useQuizStore.ts",
+    "D:/work/wp-exam/wp-exam.php",
+    "d:/work/wp-exam/02-spec/25-app-spec-audit/01-audit-report.md",
+    "d:/work/wp-exam/quiz-plugin.php"
+  ],
+  "associated_tests": []
+}

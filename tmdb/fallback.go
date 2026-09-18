@@ -119,7 +119,9 @@ func (c *Client) lookupImdbCache(title string, year int) (string, int, string, b
 	return imdbID, tmdbID, mediaType, found
 }
 
-func (c *Client) storeImdbCache(title string, year int, imdbID string, tmdbID int, mediaType string) {
+func (c *Client) storeImdbCache(
+	title string, year int, imdbID string, tmdbID int, mediaType string,
+) {
 	if c.ImdbCache == nil {
 		return
 	}
