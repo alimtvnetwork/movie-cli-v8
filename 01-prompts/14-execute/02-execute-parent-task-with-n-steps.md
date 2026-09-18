@@ -86,6 +86,29 @@ Before writing any source code changes, you MUST execute Phase 1:
 8. **TOTAL BAN on Build Checking:** DO NOT run build verification commands (`go build`, `npm run build`, compiler invocations). Build compilation is checked later on in CI/CD.
 9. **Targeted Quality Linting Only:** Run only targeted, fast file-level linters/autofixers on specifically modified files (`exit 0`). DO NOT run `06-cicd-local-runner.py` or full test suites.
 
+### Remote CI/CD Pipeline Monitoring & Dynamic Waiting Protocol (GitMap Pipeline-AI)
+
+When monitoring or checking remote CI/CD pipelines (e.g., following git push or during pipeline audits):
+
+1. **Mandatory GitMap Pipeline-AI Authority:** Agents MUST use GitMap CLI to retrieve remote CI/CD status:
+   ```bash
+   gitmap pipeline-ai status --json
+   # or alias:
+   gitmap pl-ai status --json
+   ```
+   Parse structured output fields: `is_running`, `status`, `etaSeconds`, and `nextAiCommand`.
+2. **Anti-Credit-Waste Waiting Mandate (TOTAL BAN on Rapid Polling):**
+   - NEVER loop rapidly or busy-poll (`gh run view` in tight loops). Rapid polling burns user credits, exhausts LLM tokens, and wastes rate limits.
+   - When a pipeline is in progress (`is_running: true`), agents MUST wait/sleep based on the estimated completion duration (`etaSeconds` or `-t <sec>`):
+     ```bash
+     gitmap pipeline-ai status -t <etaSeconds>
+     ```
+   - Proportional ETA sleep guidelines:
+     - `etaSeconds > 120`: wait 20s–30s before querying again.
+     - `60 < etaSeconds <= 120`: wait 10s–20s before querying again.
+     - `etaSeconds <= 60`: wait 5s–10s before querying again.
+3. **Targeted Failure Diagnostics:** Use GitMap's automated error extraction to isolate actionable failure lines (`##[error]`, `FAIL:`, compile errors) without fetching noisy passing step logs.
+
 ---
 
 ## 4. AI Fix Scripts Memory (Reusable Tooling)
@@ -105,6 +128,7 @@ Before writing any source code changes, you MUST execute Phase 1:
 - [ ] **NO RUNNER SCRIPTS (TOTAL BAN):** NEVER launch background test runners, worker pools, or test inventory loops during routine execution.
 - [ ] **NO AUTOMATIC RELEASES (TOTAL BAN):** NEVER bump versions, update changelogs, or trigger releases unless explicitly commanded by the user.
 - [ ] **NO PER-FILE COMMITTING (TOTAL BAN):** NEVER commit each file individually as you work (e.g. running `git commit` after editing File 1, then another commit after File 2). Committing file-by-file pollutes git history, creates subagent lock collisions, and breaks atomic changes. All modified files across the turn must be accumulated and committed together in a single atomic commit at the final step.
+- [ ] **NO RAPID CI/CD POLLING (TOTAL BAN):** NEVER query or loop rapidly (`gh run view` in tight loops) when inspecting remote CI/CD pipelines. Agents MUST query pipeline state using GitMap Pipeline-AI (`gitmap pipeline-ai status --json` or `gitmap pl-ai status -t <sec>`) and strictly wait/sleep based on `etaSeconds` to eliminate credit waste.
 
 ---
 
@@ -163,7 +187,7 @@ To guarantee full execution without stopping after planning mode, the master orc
   - The next subagent spawned MUST read the previous failure log first, record it as a pending memory task, and implement the necessary fix.
 - Execute targeted local linters on modified files ensuring `exit 0` before concluding. DO NOT run `06-cicd-local-runner.py`, unit test suites, or build checks during routine loops.
 - **TOTAL BAN on Test Running & Build Checking:** All test runs (`go test`, `pytest`, python runners) and build checks (`go build`, compiler verification) are strictly banned during routine execution. Verification will be checked later on in CI/CD.
-- Record all modified files to `.ai-memory/temp/recent-file-changes.json` under lock (`python 03-ai-scripts/33-test-inventory-generator.py --record <files...>`) for subsequent CI/CD runs.
+- Record all modified files to `.ai-memory/temp/recent-file-changes.json` under lock (`python 03-ai-scripts/33-test-inventory-generator.py --record <files...>`) for subsequent CI/CD runs. When inspecting remote CI/CD pipelines, agents MUST follow GitMap (`gitmap pipeline-ai status --json` / `gitmap pl-ai status -t <sec>`) and adaptively wait based on `etaSeconds` to avoid credit waste.
 
 ### 4. Per-Task Agent Isolation & Workspace Subfolders (`.ai-memory/temp-agents/xx-<task-name>/`)
 
