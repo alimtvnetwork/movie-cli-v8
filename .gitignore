@@ -31,3 +31,4 @@ dist-ssr
 /scan
 .gitmap/release-assets
 release-assets
+.gitmap/backup/

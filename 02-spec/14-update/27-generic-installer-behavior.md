@@ -167,7 +167,7 @@ The repo name MUST end in `-v{N}` where `{N}` is a positive integer:
 
 ```
 {repo-base}-v{N}        e.g.  coding-guidelines-v24
-                              movie-cli-v2
+                              movie-cli-v8
                               repo-v20
 ```
 
