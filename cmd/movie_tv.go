@@ -8,9 +8,9 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/alimtvnetwork/movie-cli-v8/apperror"
 	"github.com/alimtvnetwork/movie-cli-v8/db"
 	"github.com/alimtvnetwork/movie-cli-v8/errlog"
+	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 	"github.com/spf13/cobra"
 )
 
@@ -72,7 +72,7 @@ func init() {
 func resolveTvMedia(query string) (*db.DB, *db.Media, error) {
 	database, err := db.Open()
 	if err != nil {
-		return nil, nil, apperror.Wrap("open database", err)
+		return nil, nil, appfault.Wrap("open database", err)
 	}
 	media, resolveErr := resolveMediaByQuery(database, query)
 	if resolveErr != nil {
@@ -81,7 +81,7 @@ func resolveTvMedia(query string) (*db.DB, *db.Media, error) {
 	}
 	if media.Type != string(db.MediaTypeTV) {
 		database.Close()
-		return nil, nil, apperror.New("'%s' is not a TV show (type=%s)",
+		return nil, nil, appfault.New("'%s' is not a TV show (type=%s)",
 			media.Title, media.Type)
 	}
 	return database, media, nil
@@ -91,7 +91,7 @@ func resolveTvMedia(query string) (*db.DB, *db.Media, error) {
 func parseEpisodeCode(code string) (int, int, error) {
 	match := episodeCodePattern.FindStringSubmatch(code)
 	if match == nil {
-		return 0, 0, apperror.New("invalid episode code %q (expected SxxExx, e.g. S01E03)", code)
+		return 0, 0, appfault.New("invalid episode code %q (expected SxxExx, e.g. S01E03)", code)
 	}
 	season, _ := strconv.Atoi(match[1])
 	episode, _ := strconv.Atoi(match[2])

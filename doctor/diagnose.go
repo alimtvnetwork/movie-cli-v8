@@ -13,7 +13,7 @@
 package doctor
 
 import (
-	"github.com/alimtvnetwork/movie-cli-v8/apperror"
+	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 )
 
 // Severity describes how serious a finding is.
@@ -49,7 +49,7 @@ type Report struct {
 func Diagnose() (*Report, error) {
 	report := &Report{}
 	if err := populatePaths(report); err != nil {
-		return nil, apperror.Wrap("doctor: cannot resolve paths", err)
+		return nil, appfault.Wrap("doctor: cannot resolve paths", err)
 	}
 	report.Findings = append(report.Findings, checkPathMismatch(report))
 	report.Findings = append(report.Findings, checkDeployInPath(report))

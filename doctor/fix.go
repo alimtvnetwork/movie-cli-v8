@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/alimtvnetwork/movie-cli-v8/apperror"
+	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 	"github.com/alimtvnetwork/movie-cli-v8/updater"
 )
 
@@ -46,7 +46,7 @@ func applyFix(r *Report, f Finding) bool {
 func runSelfReplace(r *Report) bool {
 	fmt.Printf("  [FIX ] self-replace %s -> %s\n", r.Source, r.Target)
 	if err := updater.SelfReplace(r.Source, r.Target); err != nil {
-		fmt.Printf("  [ERR ] self-replace failed: %v\n", apperror.Wrap("self-replace", err))
+		fmt.Printf("  [ERR ] self-replace failed: %v\n", appfault.Wrap("self-replace", err))
 		return false
 	}
 	return true

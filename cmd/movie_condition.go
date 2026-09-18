@@ -18,7 +18,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/alimtvnetwork/movie-cli-v8/apperror"
+	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 )
 
 // ---- field map -------------------------------------------------------------
@@ -53,7 +53,7 @@ var validOps = map[string]bool{
 func BuildConditionSQL(expr string) (string, []any, error) {
 	expr = strings.TrimSpace(expr)
 	if expr == "" {
-		return "", nil, apperror.New("empty condition expression")
+		return "", nil, appfault.New("empty condition expression")
 	}
 	tokens, err := tokenizeCondition(expr)
 	if err != nil {
@@ -118,7 +118,7 @@ func readQuoted(r []rune, i int) (condToken, int, error) {
 		i++
 	}
 	if i >= len(r) {
-		return condToken{}, 0, apperror.New("unterminated quoted value")
+		return condToken{}, 0, appfault.New("unterminated quoted value")
 	}
 	val := string(r[start:i])
 	return condToken{kind: "value", text: val}, i + 1, nil
@@ -131,7 +131,7 @@ func readOperator(r []rune, i int) (condToken, int, error) {
 	}
 	op := string(r[i])
 	if !validOps[op] {
-		return condToken{}, 0, apperror.New("invalid operator: " + op)
+		return condToken{}, 0, appfault.New("invalid operator: " + op)
 	}
 	return condToken{kind: "op", text: op}, i + 1, nil
 }
@@ -161,7 +161,7 @@ func readWord(r []rune, i int) condToken {
 
 func buildWhereFromTokens(tokens []condToken) (string, []any, error) {
 	if len(tokens) < 3 {
-		return "", nil, apperror.New("condition needs field op value")
+		return "", nil, appfault.New("condition needs field op value")
 	}
 	var parts []string
 	var args []any
@@ -178,7 +178,7 @@ func buildWhereFromTokens(tokens []condToken) (string, []any, error) {
 			break
 		}
 		if tokens[i].kind != "logic" {
-			return "", nil, apperror.New("expected AND/OR, got: " + tokens[i].text)
+			return "", nil, appfault.New("expected AND/OR, got: " + tokens[i].text)
 		}
 		parts = append(parts, tokens[i].text)
 		i++
@@ -189,18 +189,18 @@ func buildWhereFromTokens(tokens []condToken) (string, []any, error) {
 
 func parseSingleTerm(t []condToken, i int) (string, []any, int, error) {
 	if i+2 >= len(t) {
-		return "", nil, 0, apperror.New("incomplete term near end of expression")
+		return "", nil, 0, appfault.New("incomplete term near end of expression")
 	}
 	fieldTok, opTok, valTok := t[i], t[i+1], t[i+2]
 	if fieldTok.kind != "word" {
-		return "", nil, 0, apperror.New("expected field, got: " + fieldTok.text)
+		return "", nil, 0, appfault.New("expected field, got: " + fieldTok.text)
 	}
 	spec, ok := conditionFields[strings.ToLower(fieldTok.text)]
 	if !ok {
-		return "", nil, 0, apperror.New("unknown field: " + fieldTok.text)
+		return "", nil, 0, appfault.New("unknown field: " + fieldTok.text)
 	}
 	if opTok.kind != "op" {
-		return "", nil, 0, apperror.New("expected operator, got: " + opTok.text)
+		return "", nil, 0, appfault.New("expected operator, got: " + opTok.text)
 	}
 	clause, args, err := buildClause(spec, opTok.text, valTok.text)
 	if err != nil {
@@ -219,7 +219,7 @@ func buildClause(spec fieldSpec, op, raw string) (string, []any, error) {
 	if spec.kind == "num" {
 		n, err := strconv.ParseFloat(raw, 64)
 		if err != nil {
-			return "", nil, apperror.Wrap("numeric value: "+raw, err)
+			return "", nil, appfault.Wrap("numeric value: "+raw, err)
 		}
 		return spec.column + " " + op + " ?", []any{n}, nil
 	}
@@ -228,7 +228,7 @@ func buildClause(spec fieldSpec, op, raw string) (string, []any, error) {
 
 func buildGenreClause(op, raw string) (string, []any, error) {
 	if op != "=" && op != "!=" {
-		return "", nil, apperror.New("genre supports only = / !=")
+		return "", nil, appfault.New("genre supports only = / !=")
 	}
 	notKw := ""
 	if op == "!=" {
@@ -262,7 +262,7 @@ func parseSizeToMB(raw string) (float64, error) {
 	}
 	n, err := strconv.ParseFloat(strings.TrimSpace(upper), 64)
 	if err != nil {
-		return 0, apperror.Wrap("size value: "+raw, err)
+		return 0, appfault.Wrap("size value: "+raw, err)
 	}
 	return n * mult, nil
 }

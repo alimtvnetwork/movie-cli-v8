@@ -7,9 +7,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/alimtvnetwork/movie-cli-v8/apperror"
 	"github.com/alimtvnetwork/movie-cli-v8/db"
 	"github.com/alimtvnetwork/movie-cli-v8/errlog"
+	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 )
 
 // executeMoveRedo re-applies a previously reverted file move.
@@ -21,11 +21,11 @@ func executeMoveRedo(database *db.DB, m *db.MoveRecord) error {
 
 	destDir := m.ToPath[:strings.LastIndex(m.ToPath, string(os.PathSeparator))]
 	if err := os.MkdirAll(destDir, 0755); err != nil {
-		return apperror.Wrapf(err, "cannot create directory %s", destDir)
+		return appfault.Wrapf(err, "cannot create directory %s", destDir)
 	}
 
 	if err := MoveFile(m.FromPath, m.ToPath); err != nil {
-		return apperror.Wrap("redo move", err)
+		return appfault.Wrap("redo move", err)
 	}
 
 	if err := database.MarkMoveRestored(m.ID); err != nil {
@@ -45,9 +45,9 @@ func checkFileExists(path string) error {
 		return nil
 	}
 	if os.IsNotExist(err) {
-		return apperror.New("file not found at %s — cannot redo", path)
+		return appfault.New("file not found at %s — cannot redo", path)
 	}
-	return apperror.Wrapf(err, "cannot access %s", path)
+	return appfault.Wrapf(err, "cannot access %s", path)
 }
 
 // executeActionRedo re-applies a previously reverted action_history entry.
@@ -66,7 +66,7 @@ func executeActionRedo(database *db.DB, a *db.ActionRecord) error {
 	case db.FileActionCompact:
 		return redoCompact(database, a)
 	default:
-		return apperror.New("unknown action type for redo: %s", a.FileActionId)
+		return appfault.New("unknown action type for redo: %s", a.FileActionId)
 	}
 	return database.MarkActionRestored(a.ActionHistoryId)
 }
@@ -77,10 +77,10 @@ func redoScanAdd(database *db.DB, a *db.ActionRecord) error {
 	}
 	media, err := db.MediaFromJSON(a.MediaSnapshot)
 	if err != nil {
-		return apperror.Wrapf(err, "parse snapshot for redo action %d", a.ActionHistoryId)
+		return appfault.Wrapf(err, "parse snapshot for redo action %d", a.ActionHistoryId)
 	}
 	if _, insertErr := database.InsertMedia(media); insertErr != nil {
-		return apperror.Wrap("re-insert media for redo", insertErr)
+		return appfault.Wrap("re-insert media for redo", insertErr)
 	}
 	return database.MarkActionRestored(a.ActionHistoryId)
 }
@@ -90,7 +90,7 @@ func redoDelete(database *db.DB, a *db.ActionRecord) error {
 		return database.MarkActionRestored(a.ActionHistoryId)
 	}
 	if err := database.DeleteMediaByID(a.MediaId.Int64); err != nil {
-		return apperror.Wrapf(err, "redo delete media %d", a.MediaId.Int64)
+		return appfault.Wrapf(err, "redo delete media %d", a.MediaId.Int64)
 	}
 	return database.MarkActionRestored(a.ActionHistoryId)
 }
@@ -101,10 +101,10 @@ func redoRestore(database *db.DB, a *db.ActionRecord) error {
 	}
 	media, err := db.MediaFromJSON(a.MediaSnapshot)
 	if err != nil {
-		return apperror.Wrapf(err, "parse snapshot for redo restore %d", a.ActionHistoryId)
+		return appfault.Wrapf(err, "parse snapshot for redo restore %d", a.ActionHistoryId)
 	}
 	if _, insertErr := database.InsertMedia(media); insertErr != nil {
-		return apperror.Wrap("redo restore insert", insertErr)
+		return appfault.Wrap("redo restore insert", insertErr)
 	}
 	return database.MarkActionRestored(a.ActionHistoryId)
 }

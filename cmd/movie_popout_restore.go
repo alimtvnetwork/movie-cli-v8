@@ -20,8 +20,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/alimtvnetwork/movie-cli-v8/apperror"
 	"github.com/alimtvnetwork/movie-cli-v8/db"
+	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 )
 
 // compactSnapshot is the on-disk JSON shape emitted by compactFolder().
@@ -36,13 +36,13 @@ type compactSnapshot struct {
 func parseCompactSnapshot(a *db.ActionRecord) (compactSnapshot, error) {
 	var snap compactSnapshot
 	if a.MediaSnapshot == "" {
-		return snap, apperror.New("no snapshot for compact action %d", a.ActionHistoryId)
+		return snap, appfault.New("no snapshot for compact action %d", a.ActionHistoryId)
 	}
 	if err := json.Unmarshal([]byte(a.MediaSnapshot), &snap); err != nil {
-		return snap, apperror.Wrapf(err, "parse compact snapshot %d", a.ActionHistoryId)
+		return snap, appfault.Wrapf(err, "parse compact snapshot %d", a.ActionHistoryId)
 	}
 	if snap.OriginalPath == "" || snap.CompactPath == "" {
-		return snap, apperror.New("incomplete compact snapshot for action %d", a.ActionHistoryId)
+		return snap, appfault.New("incomplete compact snapshot for action %d", a.ActionHistoryId)
 	}
 	return snap, nil
 }
@@ -57,13 +57,13 @@ func undoCompact(database *db.DB, a *db.ActionRecord) error {
 		return statErr
 	}
 	if _, existsErr := os.Stat(snap.OriginalPath); existsErr == nil {
-		return apperror.New("cannot restore: %s already exists", snap.OriginalPath)
+		return appfault.New("cannot restore: %s already exists", snap.OriginalPath)
 	}
 	if mkErr := os.MkdirAll(filepath.Dir(snap.OriginalPath), 0755); mkErr != nil {
-		return apperror.Wrapf(mkErr, "create parent for %s", snap.OriginalPath)
+		return appfault.Wrapf(mkErr, "create parent for %s", snap.OriginalPath)
 	}
 	if mvErr := MoveFile(snap.CompactPath, snap.OriginalPath); mvErr != nil {
-		return apperror.Wrap("restore compacted folder", mvErr)
+		return appfault.Wrap("restore compacted folder", mvErr)
 	}
 	fmt.Printf("   📦↩  Restored: .temp/%s  →  %s\n",
 		filepath.Base(snap.CompactPath), snap.OriginalPath)
@@ -81,10 +81,10 @@ func redoCompact(database *db.DB, a *db.ActionRecord) error {
 		return statErr
 	}
 	if mkErr := os.MkdirAll(filepath.Dir(snap.CompactPath), 0755); mkErr != nil {
-		return apperror.Wrapf(mkErr, "create parent for %s", snap.CompactPath)
+		return appfault.Wrapf(mkErr, "create parent for %s", snap.CompactPath)
 	}
 	if mvErr := MoveFile(snap.OriginalPath, snap.CompactPath); mvErr != nil {
-		return apperror.Wrap("re-compact folder", mvErr)
+		return appfault.Wrap("re-compact folder", mvErr)
 	}
 	fmt.Printf("   📦   Re-compacted: %s  →  .temp/%s\n",
 		snap.OriginalPath, filepath.Base(snap.CompactPath))
@@ -96,12 +96,12 @@ func requireDirExists(path string) error {
 	info, err := os.Stat(path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return apperror.New("path not found: %s", path)
+			return appfault.New("path not found: %s", path)
 		}
-		return apperror.Wrapf(err, "cannot access %s", path)
+		return appfault.Wrapf(err, "cannot access %s", path)
 	}
 	if !info.IsDir() {
-		return apperror.New("not a directory: %s", path)
+		return appfault.New("not a directory: %s", path)
 	}
 	return nil
 }

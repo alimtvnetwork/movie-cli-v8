@@ -7,15 +7,15 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/alimtvnetwork/movie-cli-v8/apperror"
+	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 )
 
 func installContextMenu(exePath string) error {
-	return apperror.New(fmt.Sprintf("context menu not supported on %s", runtime.GOOS))
+	return appfault.New(fmt.Sprintf("context menu not supported on %s", runtime.GOOS))
 }
 
 func uninstallContextMenu() error {
-	return apperror.New(fmt.Sprintf("context menu not supported on %s", runtime.GOOS))
+	return appfault.New(fmt.Sprintf("context menu not supported on %s", runtime.GOOS))
 }
 
 func contextMenuStatus() (bool, string) {

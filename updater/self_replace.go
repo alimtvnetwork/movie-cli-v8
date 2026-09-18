@@ -22,7 +22,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/alimtvnetwork/movie-cli-v8/apperror"
+	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 )
 
 // SelfReplace copies sourcePath over targetPath using rename-first semantics.
@@ -53,7 +53,7 @@ func SelfReplace(sourcePath, targetPath string) error {
 	}
 
 	if _, statErr := os.Stat(resolvedSource); statErr != nil {
-		return apperror.Wrap("source binary not found", statErr)
+		return appfault.Wrap("source binary not found", statErr)
 	}
 
 	fmt.Printf("  Source: %s\n", resolvedSource)
@@ -66,7 +66,7 @@ func SelfReplace(sourcePath, targetPath string) error {
 	if _, statErr := os.Stat(resolvedTarget); statErr == nil {
 		hadExisting = true
 		if renameErr := os.Rename(resolvedTarget, backup); renameErr != nil {
-			return apperror.Wrap("cannot rename active binary (close all terminals using it)", renameErr)
+			return appfault.Wrap("cannot rename active binary (close all terminals using it)", renameErr)
 		}
 		fmt.Printf("  Renamed active binary -> %s\n", filepath.Base(backup))
 	}
@@ -77,7 +77,7 @@ func SelfReplace(sourcePath, targetPath string) error {
 			_ = os.Rename(backup, resolvedTarget)
 			fmt.Println("  Rolled back: restored original binary")
 		}
-		return apperror.Wrap("cannot copy source over target", copyErr)
+		return appfault.Wrap("cannot copy source over target", copyErr)
 	}
 	makeExecutable(resolvedTarget)
 	fmt.Printf("  Copied new binary -> %s\n", resolvedTarget)
@@ -100,7 +100,7 @@ func resolveSelfReplaceSource(sourcePath string) (string, error) {
 	}
 	cfg := loadPowershellConfig()
 	if cfg == nil {
-		return "", apperror.New("--from is empty and powershell.json could not be loaded; pass --from <path>")
+		return "", appfault.New("--from is empty and powershell.json could not be loaded; pass --from <path>")
 	}
 	binaryName := defaultBinaryName()
 	candidate := filepath.Join(cfg.DeployPath, binaryName)
@@ -116,7 +116,7 @@ func resolveSelfReplaceTarget(targetPath string) (string, error) {
 	}
 	self, err := os.Executable()
 	if err != nil {
-		return "", apperror.Wrap("cannot resolve active binary; pass --to <path>", err)
+		return "", appfault.Wrap("cannot resolve active binary; pass --to <path>", err)
 	}
 	return normalizeAbs(self)
 }
@@ -124,7 +124,7 @@ func resolveSelfReplaceTarget(targetPath string) (string, error) {
 func normalizeAbs(path string) (string, error) {
 	abs, err := filepath.Abs(path)
 	if err != nil {
-		return "", apperror.Wrap("cannot resolve absolute path", err)
+		return "", appfault.Wrap("cannot resolve absolute path", err)
 	}
 	if resolved, evalErr := filepath.EvalSymlinks(abs); evalErr == nil {
 		return resolved, nil

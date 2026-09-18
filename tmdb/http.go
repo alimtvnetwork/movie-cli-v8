@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/alimtvnetwork/movie-cli-v8/apperror"
+	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 )
 
 func (c *Client) buildURL(path string, params url.Values) string {
@@ -38,14 +38,14 @@ func (c *Client) get(reqURL string, target interface{}) error {
 		if errors.Is(lastErr, ErrRateLimited) {
 			continue
 		}
-		isFatal := errors.Is(lastErr, ErrTimeout) || 
-			errors.Is(lastErr, ErrNetworkError) || 
+		isFatal := errors.Is(lastErr, ErrTimeout) ||
+			errors.Is(lastErr, ErrNetworkError) ||
 			errors.Is(lastErr, ErrAuthInvalid)
 		if isFatal {
 			return lastErr
 		}
 	}
-	return apperror.Wrapf(lastErr, "TMDb request failed after %d retries", MaxRetries)
+	return appfault.Wrapf(lastErr, "TMDb request failed after %d retries", MaxRetries)
 }
 
 func (c *Client) doGet(reqURL string, target interface{}, attempt int) error {
@@ -53,7 +53,7 @@ func (c *Client) doGet(reqURL string, target interface{}, attempt int) error {
 	req, reqErr := http.NewRequest(http.MethodGet, reqURL, nil)
 	if reqErr != nil {
 		backoff(attempt)
-		return apperror.Wrap("build request failed", reqErr)
+		return appfault.Wrap("build request failed", reqErr)
 	}
 	if c.AccessToken != "" {
 		req.Header.Set("Authorization", "Bearer "+c.AccessToken)
@@ -70,19 +70,19 @@ func (c *Client) doGet(reqURL string, target interface{}, attempt int) error {
 
 func classifyHTTPError(err error) error {
 	if IsTimeoutError(err) {
-		return apperror.New("%w: check your internet connection", ErrTimeout)
+		return appfault.New("%w: check your internet connection", ErrTimeout)
 	}
 	if IsNetworkError(err) {
 		return ErrNetworkError
 	}
-	return apperror.Wrap("HTTP request failed", err)
+	return appfault.Wrap("HTTP request failed", err)
 }
 
 func handleResponse(resp *http.Response, target interface{}, attempt int) error {
 	switch {
 	case resp.StatusCode == 401:
 		resp.Body.Close()
-		return apperror.New("%w. Run: movie config set tmdb_api_key YOUR_KEY", ErrAuthInvalid)
+		return appfault.New("%w. Run: movie config set tmdb_api_key YOUR_KEY", ErrAuthInvalid)
 
 	case resp.StatusCode == 429:
 		resp.Body.Close()
@@ -96,7 +96,7 @@ func handleResponse(resp *http.Response, target interface{}, attempt int) error 
 
 	case resp.StatusCode >= 500:
 		resp.Body.Close()
-		lastErr := apperror.New("%w (HTTP %d)", ErrServerError, resp.StatusCode)
+		lastErr := appfault.New("%w (HTTP %d)", ErrServerError, resp.StatusCode)
 		if attempt == 0 {
 			delay := serverRetryDelay(resp.StatusCode)
 			time.Sleep(delay)
@@ -106,7 +106,7 @@ func handleResponse(resp *http.Response, target interface{}, attempt int) error 
 	case resp.StatusCode != 200:
 		body, _ := io.ReadAll(resp.Body)
 		resp.Body.Close()
-		return apperror.New("TMDb API error %d: %s", resp.StatusCode, string(body))
+		return appfault.New("TMDb API error %d: %s", resp.StatusCode, string(body))
 	}
 
 	err := json.NewDecoder(resp.Body).Decode(target)

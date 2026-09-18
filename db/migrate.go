@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/alimtvnetwork/movie-cli-v8/apperror"
+	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 )
 
 // Migration represents a single versioned schema migration.
@@ -59,12 +59,12 @@ func (d *DB) recordMigration(m Migration) error {
 // runMigrations applies all pending migrations in order.
 func (d *DB) runMigrations() error {
 	if err := d.ensureSchemaVersionTable(); err != nil {
-		return apperror.Wrap("create SchemaVersion table", err)
+		return appfault.Wrap("create SchemaVersion table", err)
 	}
 
 	current, err := d.currentSchemaVersion()
 	if err != nil {
-		return apperror.Wrap("read schema version", err)
+		return appfault.Wrap("read schema version", err)
 	}
 
 	for _, m := range allMigrations() {
@@ -72,10 +72,10 @@ func (d *DB) runMigrations() error {
 			continue
 		}
 		if err := m.Apply(d); err != nil {
-			return apperror.Wrapf(err, "migration v%d (%s)", m.Version, m.Description)
+			return appfault.Wrapf(err, "migration v%d (%s)", m.Version, m.Description)
 		}
 		if err := d.recordMigration(m); err != nil {
-			return apperror.Wrapf(err, "record migration v%d", m.Version)
+			return appfault.Wrapf(err, "record migration v%d", m.Version)
 		}
 		fmt.Printf("  ✅ Migration v%d: %s\n", m.Version, m.Description)
 	}

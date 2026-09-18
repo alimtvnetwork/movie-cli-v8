@@ -9,7 +9,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/alimtvnetwork/movie-cli-v8/apperror"
+	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 )
 
 const powershellConfigName = "powershell.json"
@@ -35,7 +35,7 @@ func resolveActiveBinary() (string, error) {
 	name := defaultBinaryName()
 	path, err := exec.LookPath(name)
 	if err != nil {
-		return "", apperror.Wrap("active binary not on PATH", err)
+		return "", appfault.Wrap("active binary not on PATH", err)
 	}
 	return absPath(path)
 }
@@ -47,11 +47,11 @@ func loadConfig() (*powershellConfig, error) {
 	}
 	data, err := os.ReadFile(filepath.Join(repo, powershellConfigName))
 	if err != nil {
-		return nil, apperror.Wrap("cannot read powershell.json", err)
+		return nil, appfault.Wrap("cannot read powershell.json", err)
 	}
 	var cfg powershellConfig
 	if err := json.Unmarshal(data, &cfg); err != nil {
-		return nil, apperror.Wrap("cannot parse powershell.json", err)
+		return nil, appfault.Wrap("cannot parse powershell.json", err)
 	}
 	return &cfg, nil
 }
@@ -59,7 +59,7 @@ func loadConfig() (*powershellConfig, error) {
 func findRepoRoot() (string, error) {
 	wd, err := os.Getwd()
 	if err != nil {
-		return "", apperror.Wrap("cannot get working directory", err)
+		return "", appfault.Wrap("cannot get working directory", err)
 	}
 	dir := wd
 	for i := 0; i < 8; i++ {
@@ -72,13 +72,13 @@ func findRepoRoot() (string, error) {
 		}
 		dir = parent
 	}
-	return "", apperror.New("powershell.json not found in cwd or parents")
+	return "", appfault.New("powershell.json not found in cwd or parents")
 }
 
 func absPath(path string) (string, error) {
 	abs, err := filepath.Abs(path)
 	if err != nil {
-		return "", apperror.Wrap("cannot resolve absolute path", err)
+		return "", appfault.Wrap("cannot resolve absolute path", err)
 	}
 	if resolved, err := filepath.EvalSymlinks(abs); err == nil {
 		return resolved, nil

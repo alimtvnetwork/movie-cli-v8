@@ -11,7 +11,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/alimtvnetwork/movie-cli-v8/apperror"
+	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 )
 
 func macServicesDir() string {
@@ -25,7 +25,7 @@ func macWorkflowPath(key string) string {
 
 func installContextMenu(exePath string) error {
 	if err := os.MkdirAll(macServicesDir(), 0o755); err != nil {
-		return apperror.Wrap("mkdir Services", err)
+		return appfault.Wrap("mkdir Services", err)
 	}
 	for _, e := range contextMenuEntries {
 		if err := installMacWorkflow(exePath, e); err != nil {
@@ -39,11 +39,11 @@ func installMacWorkflow(exePath string, e ContextMenuEntry) error {
 	wfDir := macWorkflowPath(e.Key)
 	contentsDir := filepath.Join(wfDir, "Contents")
 	if err := os.MkdirAll(contentsDir, 0o755); err != nil {
-		return apperror.Wrap("mkdir workflow", err)
+		return appfault.Wrap("mkdir workflow", err)
 	}
 	infoPlist := buildMacInfoPlist(e)
 	if err := os.WriteFile(filepath.Join(contentsDir, "Info.plist"), []byte(infoPlist), 0o644); err != nil {
-		return apperror.Wrap("write Info.plist", err)
+		return appfault.Wrap("write Info.plist", err)
 	}
 	doc := buildMacDocumentWflow(exePath, e)
 	return os.WriteFile(filepath.Join(contentsDir, "document.wflow"), []byte(doc), 0o644)
@@ -52,7 +52,7 @@ func installMacWorkflow(exePath string, e ContextMenuEntry) error {
 func uninstallContextMenu() error {
 	for _, e := range contextMenuEntries {
 		if err := os.RemoveAll(macWorkflowPath(e.Key)); err != nil {
-			return apperror.Wrap("remove workflow", err)
+			return appfault.Wrap("remove workflow", err)
 		}
 	}
 	return nil

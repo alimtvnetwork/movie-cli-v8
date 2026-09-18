@@ -2,17 +2,17 @@
 package db
 
 import (
-	"github.com/alimtvnetwork/movie-cli-v8/apperror"
+	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 	"github.com/alimtvnetwork/movie-cli-v8/version"
 )
 
 // migrateSchema runs all pending migrations and stamps the app version.
 func (d *DB) migrateSchema() error {
 	if err := d.runMigrations(); err != nil {
-		return apperror.Wrap("run migrations", err)
+		return appfault.Wrap("run migrations", err)
 	}
 	if err := d.SetConfig("AppVersion", version.Short()); err != nil {
-		return apperror.Wrap("stamp app version", err)
+		return appfault.Wrap("stamp app version", err)
 	}
 	return nil
 }

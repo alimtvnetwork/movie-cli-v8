@@ -22,7 +22,7 @@ func shouldSuppressProgress(ctx *ScanContext) bool {
 	if ctx == nil {
 		return true
 	}
-	if ctx.UseTable {
+	if ctx.IsTableOutput {
 		return true
 	}
 	return scanFormat == "json"

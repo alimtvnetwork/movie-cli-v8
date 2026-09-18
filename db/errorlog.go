@@ -4,7 +4,7 @@ package db
 import (
 	"fmt"
 
-	"github.com/alimtvnetwork/movie-cli-v8/apperror"
+	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 )
 
 // ErrorLogEntry holds all fields for an error log row.
@@ -28,7 +28,7 @@ func (d *DB) InsertErrorLog(entry ErrorLogEntry) error {
 		entry.Command, entry.WorkDir, entry.Message, entry.StackTrace,
 	)
 	if err != nil {
-		return apperror.Wrap("insert error log", err)
+		return appfault.Wrap("insert error log", err)
 	}
 	return nil
 }
@@ -39,7 +39,7 @@ func (d *DB) RecentErrorLogs(limit int) ([]map[string]string, error) {
 		SELECT ErrorLogId, Timestamp, Level, Source, Function, Command, WorkDir, Message, StackTrace
 		FROM ErrorLog ORDER BY ErrorLogId DESC LIMIT ?`, limit)
 	if err != nil {
-		return nil, apperror.Wrap("query error logs", err)
+		return nil, appfault.Wrap("query error logs", err)
 	}
 	defer rows.Close()
 
@@ -48,7 +48,7 @@ func (d *DB) RecentErrorLogs(limit int) ([]map[string]string, error) {
 		var id int
 		var ts, lvl, src, fn, cmd, wd, msg, st string
 		if scanErr := rows.Scan(&id, &ts, &lvl, &src, &fn, &cmd, &wd, &msg, &st); scanErr != nil {
-			return nil, apperror.Wrap("scan error log", scanErr)
+			return nil, appfault.Wrap("scan error log", scanErr)
 		}
 		results = append(results, map[string]string{
 			"id":          fmt.Sprintf("%d", id),
@@ -63,7 +63,7 @@ func (d *DB) RecentErrorLogs(limit int) ([]map[string]string, error) {
 		})
 	}
 	if err := rows.Err(); err != nil {
-		return nil, apperror.Wrap("rows iteration", err)
+		return nil, appfault.Wrap("rows iteration", err)
 	}
 	return results, nil
 }

@@ -7,7 +7,7 @@
 // Spec: spec/08-app/10-remove-move-rescan/rescan-reconciliation/02-reverse-sync-spec.md
 package db
 
-import "github.com/alimtvnetwork/movie-cli-v8/apperror"
+import "github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 
 // ReverseSyncRow is the minimal projection used by the reverse-sync loop.
 type ReverseSyncRow struct {
@@ -35,7 +35,7 @@ func (d *DB) ListReverseSyncRows(scanDir string) ([]ReverseSyncRow, error) {
 		FROM   Media
 		WHERE  OriginalFilePath LIKE ?`, prefix+"%")
 	if err != nil {
-		return nil, apperror.Wrap("query reverse-sync rows", err)
+		return nil, appfault.Wrap("query reverse-sync rows", err)
 	}
 	defer rows.Close()
 
@@ -44,7 +44,7 @@ func (d *DB) ListReverseSyncRows(scanDir string) ([]ReverseSyncRow, error) {
 		var r ReverseSyncRow
 		var deletedInt int
 		if scanErr := rows.Scan(&r.ID, &r.CurrentFilePath, &r.Type, &r.UpdatedAt, &deletedInt); scanErr != nil {
-			return nil, apperror.Wrap("scan reverse-sync row", scanErr)
+			return nil, appfault.Wrap("scan reverse-sync row", scanErr)
 		}
 		r.IsDeleted = deletedInt != 0
 		out = append(out, r)

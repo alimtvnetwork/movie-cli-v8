@@ -8,14 +8,14 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/alimtvnetwork/movie-cli-v8/apperror"
+	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 )
 
 // executeUpdateWindows writes a temp PowerShell script and runs it.
 func executeUpdateWindows(repoPath, targetBinary string) error {
 	scriptPath, err := writeUpdateScript(repoPath, targetBinary)
 	if err != nil {
-		return apperror.Wrap("cannot write update script", err)
+		return appfault.Wrap("cannot write update script", err)
 	}
 	defer os.Remove(scriptPath)
 
@@ -26,11 +26,11 @@ func executeUpdateWindows(repoPath, targetBinary string) error {
 func executeUpdateUnix(repoPath, targetBinary string) error {
 	if !hasPwshWithRunPS1(repoPath) {
 		runPS1 := filepath.Join(repoPath, "run.ps1")
-		return apperror.New("pwsh is required to run %s", runPS1)
+		return appfault.New("pwsh is required to run %s", runPS1)
 	}
 	scriptPath, err := writeUpdateScript(repoPath, targetBinary)
 	if err != nil {
-		return apperror.Wrap("cannot write update script", err)
+		return appfault.Wrap("cannot write update script", err)
 	}
 	defer os.Remove(scriptPath)
 	return runPowerShellScript(scriptPath)

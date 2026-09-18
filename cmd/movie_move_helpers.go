@@ -18,10 +18,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/alimtvnetwork/movie-cli-v8/apperror"
 	"github.com/alimtvnetwork/movie-cli-v8/cleaner"
 	"github.com/alimtvnetwork/movie-cli-v8/db"
 	"github.com/alimtvnetwork/movie-cli-v8/errlog"
+	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 )
 
 // expandHome replaces ~ with actual home directory.
@@ -37,7 +37,7 @@ func expandHome(path, home string) string {
 func listVideoFiles(dir string) ([]os.FileInfo, error) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
-		return nil, apperror.Wrapf(err, "cannot read directory %s", dir)
+		return nil, appfault.Wrapf(err, "cannot read directory %s", dir)
 	}
 
 	var files []os.FileInfo
@@ -159,30 +159,30 @@ func isCrossDeviceError(err error) bool {
 func crossDeviceMove(src, dst string) error {
 	srcFile, err := os.Open(src)
 	if err != nil {
-		return apperror.Wrap("open source", err)
+		return appfault.Wrap("open source", err)
 	}
 	defer srcFile.Close()
 
 	srcInfo, err := srcFile.Stat()
 	if err != nil {
-		return apperror.Wrap("stat source", err)
+		return appfault.Wrap("stat source", err)
 	}
 
 	dstFile, err := os.OpenFile(dst, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, srcInfo.Mode())
 	if err != nil {
-		return apperror.Wrap("create destination", err)
+		return appfault.Wrap("create destination", err)
 	}
 
 	if _, err := io.Copy(dstFile, srcFile); err != nil {
 		dstFile.Close()
 		os.Remove(dst)
-		return apperror.Wrap("copy data", err)
+		return appfault.Wrap("copy data", err)
 	}
 
 	if err := dstFile.Sync(); err != nil {
 		dstFile.Close()
 		os.Remove(dst)
-		return apperror.Wrap("sync destination", err)
+		return appfault.Wrap("sync destination", err)
 	}
 	dstFile.Close()
 

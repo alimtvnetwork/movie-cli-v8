@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/alimtvnetwork/movie-cli-v8/apperror"
 	"github.com/alimtvnetwork/movie-cli-v8/db"
+	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 	"github.com/spf13/cobra"
 )
 
@@ -57,7 +57,7 @@ func runTvEpisodes(cmd *cobra.Command, args []string) {
 func printEpisodesForSeason(database *db.DB, media *db.Media, seasonNumber int) {
 	season := findSeasonByNumber(database, media.ID, seasonNumber)
 	if season == nil {
-		reportTvError(apperror.New("S%02d not found for '%s'", seasonNumber, media.Title))
+		reportTvError(appfault.New("S%02d not found for '%s'", seasonNumber, media.Title))
 		return
 	}
 	eps, err := database.EpisodesBySeasonID(season.ID)
@@ -108,7 +108,7 @@ func applyWatchedState(database *db.DB, media *db.Media,
 	episodeID, lookupErr := database.FindEpisodeByMediaAndCode(
 		media.ID, seasonNumber, episodeNumber)
 	if lookupErr != nil || episodeID <= 0 {
-		reportTvError(apperror.New("S%02dE%02d not found for '%s'",
+		reportTvError(appfault.New("S%02dE%02d not found for '%s'",
 			seasonNumber, episodeNumber, media.Title))
 		return
 	}

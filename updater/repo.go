@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/alimtvnetwork/movie-cli-v8/apperror"
+	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 )
 
 const (
@@ -62,12 +62,12 @@ func findRepoPath(flagPath string) (string, bool, error) {
 		cloneDir := filepath.Join(exeDir, repoDirName)
 		fmt.Printf("📥 No local repo found. Cloning to: %s\n", cloneDir)
 		if _, cloneErr := gitOutput(exeDir, "clone", "--depth", "1", repoURL); cloneErr != nil {
-			return "", false, apperror.Wrap("cannot clone repository", cloneErr)
+			return "", false, appfault.Wrap("cannot clone repository", cloneErr)
 		}
 		return cloneDir, true, nil
 	}
 
-	return "", false, apperror.New("cannot locate the movie-cli repository")
+	return "", false, appfault.New("cannot locate the movie-cli repository")
 }
 
 func resolveFlagRepoPath(flagPath string) (string, bool, error) {
@@ -76,7 +76,7 @@ func resolveFlagRepoPath(flagPath string) (string, bool, error) {
 		return "", false, err
 	}
 	if !isValidRepo(repoPath) {
-		return "", false, apperror.New("invalid --repo-path: %s", repoPath)
+		return "", false, appfault.New("invalid --repo-path: %s", repoPath)
 	}
 	return repoRoot(repoPath), false, nil
 }
@@ -128,7 +128,7 @@ func normalizeRepoPath(raw string) (string, error) {
 	path = strings.Trim(path, `"'`)
 	path = strings.TrimSpace(path)
 	if path == "" {
-		return "", apperror.New("repository path is empty")
+		return "", appfault.New("repository path is empty")
 	}
 	expanded, err := expandHomePath(path)
 	if err != nil {
@@ -136,7 +136,7 @@ func normalizeRepoPath(raw string) (string, error) {
 	}
 	absPath, err := filepath.Abs(expanded)
 	if err != nil {
-		return "", apperror.Wrap("cannot resolve repository path", err)
+		return "", appfault.Wrap("cannot resolve repository path", err)
 	}
 	return filepath.Clean(absPath), nil
 }
@@ -147,7 +147,7 @@ func expandHomePath(path string) (string, error) {
 	}
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return "", apperror.Wrap("cannot resolve home directory", err)
+		return "", appfault.Wrap("cannot resolve home directory", err)
 	}
 	if path == "~" {
 		return home, nil
@@ -174,7 +174,7 @@ func gitOutput(dir string, args ...string) (string, error) {
 		if text == "" {
 			return "", err
 		}
-		return "", apperror.New("%s", text)
+		return "", appfault.New("%s", text)
 	}
 	return text, nil
 }

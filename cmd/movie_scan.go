@@ -76,7 +76,7 @@ func init() {
 }
 
 func runMovieScan(cmd *cobra.Command, args []string) {
-	useJson := scanFormat == "json"
+	isJsonOutput := scanFormat == "json"
 
 	database, err := db.Open()
 	if err != nil {
@@ -85,7 +85,7 @@ func runMovieScan(cmd *cobra.Command, args []string) {
 	}
 	defer database.Close()
 
-	scanDir, err := resolveScanDir(args, useJson)
+	scanDir, err := resolveScanDir(args, isJsonOutput)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "❌ %v\n", err)
 		return
@@ -105,7 +105,7 @@ func runMovieScan(cmd *cobra.Command, args []string) {
 
 	initScanLogger(database, outputDir)
 
-	if !useJson {
+	if !isJsonOutput {
 		printScanHeader(scanDir, outputDir)
 	}
 
@@ -120,14 +120,14 @@ func runMovieScan(cmd *cobra.Command, args []string) {
 	}
 
 	ctx := createScanContext(database, creds, outputDir)
-	removed, jsonItems := executeScan(ctx, scanDir, useJson)
+	removed, jsonItems := executeScan(ctx, scanDir, isJsonOutput)
 
 	// Reverse-sync pass: DB is authoritative; rewrite/purge sidecars to match.
 	_ = runReverseSync(database, scanDir)
 
 	finalizeScan(cmd, ctx, FinalizeScanInput{
 		ScanDir: scanDir, OutputDir: outputDir, Database: database,
-		Creds: creds, Removed: removed, JsonItems: jsonItems, UseJson: useJson,
+		Creds: creds, Removed: removed, JsonItems: jsonItems, IsJsonOutput: isJsonOutput,
 	})
 }
 
@@ -135,28 +135,28 @@ func createScanContext(database *db.DB, creds tmdbCredentials, outputDir string)
 	tmdbClient := tmdb.NewClientWithToken(creds.ApiKey, creds.Token)
 	tmdbClient.SetImdbCache(newImdbCacheAdapter(database))
 	return &ScanContext{
-		Database:  database,
-		Client:    tmdbClient,
-		HasTMDb:   creds.HasAuth(),
-		OutputDir: outputDir,
-		UseTable:  scanFormat == string(db.OutputFormatTable) || scanFormat == "json",
-		BatchID:   generateBatchID(),
+		Database:      database,
+		Client:        tmdbClient,
+		HasTMDb:       creds.HasAuth(),
+		OutputDir:     outputDir,
+		IsTableOutput: scanFormat == string(db.OutputFormatTable) || scanFormat == "json",
+		BatchID:       generateBatchID(),
 	}
 }
 
-func executeScan(ctx *ScanContext, scanDir string, useJson bool) (int, []scanJsonItem) {
+func executeScan(ctx *ScanContext, scanDir string, isJsonOutput bool) (int, []scanJsonItem) {
 	videoFiles := collectVideoFiles(scanDir, scanRecursive, scanDepth)
-	useTable := scanFormat == string(db.OutputFormatTable)
+	isTableOutput := scanFormat == string(db.OutputFormatTable)
 	var jsonItems []scanJsonItem
 
-	if useTable {
+	if isTableOutput {
 		printScanTableHeader()
 	}
 
 	if scanDryRun {
-		runDryRunScan(DryRunInput{VideoFiles: videoFiles, UseJson: useJson, UseTable: useTable},
+		runDryRunScan(DryRunInput{VideoFiles: videoFiles, IsJsonOutput: isJsonOutput, IsTableOutput: isTableOutput},
 			DryRunOutput{JsonItems: &jsonItems, TotalFiles: &ctx.TotalFiles, MovieCount: &ctx.MovieCount, TVCount: &ctx.TVCount})
-		if useTable {
+		if isTableOutput {
 			printScanTableFooter()
 		}
 		return 0, jsonItems
@@ -164,11 +164,11 @@ func executeScan(ctx *ScanContext, scanDir string, useJson bool) (int, []scanJso
 
 	removed := runMainScanLoop(ctx, videoFiles, ScanLoopConfig{
 		Client: ctx.Client, ScanDir: scanDir, BatchID: ctx.BatchID,
-		UseJson: useJson, UseTable: useTable, HasTMDb: ctx.HasTMDb,
+		OutputFormatOpts: OutputFormatOpts{IsJsonOutput: isJsonOutput, IsTableOutput: isTableOutput}, HasTMDb: ctx.HasTMDb,
 		JsonItems: &jsonItems,
 	})
 
-	if useTable {
+	if isTableOutput {
 		printScanTableFooter()
 	}
 	return removed, jsonItems
@@ -177,12 +177,12 @@ func executeScan(ctx *ScanContext, scanDir string, useJson bool) (int, []scanJso
 func finalizeScan(cmd *cobra.Command, ctx *ScanContext, input FinalizeScanInput) {
 	registerScanHistory(input.Database, input.ScanDir, ctx)
 
-	if input.UseJson {
+	if input.IsJsonOutput {
 		printScanJson(input.ScanDir, input.JsonItems, ScanStats{
 			Total: ctx.TotalFiles, Movies: ctx.MovieCount, TV: ctx.TVCount, Skipped: ctx.Skipped,
 		})
 	}
-	if !input.UseJson {
+	if !input.IsJsonOutput {
 		printScanFooter(ScanStats{
 			ScanDir: input.ScanDir, OutputDir: input.OutputDir, Items: ctx.ScannedItems,
 			Total: ctx.TotalFiles, Movies: ctx.MovieCount, TV: ctx.TVCount,
@@ -259,7 +259,7 @@ func startRestWithOptionalWatch(cmd *cobra.Command, cfg ScanServiceConfig) {
 
 // runDryRunScan handles the dry-run scanning loop for all output formats.
 func runDryRunScan(input DryRunInput, output DryRunOutput) {
-	if input.UseJson {
+	if input.IsJsonOutput {
 		items, mc, tc := buildDryRunJSONItems(input.VideoFiles)
 		*output.JsonItems = items
 		*output.TotalFiles = len(items)
@@ -267,7 +267,7 @@ func runDryRunScan(input DryRunInput, output DryRunOutput) {
 		*output.TVCount = tc
 		return
 	}
-	if input.UseTable {
+	if input.IsTableOutput {
 		rows, mc, tc := buildDryRunTableRows(input.VideoFiles)
 		for _, row := range rows {
 			printScanTableRow(row)

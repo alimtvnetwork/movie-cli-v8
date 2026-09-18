@@ -8,7 +8,7 @@
 // cmd.BuildConditionSQL and returns the matching MediaIds (capped).
 package db
 
-import "github.com/alimtvnetwork/movie-cli-v8/apperror"
+import "github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 
 // MaxRemoveMatches caps how many rows a single rm/move can target.
 const MaxRemoveMatches = 10000
@@ -51,14 +51,14 @@ func (d *DB) QueryMediaIDsByWhere(where string, args []any) ([]int64, error) {
 	args = append(args, MaxRemoveMatches)
 	rows, err := d.Query(q, args...)
 	if err != nil {
-		return nil, apperror.Wrap("query media ids", err)
+		return nil, appfault.Wrap("query media ids", err)
 	}
 	defer rows.Close()
 	var ids []int64
 	for rows.Next() {
 		var id int64
 		if scanErr := rows.Scan(&id); scanErr != nil {
-			return nil, apperror.Wrap("scan media id", scanErr)
+			return nil, appfault.Wrap("scan media id", scanErr)
 		}
 		ids = append(ids, id)
 	}

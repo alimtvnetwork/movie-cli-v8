@@ -9,9 +9,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/alimtvnetwork/movie-cli-v8/apperror"
 	"github.com/alimtvnetwork/movie-cli-v8/db"
 	"github.com/alimtvnetwork/movie-cli-v8/errlog"
+	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 )
 
 var watchExportOutput string
@@ -125,7 +125,7 @@ func resolveWatchExportPath() string {
 
 func writeWatchExportFile(outPath string, data []byte) error {
 	if err := os.MkdirAll(filepath.Dir(outPath), 0755); err != nil {
-		return apperror.Wrapf(err, "cannot create directory %s", filepath.Dir(outPath))
+		return appfault.Wrapf(err, "cannot create directory %s", filepath.Dir(outPath))
 	}
 	return os.WriteFile(outPath, data, 0644)
 }

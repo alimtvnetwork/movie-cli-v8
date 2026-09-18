@@ -14,8 +14,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/alimtvnetwork/movie-cli-v8/apperror"
 	"github.com/alimtvnetwork/movie-cli-v8/db"
+	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 	"github.com/alimtvnetwork/movie-cli-v8/version"
 )
 
@@ -40,7 +40,7 @@ func scanDirFromArgs(args []string, quiet bool) (string, error) {
 	}
 	dir, err := os.Getwd()
 	if err != nil {
-		return "", apperror.Wrap("cannot determine current directory", err)
+		return "", appfault.Wrap("cannot determine current directory", err)
 	}
 	if !quiet {
 		fmt.Printf("📂 No folder specified — scanning current directory\n\n")
@@ -54,7 +54,7 @@ func expandTilde(path string) (string, error) {
 	}
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return "", apperror.Wrap("cannot determine home directory", err)
+		return "", appfault.Wrap("cannot determine home directory", err)
 	}
 	return filepath.Join(home, path[1:]), nil
 }
@@ -62,7 +62,7 @@ func expandTilde(path string) (string, error) {
 func validateDirPath(path string) (string, error) {
 	info, err := os.Stat(path)
 	if err != nil || !info.IsDir() {
-		return "", apperror.New("folder not found: %s", path)
+		return "", appfault.New("folder not found: %s", path)
 	}
 	return path, nil
 }
@@ -70,13 +70,13 @@ func validateDirPath(path string) (string, error) {
 // createOutputDirs creates the .movie-output directory structure.
 func createOutputDirs(outputDir string) error {
 	if err := os.MkdirAll(outputDir, 0755); err != nil {
-		return apperror.Wrap("cannot create output directory", err)
+		return appfault.Wrap("cannot create output directory", err)
 	}
 	if err := os.MkdirAll(filepath.Join(outputDir, "json", string(db.MediaTypeMovie)), 0755); err != nil {
-		return apperror.Wrapf(err, "cannot create json/%s dir", db.MediaTypeMovie)
+		return appfault.Wrapf(err, "cannot create json/%s dir", db.MediaTypeMovie)
 	}
 	if err := os.MkdirAll(filepath.Join(outputDir, "json", string(db.MediaTypeTV)), 0755); err != nil {
-		return apperror.Wrapf(err, "cannot create json/%s dir", db.MediaTypeTV)
+		return appfault.Wrapf(err, "cannot create json/%s dir", db.MediaTypeTV)
 	}
 	return nil
 }

@@ -10,7 +10,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/alimtvnetwork/movie-cli-v8/apperror"
+	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 )
 
 const baseURL = "https://api.themoviedb.org/3"
@@ -191,7 +191,7 @@ func TrailerURL(videos []VideoResult) string {
 // DownloadPoster downloads a poster image and saves it to dst.
 func (c *Client) DownloadPoster(posterPath, dst string) error {
 	if posterPath == "" {
-		return apperror.New("no poster available")
+		return appfault.New("no poster available")
 	}
 
 	imgURL := imageBaseURL + posterPath
@@ -216,7 +216,11 @@ func (c *Client) DownloadPoster(posterPath, dst string) error {
 }
 
 // GetRecommendations returns recommended movies or TV shows.
-func (c *Client) GetRecommendations(tmdbID int, mediaType string, page int) ([]SearchResult, error) {
+func (c *Client) GetRecommendations(
+	tmdbID int,
+	mediaType string,
+	page int,
+) ([]SearchResult, error) {
 	params := url.Values{}
 	params.Set("page", fmt.Sprintf("%d", page))
 

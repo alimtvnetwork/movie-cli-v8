@@ -32,7 +32,7 @@ func isAlreadyScanned(ctx *ScanContext, vf videoFile, result cleaner.Result) boo
 		if existing[i].OriginalFilePath != vf.FullPath {
 			continue
 		}
-		if ctx.UseTable {
+		if ctx.IsTableOutput {
 			printScanTableRow(buildMediaTableRow(ctx.TotalFiles, &db.Media{
 				OriginalFileName: vf.Name,
 				CleanTitle:       result.CleanTitle,
@@ -40,7 +40,7 @@ func isAlreadyScanned(ctx *ScanContext, vf videoFile, result cleaner.Result) boo
 				Type:             result.Type,
 			}, "skipped"))
 		}
-		if !ctx.UseTable {
+		if !ctx.IsTableOutput {
 			fmt.Println("     ⏩ Already in database, skipping")
 		}
 		ctx.Skipped++

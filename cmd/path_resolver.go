@@ -34,7 +34,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/alimtvnetwork/movie-cli-v8/apperror"
+	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 )
 
 // ResolveTargetDir is the canonical entry point for resolving a directory
@@ -49,7 +49,7 @@ func ResolveTargetDir(args []string, home string) (string, error) {
 	}
 	cwd, err := os.Getwd()
 	if err != nil {
-		return "", apperror.Wrap("resolve cwd default", err)
+		return "", appfault.Wrap("resolve cwd default", err)
 	}
 	return cwd, nil
 }

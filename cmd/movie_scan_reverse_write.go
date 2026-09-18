@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/alimtvnetwork/movie-cli-v8/apperror"
 	"github.com/alimtvnetwork/movie-cli-v8/db"
+	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 )
 
 // sidecarPathFor returns the canonical sidecar path for a Media row,
@@ -41,10 +41,10 @@ func writeSidecarFromDB(database *db.DB, jsonRoot string, r *db.ReverseSyncRow) 
 	}
 	media, err := database.GetMediaByID(r.ID)
 	if err != nil {
-		return apperror.Wrap("load media", err)
+		return appfault.Wrap("load media", err)
 	}
 	if media == nil {
-		return apperror.New("reverse-sync: media row vanished")
+		return appfault.New("reverse-sync: media row vanished")
 	}
 	basePath := filepath.Dir(jsonRoot) // .movie-output
 	return writeMediaJSON(basePath, media)

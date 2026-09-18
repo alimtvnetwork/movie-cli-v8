@@ -15,9 +15,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/alimtvnetwork/movie-cli-v8/apperror"
 	"github.com/alimtvnetwork/movie-cli-v8/db"
 	"github.com/alimtvnetwork/movie-cli-v8/errlog"
+	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 )
 
 var (
@@ -100,7 +100,7 @@ func isConditionExpression(q string) bool {
 func resolveByCondition(database *db.DB, expr string) ([]int64, error) {
 	where, args, err := BuildConditionSQL(expr)
 	if err != nil {
-		return nil, apperror.Wrap("parse expression", err)
+		return nil, appfault.Wrap("parse expression", err)
 	}
 	return database.QueryMediaIDsByWhere(where, args)
 }

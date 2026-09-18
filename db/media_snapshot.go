@@ -4,14 +4,14 @@ package db
 import (
 	"encoding/json"
 
-	"github.com/alimtvnetwork/movie-cli-v8/apperror"
+	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 )
 
 // MediaToJSON serializes a Media record to JSON for ActionHistory snapshots.
 func MediaToJSON(m *Media) (string, error) {
 	data, err := json.Marshal(m)
 	if err != nil {
-		return "", apperror.Wrap("marshal media snapshot", err)
+		return "", appfault.Wrap("marshal media snapshot", err)
 	}
 	return string(data), nil
 }
@@ -20,7 +20,7 @@ func MediaToJSON(m *Media) (string, error) {
 func MediaFromJSON(snapshot string) (*Media, error) {
 	var m Media
 	if err := json.Unmarshal([]byte(snapshot), &m); err != nil {
-		return nil, apperror.Wrap("unmarshal media snapshot", err)
+		return nil, appfault.Wrap("unmarshal media snapshot", err)
 	}
 	return &m, nil
 }
@@ -29,7 +29,7 @@ func MediaFromJSON(snapshot string) (*Media, error) {
 func (d *DB) DeleteMediaByID(id int64) error {
 	_, err := d.Exec("DELETE FROM Media WHERE MediaId = ?", id)
 	if err != nil {
-		return apperror.Wrapf(err, "delete media %d", id)
+		return appfault.Wrapf(err, "delete media %d", id)
 	}
 	return nil
 }

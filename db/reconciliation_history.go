@@ -10,7 +10,7 @@ package db
 import (
 	"database/sql"
 
-	"github.com/alimtvnetwork/movie-cli-v8/apperror"
+	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 )
 
 // ReconRecord represents one ReconciliationHistory row (read side).
@@ -38,7 +38,7 @@ func (d *DB) InsertReconciliation(input ReconInput) (int64, error) {
 		input.MediaID, input.ActionType, input.Details,
 	)
 	if err != nil {
-		return 0, apperror.Wrap("insert ReconciliationHistory", err)
+		return 0, appfault.Wrap("insert ReconciliationHistory", err)
 	}
 	return res.LastInsertId()
 }
@@ -52,7 +52,7 @@ func (d *DB) CountReconciliationByType(since string) (map[int]int, error) {
 		WHERE OccurredAt >= ?
 		GROUP BY ReconciliationActionTypeId`, since)
 	if err != nil {
-		return nil, apperror.Wrap("query ReconciliationHistory", err)
+		return nil, appfault.Wrap("query ReconciliationHistory", err)
 	}
 	defer rows.Close()
 
@@ -60,7 +60,7 @@ func (d *DB) CountReconciliationByType(since string) (map[int]int, error) {
 	for rows.Next() {
 		var actionType, count int
 		if scanErr := rows.Scan(&actionType, &count); scanErr != nil {
-			return nil, apperror.Wrap("scan ReconciliationHistory row", scanErr)
+			return nil, appfault.Wrap("scan ReconciliationHistory row", scanErr)
 		}
 		out[actionType] = count
 	}
@@ -78,7 +78,7 @@ func (d *DB) ListReconciliation(limit int) ([]ReconRecord, error) {
 		ORDER  BY rh.OccurredAt DESC, rh.ReconciliationHistoryId DESC
 		LIMIT  ?`, limit)
 	if err != nil {
-		return nil, apperror.Wrap("list ReconciliationHistory", err)
+		return nil, appfault.Wrap("list ReconciliationHistory", err)
 	}
 	defer rows.Close()
 	var out []ReconRecord
@@ -86,7 +86,7 @@ func (d *DB) ListReconciliation(limit int) ([]ReconRecord, error) {
 		var r ReconRecord
 		if scanErr := rows.Scan(&r.ReconciliationHistoryId, &r.MediaId,
 			&r.ReconciliationActionTypeId, &r.OccurredAt, &r.Details); scanErr != nil {
-			return nil, apperror.Wrap("scan ReconciliationHistory row", scanErr)
+			return nil, appfault.Wrap("scan ReconciliationHistory row", scanErr)
 		}
 		out = append(out, r)
 	}

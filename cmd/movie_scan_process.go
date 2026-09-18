@@ -15,17 +15,17 @@ import (
 
 // ScanContext holds shared state for a scan session.
 type ScanContext struct {
-	Database     *db.DB
-	Client       *tmdb.Client
-	OutputDir    string
-	BatchID      string
-	ScannedItems []db.Media
-	TotalFiles   int
-	MovieCount   int
-	TVCount      int
-	Skipped      int
-	HasTMDb      bool
-	UseTable     bool
+	Database      *db.DB
+	Client        *tmdb.Client
+	OutputDir     string
+	BatchID       string
+	ScannedItems  []db.Media
+	TotalFiles    int
+	MovieCount    int
+	TVCount       int
+	Skipped       int
+	HasTMDb       bool
+	IsTableOutput bool
 }
 
 // processVideoFile handles a single video file: clean, check DB, fetch TMDb, insert, write JSON.
@@ -53,19 +53,19 @@ func processVideoFile(vf videoFile, ctx *ScanContext) bool {
 	writeScanJSON(ctx, m)
 
 	ctx.ScannedItems = append(ctx.ScannedItems, *m)
-	if ctx.UseTable {
+	if ctx.IsTableOutput {
 		printScanTableRow(buildMediaTableRow(ctx.TotalFiles, m, "new"))
 	}
 	incrementTypeCount(ctx, m.Type)
 
-	if !ctx.UseTable {
+	if !ctx.IsTableOutput {
 		fmt.Println()
 	}
 	return true
 }
 
 func printScanFileHeader(ctx *ScanContext, result cleaner.Result) {
-	if ctx.UseTable {
+	if ctx.IsTableOutput {
 		return
 	}
 	typeIcon := db.TypeIcon(result.Type)

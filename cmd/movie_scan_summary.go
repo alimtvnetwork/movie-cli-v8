@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/alimtvnetwork/movie-cli-v8/apperror"
 	"github.com/alimtvnetwork/movie-cli-v8/db"
+	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 )
 
 // scanSummary is the top-level structure written to summary.json.
@@ -63,12 +63,12 @@ func writeScanSummary(stats ScanStats) error {
 
 	data, err := json.MarshalIndent(summary, "", "  ")
 	if err != nil {
-		return apperror.Wrap("json encode", err)
+		return appfault.Wrap("json encode", err)
 	}
 
 	outPath := filepath.Join(stats.OutputDir, "summary.json")
 	if err := os.WriteFile(outPath, data, 0644); err != nil {
-		return apperror.Wrap("write file", err)
+		return appfault.Wrap("write file", err)
 	}
 	return nil
 }

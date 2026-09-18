@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/alimtvnetwork/movie-cli-v8/apperror"
+	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 )
 
 // Level represents the severity of a log entry.
@@ -62,13 +62,13 @@ func Init(outputDir, command string) error {
 
 	logDir := filepath.Join(outputDir, "logs")
 	if err := os.MkdirAll(logDir, 0755); err != nil {
-		return apperror.Wrapf(err, "cannot create log dir %s", logDir)
+		return appfault.Wrapf(err, "cannot create log dir %s", logDir)
 	}
 
 	logPath := filepath.Join(logDir, "error.txt")
 	f, err := os.OpenFile(logPath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
-		return apperror.Wrapf(err, "cannot open log file %s", logPath)
+		return appfault.Wrapf(err, "cannot open log file %s", logPath)
 	}
 
 	wd, _ := os.Getwd()
@@ -88,7 +88,7 @@ func Init(outputDir, command string) error {
 func InitFresh(outputDir, command string) error {
 	logDir := filepath.Join(outputDir, "logs")
 	if err := os.RemoveAll(logDir); err != nil {
-		return apperror.Wrapf(err, "cannot remove log dir %s", logDir)
+		return appfault.Wrapf(err, "cannot remove log dir %s", logDir)
 	}
 	return Init(outputDir, command)
 }

@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/alimtvnetwork/movie-cli-v8/apperror"
+	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 )
 
 // createHandoffCopy creates a temporary copy of the binary for the handoff worker.
@@ -24,7 +24,7 @@ func createHandoffCopy(selfPath string) (string, error) {
 	// Fallback to temp directory
 	copyPath = filepath.Join(os.TempDir(), name)
 	if err := copyFile(selfPath, copyPath); err != nil {
-		return "", apperror.Wrap("cannot create handoff copy", err)
+		return "", appfault.Wrap("cannot create handoff copy", err)
 	}
 	makeExecutable(copyPath)
 	return copyPath, nil
@@ -52,7 +52,7 @@ func launchHandoff(copyPath, repoPath, targetBinary string) error {
 	configureDetached(cmd)
 
 	if err := cmd.Start(); err != nil {
-		return apperror.Wrap("cannot start update worker", err)
+		return appfault.Wrap("cannot start update worker", err)
 	}
 	if cmd.Process != nil {
 		_ = cmd.Process.Release()

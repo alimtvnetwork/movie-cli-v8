@@ -8,7 +8,7 @@ import (
 
 	_ "modernc.org/sqlite"
 
-	"github.com/alimtvnetwork/movie-cli-v8/apperror"
+	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 )
 
 const dbFile = "movie.db"
@@ -23,11 +23,11 @@ type DB struct {
 func exeDir() (string, error) {
 	exe, err := os.Executable()
 	if err != nil {
-		return "", apperror.Wrap("cannot locate executable", err)
+		return "", appfault.Wrap("cannot locate executable", err)
 	}
 	exe, err = filepath.EvalSymlinks(exe)
 	if err != nil {
-		return "", apperror.Wrap("cannot resolve symlinks for executable", err)
+		return "", appfault.Wrap("cannot resolve symlinks for executable", err)
 	}
 	return filepath.Dir(exe), nil
 }
@@ -53,7 +53,7 @@ func Open() (*DB, error) {
 	d := &DB{DB: conn, BasePath: base}
 	if err := d.migrateSchema(); err != nil {
 		conn.Close()
-		return nil, apperror.Wrap("migration failed", err)
+		return nil, appfault.Wrap("migration failed", err)
 	}
 
 	return d, nil
@@ -71,7 +71,7 @@ func createDataDirs(base string) error {
 	}
 	for _, d := range dirs {
 		if err := os.MkdirAll(d, 0755); err != nil {
-			return apperror.Wrapf(err, "cannot create directory %s", d)
+			return appfault.Wrapf(err, "cannot create directory %s", d)
 		}
 	}
 	return nil
@@ -81,7 +81,7 @@ func openAndConfigureDB(base string) (*sql.DB, error) {
 	dbPath := filepath.Join(base, dbFile)
 	conn, err := sql.Open("sqlite", dbPath)
 	if err != nil {
-		return nil, apperror.Wrap("cannot open database", err)
+		return nil, appfault.Wrap("cannot open database", err)
 	}
 
 	pragmas := []struct{ stmt, errMsg string }{
@@ -92,7 +92,7 @@ func openAndConfigureDB(base string) (*sql.DB, error) {
 	for _, p := range pragmas {
 		if _, err := conn.Exec(p.stmt); err != nil {
 			conn.Close()
-			return nil, apperror.Wrap(p.errMsg, err)
+			return nil, appfault.Wrap(p.errMsg, err)
 		}
 	}
 

@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"os/exec"
 
-	"github.com/alimtvnetwork/movie-cli-v8/apperror"
+	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 )
 
 const winRegRoot = `HKCU\Software\Classes\Directory\shell\Movie`
@@ -89,14 +89,14 @@ func regAdd(key, name, valueType, data string) error {
 		args = append(args, "/d", data)
 	}
 	if out, err := exec.Command("reg", args...).CombinedOutput(); err != nil {
-		return apperror.Wrapf(err, "reg add %s: %s", key, string(out))
+		return appfault.Wrapf(err, "reg add %s: %s", key, string(out))
 	}
 	return nil
 }
 
 func regDelete(key string) error {
 	if out, err := exec.Command("reg", "delete", key, "/f").CombinedOutput(); err != nil {
-		return apperror.Wrapf(err, "reg delete %s: %s", key, string(out))
+		return appfault.Wrapf(err, "reg delete %s: %s", key, string(out))
 	}
 	return nil
 }

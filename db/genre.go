@@ -4,18 +4,18 @@ package db
 import (
 	"strings"
 
-	"github.com/alimtvnetwork/movie-cli-v8/apperror"
+	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 )
 
 // EnsureGenre inserts a genre if it doesn't exist, returns its GenreId.
 func (d *DB) EnsureGenre(name string) (int64, error) {
 	name = strings.TrimSpace(name)
 	if name == "" {
-		return 0, apperror.New("genre name is empty")
+		return 0, appfault.New("genre name is empty")
 	}
 	_, err := d.Exec("INSERT OR IGNORE INTO Genre (Name) VALUES (?)", name)
 	if err != nil {
-		return 0, apperror.Wrapf(err, "insert genre %q", name)
+		return 0, appfault.Wrapf(err, "insert genre %q", name)
 	}
 	var id int64
 	err = d.QueryRow("SELECT GenreId FROM Genre WHERE Name = ?", name).Scan(&id)
@@ -35,13 +35,13 @@ func (d *DB) LinkMediaGenres(mediaID int64, genreCSV string) error {
 		}
 		genreID, err := d.EnsureGenre(name)
 		if err != nil {
-			return apperror.Wrapf(err, "ensure genre %q", name)
+			return appfault.Wrapf(err, "ensure genre %q", name)
 		}
 		if _, err := d.Exec(
 			"INSERT OR IGNORE INTO MediaGenre (MediaId, GenreId) VALUES (?, ?)",
 			mediaID, genreID,
 		); err != nil {
-			return apperror.Wrapf(err, "link media %d genre %d", mediaID, genreID)
+			return appfault.Wrapf(err, "link media %d genre %d", mediaID, genreID)
 		}
 	}
 	return nil
@@ -50,7 +50,7 @@ func (d *DB) LinkMediaGenres(mediaID int64, genreCSV string) error {
 // ReplaceMediaGenres removes all existing genre links for a media and re-links.
 func (d *DB) ReplaceMediaGenres(mediaID int64, genreCSV string) error {
 	if _, err := d.Exec("DELETE FROM MediaGenre WHERE MediaId = ?", mediaID); err != nil {
-		return apperror.Wrapf(err, "clear genres for media %d", mediaID)
+		return appfault.Wrapf(err, "clear genres for media %d", mediaID)
 	}
 	return d.LinkMediaGenres(mediaID, genreCSV)
 }

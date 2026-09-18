@@ -9,7 +9,7 @@
 //   - ReconciliationHistory     (audit rows; MediaId nullable for AddedNew)
 package db
 
-import "github.com/alimtvnetwork/movie-cli-v8/apperror"
+import "github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 
 // ReconciliationActionTypeId enum values, kept in sync with the seed order.
 const (
@@ -25,10 +25,10 @@ const (
 
 func migrateV5(d *DB) error {
 	if err := createReconActionTypeTable(d); err != nil {
-		return apperror.Wrap("create ReconciliationActionType", err)
+		return appfault.Wrap("create ReconciliationActionType", err)
 	}
 	if err := seedReconActionType(d); err != nil {
-		return apperror.Wrap("seed ReconciliationActionType", err)
+		return appfault.Wrap("seed ReconciliationActionType", err)
 	}
 	return createReconHistoryTable(d)
 }
@@ -52,7 +52,7 @@ func seedReconActionType(d *DB) error {
 		if _, err := d.Exec(
 			"INSERT OR IGNORE INTO ReconciliationActionType (Name) VALUES (?)", name,
 		); err != nil {
-			return apperror.Wrapf(err, "seed ReconciliationActionType %q", name)
+			return appfault.Wrapf(err, "seed ReconciliationActionType %q", name)
 		}
 	}
 	return nil

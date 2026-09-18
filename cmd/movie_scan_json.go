@@ -17,9 +17,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/alimtvnetwork/movie-cli-v8/apperror"
 	"github.com/alimtvnetwork/movie-cli-v8/cleaner"
 	"github.com/alimtvnetwork/movie-cli-v8/db"
+	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 )
 
 // scanMediaJSON is the JSON representation written to disk.
@@ -54,7 +54,7 @@ func writeMediaJSON(basePath string, m *db.Media) error {
 
 	dir := filepath.Join(basePath, "json", subDir)
 	if err := os.MkdirAll(dir, 0755); err != nil {
-		return apperror.Wrap("cannot create json dir", err)
+		return appfault.Wrap("cannot create json dir", err)
 	}
 
 	data := toScanMediaJSON(m)
@@ -94,14 +94,14 @@ func toScanMediaJSON(m *db.Media) scanMediaJSON {
 func writeJSONFile(path string, data scanMediaJSON) error {
 	f, err := os.Create(path)
 	if err != nil {
-		return apperror.Wrap("cannot create json file", err)
+		return appfault.Wrap("cannot create json file", err)
 	}
 	defer f.Close()
 
 	enc := json.NewEncoder(f)
 	enc.SetIndent("", "  ")
 	if err := enc.Encode(data); err != nil {
-		return apperror.Wrap("cannot write json", err)
+		return appfault.Wrap("cannot write json", err)
 	}
 	return nil
 }

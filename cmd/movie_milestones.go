@@ -19,7 +19,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/alimtvnetwork/movie-cli-v8/apperror"
+	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 )
 
 const (
@@ -85,7 +85,7 @@ func runMilestones(path string, f milestoneFilter) error {
 func readMilestones(path string) ([]milestoneEntry, error) {
 	file, err := os.Open(path)
 	if err != nil {
-		return nil, apperror.Wrap("open milestones file", err)
+		return nil, appfault.Wrap("open milestones file", err)
 	}
 	defer file.Close()
 
@@ -99,7 +99,7 @@ func readMilestones(path string) ([]milestoneEntry, error) {
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		return nil, apperror.Wrap("read milestones file", err)
+		return nil, appfault.Wrap("read milestones file", err)
 	}
 	return out, nil
 }
@@ -147,7 +147,7 @@ func parseFilterDay(raw string) (time.Time, error) {
 	}
 	t, err := time.Parse(milestoneDayLayout, raw)
 	if err != nil {
-		return time.Time{}, apperror.Wrap("parse date filter (want YYYY-MM-DD)", err)
+		return time.Time{}, appfault.Wrap("parse date filter (want YYYY-MM-DD)", err)
 	}
 	return t, nil
 }

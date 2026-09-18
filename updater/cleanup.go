@@ -8,7 +8,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/alimtvnetwork/movie-cli-v8/apperror"
+	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 )
 
 // powershellConfigName is the build/deploy config file at the repo root.
@@ -39,7 +39,7 @@ func Cleanup(skipPath string) (int, error) {
 
 	selfPath, err := os.Executable()
 	if err != nil {
-		return 0, apperror.Wrap("cannot determine executable path", err)
+		return 0, appfault.Wrap("cannot determine executable path", err)
 	}
 	if resolved, evalErr := filepath.EvalSymlinks(selfPath); evalErr == nil {
 		selfPath = resolved

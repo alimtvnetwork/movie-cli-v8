@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/alimtvnetwork/movie-cli-v8/apperror"
 	"github.com/alimtvnetwork/movie-cli-v8/db"
+	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 	"github.com/alimtvnetwork/movie-cli-v8/templates"
 )
 
@@ -49,12 +49,12 @@ type htmlReportItem struct {
 func writeHTMLReport(stats ScanStats) error {
 	tmplBytes, err := templates.FS.ReadFile("report.html")
 	if err != nil {
-		return apperror.Wrap("read template", err)
+		return appfault.Wrap("read template", err)
 	}
 
 	tmpl, err := template.New("report").Parse(string(tmplBytes))
 	if err != nil {
-		return apperror.Wrap("parse template", err)
+		return appfault.Wrap("parse template", err)
 	}
 
 	data := htmlReportData{
@@ -71,12 +71,12 @@ func writeHTMLReport(stats ScanStats) error {
 	outPath := filepath.Join(stats.OutputDir, "report.html")
 	f, err := os.Create(outPath)
 	if err != nil {
-		return apperror.Wrap("create file", err)
+		return appfault.Wrap("create file", err)
 	}
 	defer f.Close()
 
 	if err := tmpl.Execute(f, data); err != nil {
-		return apperror.Wrap("execute template", err)
+		return appfault.Wrap("execute template", err)
 	}
 	return nil
 }

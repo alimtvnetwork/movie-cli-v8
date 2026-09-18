@@ -12,7 +12,7 @@
 // defaults so existing rows remain valid Active media.
 package db
 
-import "github.com/alimtvnetwork/movie-cli-v8/apperror"
+import "github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 
 // MediaStatusId enum values, kept in sync with the seed order below.
 const (
@@ -24,10 +24,10 @@ const (
 
 func migrateV4(d *DB) error {
 	if err := createMediaStatusTable(d); err != nil {
-		return apperror.Wrap("create MediaStatus", err)
+		return appfault.Wrap("create MediaStatus", err)
 	}
 	if err := seedMediaStatus(d); err != nil {
-		return apperror.Wrap("seed MediaStatus", err)
+		return appfault.Wrap("seed MediaStatus", err)
 	}
 	return addMediaStatusColumns(d)
 }
@@ -47,7 +47,7 @@ func seedMediaStatus(d *DB) error {
 		if _, err := d.Exec(
 			"INSERT OR IGNORE INTO MediaStatus (Name) VALUES (?)", name,
 		); err != nil {
-			return apperror.Wrapf(err, "seed MediaStatus %q", name)
+			return appfault.Wrapf(err, "seed MediaStatus %q", name)
 		}
 	}
 	return nil
@@ -60,7 +60,7 @@ func addMediaStatusColumns(d *DB) error {
 	}
 	for _, stmt := range stmts {
 		if _, err := d.Exec(stmt); err != nil {
-			return apperror.Wrap("alter Media", err)
+			return appfault.Wrap("alter Media", err)
 		}
 	}
 	return nil

@@ -10,9 +10,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/alimtvnetwork/movie-cli-v8/apperror"
 	"github.com/alimtvnetwork/movie-cli-v8/db"
 	"github.com/alimtvnetwork/movie-cli-v8/errlog"
+	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 )
 
 var movieCacheImdbForgetCmd = &cobra.Command{
@@ -67,7 +67,7 @@ func parseForgetArgs(args []string) (string, int, error) {
 	if len(args) == 2 {
 		parsed, convErr := strconv.Atoi(args[1])
 		if convErr != nil {
-			return "", 0, apperror.Wrap("year must be an integer", convErr)
+			return "", 0, appfault.Wrap("year must be an integer", convErr)
 		}
 		year = parsed
 	}

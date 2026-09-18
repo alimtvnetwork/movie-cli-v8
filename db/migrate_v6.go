@@ -4,7 +4,7 @@
 // Spec: spec/08-app/10-remove-move-rescan/rescan-reconciliation/02-reverse-sync-spec.md
 package db
 
-import "github.com/alimtvnetwork/movie-cli-v8/apperror"
+import "github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 
 func migrateV6(d *DB) error {
 	names := []string{
@@ -15,7 +15,7 @@ func migrateV6(d *DB) error {
 		if _, err := d.Exec(
 			"INSERT OR IGNORE INTO ReconciliationActionType (Name) VALUES (?)", name,
 		); err != nil {
-			return apperror.Wrapf(err, "seed ReconciliationActionType %q", name)
+			return appfault.Wrapf(err, "seed ReconciliationActionType %q", name)
 		}
 	}
 	return nil

@@ -8,27 +8,27 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/alimtvnetwork/movie-cli-v8/apperror"
 	"github.com/alimtvnetwork/movie-cli-v8/db"
 	"github.com/alimtvnetwork/movie-cli-v8/errlog"
+	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 )
 
 // executeMoveUndo reverses a file move and updates DB state.
 func executeMoveUndo(database *db.DB, m *db.MoveRecord) error {
 	if _, err := os.Stat(m.ToPath); err != nil {
 		if os.IsNotExist(err) {
-			return apperror.New("file not found at %s — may have been moved manually", m.ToPath)
+			return appfault.New("file not found at %s — may have been moved manually", m.ToPath)
 		}
-		return apperror.Wrapf(err, "cannot access %s", m.ToPath)
+		return appfault.Wrapf(err, "cannot access %s", m.ToPath)
 	}
 
 	destDir := m.FromPath[:strings.LastIndex(m.FromPath, string(os.PathSeparator))]
 	if err := os.MkdirAll(destDir, 0755); err != nil {
-		return apperror.Wrapf(err, "cannot create directory %s", destDir)
+		return appfault.Wrapf(err, "cannot create directory %s", destDir)
 	}
 
 	if err := MoveFile(m.ToPath, m.FromPath); err != nil {
-		return apperror.Wrap("move file back", err)
+		return appfault.Wrap("move file back", err)
 	}
 
 	if err := database.MarkMoveReverted(m.ID); err != nil {
@@ -58,7 +58,7 @@ func executeActionUndo(database *db.DB, a *db.ActionRecord) error {
 	case db.FileActionCompact:
 		return undoCompact(database, a)
 	default:
-		return apperror.New("unknown action type for undo: %s", a.FileActionId)
+		return appfault.New("unknown action type for undo: %s", a.FileActionId)
 	}
 	return database.MarkActionReverted(a.ActionHistoryId)
 }
@@ -66,7 +66,7 @@ func executeActionUndo(database *db.DB, a *db.ActionRecord) error {
 func undoScanAdd(database *db.DB, a *db.ActionRecord) error {
 	if a.MediaId.Valid {
 		if err := database.DeleteMediaByID(a.MediaId.Int64); err != nil {
-			return apperror.Wrapf(err, "undo scan_add (delete media %d)", a.MediaId.Int64)
+			return appfault.Wrapf(err, "undo scan_add (delete media %d)", a.MediaId.Int64)
 		}
 	}
 	return database.MarkActionReverted(a.ActionHistoryId)
@@ -74,14 +74,14 @@ func undoScanAdd(database *db.DB, a *db.ActionRecord) error {
 
 func undoDelete(database *db.DB, a *db.ActionRecord) error {
 	if a.MediaSnapshot == "" {
-		return apperror.New("no snapshot available for action %d — cannot restore", a.ActionHistoryId)
+		return appfault.New("no snapshot available for action %d — cannot restore", a.ActionHistoryId)
 	}
 	// Soft-delete path: if the original row still exists with IsDeleted=1,
 	// just flip it back to Active instead of inserting a duplicate.
 	if a.MediaId.Valid {
 		if existing, getErr := database.GetMediaByID(a.MediaId.Int64); getErr == nil && existing != nil {
 			if restoreErr := database.RestoreMedia(a.MediaId.Int64); restoreErr != nil {
-				return apperror.Wrap("restore soft-deleted media", restoreErr)
+				return appfault.Wrap("restore soft-deleted media", restoreErr)
 			}
 			regenSidecarFor(existing)
 			return database.MarkActionReverted(a.ActionHistoryId)
@@ -89,11 +89,11 @@ func undoDelete(database *db.DB, a *db.ActionRecord) error {
 	}
 	media, err := db.MediaFromJSON(a.MediaSnapshot)
 	if err != nil {
-		return apperror.Wrapf(err, "parse snapshot for action %d", a.ActionHistoryId)
+		return appfault.Wrapf(err, "parse snapshot for action %d", a.ActionHistoryId)
 	}
 	newID, insertErr := database.InsertMedia(media)
 	if insertErr != nil {
-		return apperror.Wrap("re-insert media from snapshot", insertErr)
+		return appfault.Wrap("re-insert media from snapshot", insertErr)
 	}
 	_, _ = database.InsertActionSimple(db.ActionSimpleInput{
 		FileAction: db.FileActionRestore, MediaID: newID, Snapshot: a.MediaSnapshot,
@@ -104,15 +104,15 @@ func undoDelete(database *db.DB, a *db.ActionRecord) error {
 
 func undoRescanUpdate(database *db.DB, a *db.ActionRecord) error {
 	if a.MediaSnapshot == "" {
-		return apperror.New("no snapshot for action %d — cannot revert metadata", a.ActionHistoryId)
+		return appfault.New("no snapshot for action %d — cannot revert metadata", a.ActionHistoryId)
 	}
 	media, err := db.MediaFromJSON(a.MediaSnapshot)
 	if err != nil {
-		return apperror.Wrapf(err, "parse snapshot for action %d", a.ActionHistoryId)
+		return appfault.Wrapf(err, "parse snapshot for action %d", a.ActionHistoryId)
 	}
 	if media.ID > 0 {
 		if updateErr := database.UpdateMediaByID(media); updateErr != nil {
-			return apperror.Wrapf(updateErr, "restore metadata for media %d", media.ID)
+			return appfault.Wrapf(updateErr, "restore metadata for media %d", media.ID)
 		}
 	}
 	return database.MarkActionReverted(a.ActionHistoryId)
@@ -121,7 +121,7 @@ func undoRescanUpdate(database *db.DB, a *db.ActionRecord) error {
 func undoRestore(database *db.DB, a *db.ActionRecord) error {
 	if a.MediaId.Valid {
 		if err := database.DeleteMediaByID(a.MediaId.Int64); err != nil {
-			return apperror.Wrapf(err, "undo restore (delete media %d)", a.MediaId.Int64)
+			return appfault.Wrapf(err, "undo restore (delete media %d)", a.MediaId.Int64)
 		}
 	}
 	return database.MarkActionReverted(a.ActionHistoryId)

@@ -45,11 +45,11 @@ type ScopeFilter struct {
 	Dir      string   // normalized scope dir ("" → no dir filter / --global)
 	Includes []string // glob patterns
 	Excludes []string // glob patterns
-	// UserProvidedPath is true when the user passed an explicit [path]
+	// IsUserProvidedPath is true when the user passed an explicit [path]
 	// positional argument or --global. False means the scope was inferred
 	// from cwd, in which case interactive flows should confirm with the
 	// user before acting.
-	UserProvidedPath bool
+	IsUserProvidedPath bool
 	// AssumeYes is true when the user passed --yes / -y / --assume-yes.
 	// It bypasses BOTH the cwd-scope confirmation prompt AND the per-row
 	// "Undo this? [y/N]" prompt — designed for scripted runs.
@@ -206,8 +206,8 @@ func buildScopeFilter(args []string, home string, isGlobal bool, includes, exclu
 		// User explicitly steered the scope when they passed a [path] arg
 		// or --global. Otherwise we silently fell back to cwd and need to
 		// confirm before doing anything destructive.
-		UserProvidedPath: isGlobal || len(args) > 0,
-		AssumeYes:        assumeYes,
+		IsUserProvidedPath: isGlobal || len(args) > 0,
+		AssumeYes:          assumeYes,
 	}
 }
 
@@ -369,7 +369,7 @@ func ConfirmCwdScope(scanner *bufio.Scanner, f ScopeFilter, verb string) (ScopeF
 // estimate before the user confirms. ConfirmCwdScope wraps it with a
 // nil callback for callers that don't have DB access.
 func ConfirmCwdScopeWithPreview(scanner *bufio.Scanner, f ScopeFilter, verb string, previewCounts ScopePreviewFn) (ScopeFilter, bool) {
-	if f.UserProvidedPath || f.Dir == "" {
+	if f.IsUserProvidedPath || f.Dir == "" {
 		return f, true
 	}
 	if f.AssumeYes {
@@ -388,10 +388,10 @@ func ConfirmCwdScopeWithPreview(scanner *bufio.Scanner, f ScopeFilter, verb stri
 		case "g", "global":
 			fmt.Println("   ↳ switching to --global scope")
 			return ScopeFilter{
-				Includes:         f.Includes,
-				Excludes:         f.Excludes,
-				UserProvidedPath: true,
-				AssumeYes:        f.AssumeYes,
+				Includes:           f.Includes,
+				Excludes:           f.Excludes,
+				IsUserProvidedPath: true,
+				AssumeYes:          f.AssumeYes,
 			}, true
 		case "l", "list", "show":
 			// Re-print and loop — useful when the prompt scrolled off.

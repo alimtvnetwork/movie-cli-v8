@@ -20,7 +20,7 @@ func runMainScanLoop(ctx *ScanContext, videoFiles []videoFile, cfg ScanLoopConfi
 
 	removed := removeStaleEntries(RemoveStaleInput{
 		Database: database, ExistingMedia: existingMedia, DiskPaths: diskPaths,
-		BatchID: cfg.BatchID, Opts: ScanOutputOpts{UseJson: cfg.UseJson, UseTable: cfg.UseTable},
+		BatchID: cfg.BatchID, Opts: ScanOutputOpts{OutputFormatOpts: OutputFormatOpts{IsJsonOutput: cfg.IsJsonOutput, IsTableOutput: cfg.IsTableOutput}},
 	})
 
 	existingPaths := make(map[string]*db.Media, len(existingMedia))
@@ -47,7 +47,7 @@ func splitNewFromExisting(ctx *ScanContext, videoFiles []videoFile,
 		}
 		processExistingMedia(ctx, ProcessExistingInput{
 			EM: em, VF: vf, Client: cfg.Client, Database: ctx.Database,
-			Opts:    ScanOutputOpts{UseTable: cfg.UseTable, UseJson: cfg.UseJson},
+			Opts:    ScanOutputOpts{OutputFormatOpts: OutputFormatOpts{IsTableOutput: cfg.IsTableOutput, IsJsonOutput: cfg.IsJsonOutput}},
 			BatchID: cfg.BatchID, HasTMDb: cfg.HasTMDb,
 		})
 	}
@@ -65,7 +65,7 @@ func dispatchNewFilesParallel(ctx *ScanContext, newFiles []videoFile) {
 
 // emitJsonItemsIfNeeded appends per-file JSON entries after all processing.
 func emitJsonItemsIfNeeded(ctx *ScanContext, existingPaths map[string]*db.Media, cfg ScanLoopConfig) {
-	if !cfg.UseJson {
+	if !cfg.IsJsonOutput {
 		return
 	}
 	for i := range ctx.ScannedItems {
@@ -99,7 +99,7 @@ func removeStaleEntries(input RemoveStaleInput) int {
 		return 0
 	}
 
-	if !input.Opts.UseJson && !input.Opts.UseTable {
+	if !input.Opts.IsJsonOutput && !input.Opts.IsTableOutput {
 		fmt.Printf("  🗑️  Removed %d entries (files no longer on disk)\n\n", delCount)
 	}
 	return delCount
@@ -146,7 +146,7 @@ func handleRescan(ctx *ScanContext, input HandleRescanInput) {
 	preSnapshot, _ := db.MediaToJSON(input.EM)
 	if !rescanMediaEntry(input.Database, input.Client, input.EM) {
 		ctx.Skipped++
-		if !input.Opts.UseTable && !input.Opts.UseJson {
+		if !input.Opts.IsTableOutput && !input.Opts.IsJsonOutput {
 			printRescanFailed(ctx.TotalFiles, input.EM)
 		}
 		return
@@ -156,11 +156,11 @@ func handleRescan(ctx *ScanContext, input HandleRescanInput) {
 		FileAction: db.FileActionRescanUpdate, MediaID: input.EM.ID,
 		Snapshot: preSnapshot, Detail: detail, BatchID: input.BatchID,
 	})
-	if input.Opts.UseTable {
+	if input.Opts.IsTableOutput {
 		printScanTableRow(buildMediaTableRow(ctx.TotalFiles, input.EM, "rescanned"))
 		return
 	}
-	if !input.Opts.UseJson {
+	if !input.Opts.IsJsonOutput {
 		printRescanSuccess(ctx.TotalFiles, input.EM)
 	}
 }
@@ -183,9 +183,9 @@ func printRescanFailed(idx int, em *db.Media) {
 
 func handleSkippedMedia(ctx *ScanContext, em *db.Media, opts ScanOutputOpts) {
 	ctx.Skipped++
-	if opts.UseTable {
+	if opts.IsTableOutput {
 		printScanTableRow(buildMediaTableRow(ctx.TotalFiles, em, "existing"))
-	} else if !opts.UseJson {
+	} else if !opts.IsJsonOutput {
 		printSkippedText(ctx.TotalFiles, em)
 	}
 }

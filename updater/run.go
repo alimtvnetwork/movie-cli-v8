@@ -15,7 +15,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/alimtvnetwork/movie-cli-v8/apperror"
+	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 )
 
 // repoURL is the canonical GitHub URL used when no local repo exists.
@@ -24,7 +24,7 @@ const repoURL = "https://github.com/alimtvnetwork/movie-cli-v8.git"
 // Run executes the update command: resolves repo, creates handoff copy, launches worker.
 func Run(repoPathFlag string) error {
 	if _, err := exec.LookPath("git"); err != nil {
-		return apperror.New("git is not installed or not in PATH")
+		return appfault.New("git is not installed or not in PATH")
 	}
 
 	repoPath, bootstrapped, err := findRepoPath(repoPathFlag)
@@ -72,10 +72,10 @@ func printBootstrapInfo(repoPath string) error {
 func preflightRepo(repoPath string) error {
 	dirty, err := gitOutput(repoPath, "status", "--porcelain")
 	if err != nil {
-		return apperror.Wrap("cannot check git status", err)
+		return appfault.Wrap("cannot check git status", err)
 	}
 	if strings.TrimSpace(dirty) != "" {
-		return apperror.New("repository has local changes; commit or stash them before update")
+		return appfault.New("repository has local changes; commit or stash them before update")
 	}
 	return nil
 }
@@ -83,7 +83,7 @@ func preflightRepo(repoPath string) error {
 func resolveSelfPath() (string, error) {
 	selfPath, err := os.Executable()
 	if err != nil {
-		return "", apperror.Wrap("cannot determine executable path", err)
+		return "", appfault.Wrap("cannot determine executable path", err)
 	}
 	resolved, resolveErr := filepath.EvalSymlinks(selfPath)
 	if resolveErr == nil {

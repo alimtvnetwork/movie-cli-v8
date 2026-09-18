@@ -80,21 +80,25 @@ type HistoryLogInput struct {
 	Year     int
 }
 
+// OutputFormatOpts groups output format flags.
+type OutputFormatOpts struct {
+	IsJsonOutput  bool
+	IsTableOutput bool
+}
+
 // ScanLoopConfig groups parameters for the main scan processing loop.
 type ScanLoopConfig struct {
 	Client    *tmdb.Client
 	JsonItems *[]scanJsonItem
 	ScanDir   string
 	BatchID   string
-	UseJson   bool
-	UseTable  bool
-	HasTMDb   bool
+	OutputFormatOpts
+	HasTMDb bool
 }
 
 // ScanOutputOpts groups output format flags used during scan processing.
 type ScanOutputOpts struct {
-	UseTable bool
-	UseJson  bool
+	OutputFormatOpts
 }
 
 // DryRunCounters groups counter pointers for dry-run scan output.
@@ -218,20 +222,20 @@ type FillRecoInput struct {
 
 // FinalizeScanInput groups parameters for post-scan finalization.
 type FinalizeScanInput struct {
-	Database  *db.DB
-	ScanDir   string
-	OutputDir string
-	Creds     tmdbCredentials
-	JsonItems []scanJsonItem
-	Removed   int
-	UseJson   bool
+	Database     *db.DB
+	ScanDir      string
+	OutputDir    string
+	Creds        tmdbCredentials
+	JsonItems    []scanJsonItem
+	Removed      int
+	IsJsonOutput bool
 }
 
 // DryRunInput groups parameters for dry-run scan processing.
 type DryRunInput struct {
-	VideoFiles []videoFile
-	UseJson    bool
-	UseTable   bool
+	VideoFiles    []videoFile
+	IsJsonOutput  bool
+	IsTableOutput bool
 }
 
 // DryRunOutput groups mutable output pointers for dry-run scan results.

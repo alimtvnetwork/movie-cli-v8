@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-09-18T08:04:36Z",
+  "updated_at": "2026-09-18T10:24:04Z",
   "files": [
     ".ai-memory/plans/completed/01-delete-old-folders.md",
     ".ai-memory/plans/completed/02-migrate-new-folders.md",
@@ -13,8 +13,16 @@
     "D:/work/wp-exam/src/quiz/components/QuizEditor.tsx",
     "D:/work/wp-exam/src/quiz/store/useQuizStore.ts",
     "D:/work/wp-exam/wp-exam.php",
+    "cmd/movie_scan.go",
+    "cmd/movie_scan_loop.go",
+    "cmd/movie_scan_process.go",
+    "cmd/movie_scan_process_helpers.go",
+    "cmd/movie_scan_progress.go",
+    "cmd/path_scope.go",
+    "cmd/types.go",
     "d:/work/wp-exam/02-spec/25-app-spec-audit/01-audit-report.md",
-    "d:/work/wp-exam/quiz-plugin.php"
+    "d:/work/wp-exam/quiz-plugin.php",
+    "tmdb/client.go"
   ],
   "associated_tests": []
 }

@@ -26,7 +26,7 @@ import (
 
 	_ "modernc.org/sqlite"
 
-	"github.com/alimtvnetwork/movie-cli-v8/apperror"
+	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 )
 
 // OpenInMemoryForTest opens a fresh in-memory SQLite database, runs the
@@ -40,16 +40,16 @@ import (
 func OpenInMemoryForTest(basePath string) (*DB, error) {
 	conn, err := sql.Open("sqlite", ":memory:")
 	if err != nil {
-		return nil, apperror.Wrap("open in-memory db", err)
+		return nil, appfault.Wrap("open in-memory db", err)
 	}
 	if _, err := conn.Exec("PRAGMA foreign_keys = ON"); err != nil {
 		conn.Close()
-		return nil, apperror.Wrap("enable foreign keys", err)
+		return nil, appfault.Wrap("enable foreign keys", err)
 	}
 	d := &DB{DB: conn, BasePath: basePath}
 	if err := d.migrateSchema(); err != nil {
 		conn.Close()
-		return nil, apperror.Wrap("migrate schema", err)
+		return nil, appfault.Wrap("migrate schema", err)
 	}
 	return d, nil
 }
@@ -73,7 +73,7 @@ func OpenAtPathForTest(basePath string) (*DB, error) {
 	d := &DB{DB: conn, BasePath: dataDir}
 	if err := d.migrateSchema(); err != nil {
 		conn.Close()
-		return nil, apperror.Wrap("migration failed", err)
+		return nil, appfault.Wrap("migration failed", err)
 	}
 	return d, nil
 }

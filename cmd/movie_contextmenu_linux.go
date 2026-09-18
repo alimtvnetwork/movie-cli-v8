@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/alimtvnetwork/movie-cli-v8/apperror"
+	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 )
 
 const linuxDesktopFileName = "movie-cli.desktop"
@@ -31,11 +31,11 @@ func linuxDesktopPath() string {
 func installContextMenu(exePath string) error {
 	dir := linuxActionsDir()
 	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return apperror.Wrap("mkdir actions dir", err)
+		return appfault.Wrap("mkdir actions dir", err)
 	}
 	content := buildLinuxDesktopFile(exePath)
 	if err := os.WriteFile(linuxDesktopPath(), []byte(content), 0o644); err != nil {
-		return apperror.Wrap("write .desktop file", err)
+		return appfault.Wrap("write .desktop file", err)
 	}
 	return nil
 }
@@ -43,7 +43,7 @@ func installContextMenu(exePath string) error {
 func uninstallContextMenu() error {
 	err := os.Remove(linuxDesktopPath())
 	if err != nil && !os.IsNotExist(err) {
-		return apperror.Wrap("remove .desktop file", err)
+		return appfault.Wrap("remove .desktop file", err)
 	}
 	return nil
 }
