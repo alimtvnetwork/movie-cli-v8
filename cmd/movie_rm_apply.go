@@ -103,9 +103,11 @@ func purgeOnDiskFile(m *db.Media) {
 		return
 	}
 
-	if err := trashbin.MoveToTrash(m.CurrentFilePath); err != nil && !os.IsNotExist(err) {
-		errlog.Warn("rm --purge: trash %s: %v", m.CurrentFilePath, err)
-		return
+	if err := trashbin.MoveToTrash(m.CurrentFilePath); err != nil {
+		if !os.IsNotExist(err) {
+			errlog.Warn("rm --purge: trash %s: %v", m.CurrentFilePath, err)
+			return
+		}
 	}
 
 	fmt.Printf("  🗑️ moved file to trash: %s\n", m.CurrentFilePath)

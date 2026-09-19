@@ -40,7 +40,7 @@ func moveViaXDGTrashSpec(absPath string) error {
 	if trashDir == "" {
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
-			return appfault.Wrap(err, "resolve user home directory")
+			return appfault.Wrap("resolve user home directory", err)
 		}
 		trashDir = filepath.Join(homeDir, ".local", "share", "Trash")
 	} else {
@@ -51,11 +51,11 @@ func moveViaXDGTrashSpec(absPath string) error {
 	infoDir := filepath.Join(trashDir, "info")
 
 	if mkErr := os.MkdirAll(filesDir, 0755); mkErr != nil {
-		return appfault.Wrap(mkErr, "create trash files directory")
+		return appfault.Wrap("create trash files directory", mkErr)
 	}
 
 	if mkErr := os.MkdirAll(infoDir, 0755); mkErr != nil {
-		return appfault.Wrap(mkErr, "create trash info directory")
+		return appfault.Wrap("create trash info directory", mkErr)
 	}
 
 	baseName := filepath.Base(absPath)
@@ -74,12 +74,12 @@ func moveViaXDGTrashSpec(absPath string) error {
 	)
 
 	if writeErr := os.WriteFile(infoPath, []byte(infoContent), 0644); writeErr != nil {
-		return appfault.Wrap(writeErr, "write trashinfo file")
+		return appfault.Wrap("write trashinfo file", writeErr)
 	}
 
 	if renErr := os.Rename(absPath, destPath); renErr != nil {
 		_ = os.Remove(infoPath)
-		return appfault.Wrap(renErr, "move file into trash files directory")
+		return appfault.Wrap("move file into trash files directory", renErr)
 	}
 
 	return nil

@@ -16,12 +16,12 @@ func fallbackQuarantine(absPath string) error {
 	if mkErr := os.MkdirAll(quarantineDir, 0755); mkErr != nil {
 		homeDir, homeErr := os.UserHomeDir()
 		if homeErr != nil {
-			return appfault.Wrap(homeErr, "resolve user home for fallback quarantine")
+			return appfault.Wrap("resolve user home for fallback quarantine", homeErr)
 		}
 
 		quarantineDir = filepath.Join(homeDir, ".movie", "trash")
 		if secMkErr := os.MkdirAll(quarantineDir, 0755); secMkErr != nil {
-			return appfault.Wrap(secMkErr, "create secondary quarantine directory")
+			return appfault.Wrap("create secondary quarantine directory", secMkErr)
 		}
 	}
 
