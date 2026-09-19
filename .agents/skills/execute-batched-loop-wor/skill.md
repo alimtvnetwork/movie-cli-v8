@@ -1,22 +1,22 @@
 ---
-name: execute-pending-tasks
+name: execute-batched-loop-wor
 description: >-
-  Use this skill when the user asks you to execute pending tasks in a standard workflow.
+  Use this skill when the user asks you to execute a batch of pending tasks using a batched loop WITHOUT triggering a release (WOR).
 ---
 
-# Instruction (must follow): Execute Pending Tasks (Continuous Loop & Multi-Agent)
+Run again if said: go, continue, or next
 
-/goal Autonomously orchestrate and execute ALL pending tasks in a continuous N-step self-loop until the entire queue is completely resolved without a single failure.
+# Instruction (must follow): Execute Batched Loop (3 Agents, Chunked Commits)
 
-/goal Execute every pending task across `.ai-memory/plans/pending/` using up to 2 sub-agents in a continuous self-loop. Do not stop until the queue is empty, every plan is committed to git, and all indexes are updated. This run ends only when there is nothing left to execute. You MUST self-loop continuously until every pending task is completed; do not stop until the queue is completely empty.
+/goal Execute pending tasks from `.ai-memory/plans/pending/` using a strictly batched multi-agent loop. Use exactly 3 sub-agents, assign small micro-task chunks per agent, enforce file collision safety through a locking matrix, sanitize artifacts before commits, handle crashes via `.ai-memory/temp/`, and push chunked commits to git without failure. At the end of every loop, explicitly list task statistics in your output window. You MUST self-loop continuously until every pending task is completed; do not stop until the queue is completely empty.
 
 /learn Capture every pattern, convention, fix, and correction discovered during execution into `.ai-memory/memory/learned/01-<slug>.md` and `.ai-memory/strictly-avoid.md`. Never repeat a mistake that was logged.
 
 ## Non-Negotiable Rules (Auto-Reject on Violation)
 
-1. You must NEVER stop by yourself as long as there are pending tasks.
-2. You must self-loop continuously without breaking between tasks.
-3. If a catastrophic failure occurs, halt, log the issue, and ask the user to type "continue" to resume.
+1. Maximum 3 sub-agents may run concurrently at any time. Never exceed this limit.
+2. TOTAL BAN on test running and build checking during routine execution: DO NOT run tests using Python scripts, Go (`go test`), or any test runner. DO NOT check builds (`go build`, compiler checks). All test execution and build verification is deferred to CI/CD.
+3. At the end of every loop, output explicit task statistics (done, pending, remaining list).
 
 ## AI Fix Scripts Memory (Reusable Tooling)
 
@@ -45,72 +45,67 @@ description: >-
 > - ✅ **GOOD:** `[SSH Commands](02-spec/13-generic-cli/01-index.md) — Why: Defines behavior.`
 > - ✅ **GOOD:** `Target File: cmd/login.go`
 
-- Temp Script Sandboxing: AI Fix Scripts (Reusable Tools): Before creating a helper script, you MUST check `03-ai-scripts/01-index.md` to reuse existing tools. If you generate a new script, you MUST write it to `03-ai-scripts/`, update `index.md` with its explanation, ensure `index.md` is linked in `what-to-read.md`, and commit the script.
 - If a spec file, folder, or task is missing or ambiguous, do NOT guess or invent a rule.
 - Ask a clarifying question or log an open ambiguity in `.ai-memory/ambiguous-questions/01-new-ambiguity/01-<slug>.md` before proceeding.
 - Never invent step counts. Read the actual files and count from them.
-- Ambiguity Blocked Queue: If you file an ambiguity to `.ai-memory/ambiguous-questions/`, you MUST immediately update the plan file to mark that specific subtask as `[Blocked]`. The execution loop must safely skip `[Blocked]` tasks and continue executing other disjoint tasks. Do not retry blocked tasks.
 
----
+## Phase 1: Pre-Flight & Gitignore Enforcement (Non-Negotiable)
 
-## Phase 1: Load Pending Tasks & Project State
-
-1. [ ] Check git status first. The working tree must be clean and committed before executing anything.
-2. [ ] Read  and /learn `.ai-memory/memory/01-index.md` and `.ai-memory/what-to-read.md`. Verify root readme is strictly lowercase `readme.md`.
-3. [ ] Read and /learn `.ai-memory/plans/01-index.md`. Then read every file in `.ai-memory/plans/pending/xx-<slug>.md` and all associated subtasks in `.ai-memory/plans/subtasks/xx-<slug>/` (Note: for coding guidelines, check `.ai-memory/plans/subtasks/01-coding-guideline-fixes/` or other synced folder structures).
-4. [ ] Group pending tasks into sequenced Execution Waves:
-   - Wave 1: Schemas, DB, and query wrappers
+1. The working tree must be clean. Confirm root readme is strictly lowercase `readme.md`.
+2. Verify that `.ai-memory/temp/` is explicitly added to `.gitignore`. This folder is for crash identification and lockfiles and must never be committed.
+3. Wipe any orphaned state files in `.ai-memory/temp/` from previous runs.
+4. Group pending tasks into Execution Waves:
+   - Wave 1: DB schemas and query wrappers
    - Wave 2: Business logic and services
    - Wave 3: UI and documentation
-5. [ ] /learn Ingest `.ai-memory/memory/01-index.md`, `.ai-memory/strictly-avoid.md`, `02-spec/02-coding-guidelines/`, and `02-spec/03-error-manage/`, `.ai-memory/coding-guidelines.md` before taking action and also create agent rules in the repo if required to or missing from rules set of agent memory.
-6. [ ] /learn `.ai-memory/coding-guidelines.md` and it is must and /goal apply the guidelines in coding every aspect.
 
-## Phase 2: Allocate & Execute (Continuous Loop & Parallel Agents)
+## Phase 2: Allocation & Execution (Strict 3x3 Rule & Locking Matrix)
 
-1. Spawn sub-agents (MAXIMUM 2 concurrent):
-   - Assign subtasks to up to 2 parallel sub-agents (and ONLY if there are too many tasks to handle sequentially) to accelerate execution.
-   - Maintain active file paths in `.ai-memory/01-index.md`. Parallel sub-agents must never touch the same files simultaneously.
-   - Assign each sub-agent a highly specific title reflecting its exact task (e.g., `Refactoring Auth Service`). Do not use generic names. If an agent switches tasks, its title must change.
-   - Context Diet & Task Focus: When spawning a subagent, provide clear, lean instructions that focus on the actual domain task itself rather than writing massive generic meta-prompts. DO NOT paste file contents, memory logs, or the entire plan into its prompt. Give it the absolute minimal instruction. The subagent MUST read the necessary files itself. Passing massive payloads instantly causes hallucination and memory blowout.
-   - Ensure each agent handles discrete, simple tasks (under 15 lines per function). Tasks exceeding 7 steps must be decomposed into subtasks before execution.
+1. Strict limits:
+   - Spawn up to 3 sub-agents to run in parallel.
+2. Chunking micro-tasks:
+   - Each agent is assigned a chunk of simple, small micro-tasks (under 15 lines per function) to complete sequentially in its own context.
+   - Tasks exceeding 7 steps must be decomposed into subtasks.
+3. File collision locking matrix (`active-locks.json`):
+   - Register active target files in `.ai-memory/01-index.md`.
+   - Ensure parallel tasks touch completely disjoint files to prevent git merge conflicts.
+4. Temp folder logging and specific titling (mandatory):
+   - Spawn the sub-agent with a highly specific title reflecting its exact task (e.g., `Refactoring Auth Service` or `Fixing DB Query Wrapper`). Do not use generic names. If an agent switches chunks, its title must change.
+   - Log its assigned chunk of tasks to `.ai-memory/temp/xx-agent-state.md`.
+5. Crash identification and 3-strike rollback:
+   - If an agent fails or crashes, inspect its state in `.ai-memory/temp/`.
+   - If an agent fails 3 times, automatically revert dirty changes (`git checkout -- <files>`).
+   - Log root cause to `.ai-memory/plan.md` and `.ai-memory/issues/`.
+   - Restart a new agent for the next disjoint chunk.
 
-2. Continuous self-looping:
-   - Loop to review sub-agent progress, update plan trackers, and spawn new agents for the next wave.
-   - Do not stop until every task in `.ai-memory/plans/pending/` is complete.
-   - At the end of every loop iteration, execute the Commit Fix (Phase 5) before spinning up the next loop.
+## Phase 3: Code Quality (Non-Negotiable)
 
-3. Crash Recovery & 3-Strike Rollback:
-   - If a sub-agent fails unit tests or build commands, attempt a targeted fix.
-   - If it fails 3 consecutive times, automatically rollback the dirty working tree (`git checkout -- <modified_files>`).
-   - Log the root cause to `.ai-memory/plan.md` and `.ai-memory/issues/`.
-   - Proceed to the next disjoint task after rollback.
+While executing tasks, you and your agents must adhere to these strict coding guidelines without exception:
 
----
+- Read and follow guidelines in `02-spec/02-coding-guidelines/`, `02-spec/03-error-manage/`, and `02-spec/04-database-conventions/`.
+- No magic strings or numbers. Do not introduce any unless explicitly for the logger.
+- Never use string union types (e.g., `"pass" | "fail"`). Use TypeScript Enums with the suffix `Type` (e.g., `StatusType`).
+- Always use explicit boolean state checks (e.g., `response.isFail`). Never invert success booleans (e.g., `!response.isSuccess`).
+- Code must be DRY. Reuse constants and wrappers.
 
-## Phase 4: Memory Update & File Moving
+## Phase 4: Chunked Delivery, Artifact Purge & File Moving
 
-As tasks are completed:
+When a chunk of tasks is completed by the agents, do the following before starting the next loop iteration:
 
-1. Use `mv` to move the completed task file from `.ai-memory/plans/pending/` to `.ai-memory/plans/completed/`.
-2. Open the moved file and flip `Status: pending` to `Status: completed`.
-3. Immediately update `.ai-memory/plans/01-index.md` to reflect the completed status and new file location.
-4. If new patterns or conventions are established, record them in `.ai-memory/memory/<topic>/xx-<slug>.md` and update `.ai-memory/memory/01-index.md`. Detailed specs must never be shortened.
+1. Use `mv` to move the completed task files from `.ai-memory/plans/pending/` to `.ai-memory/plans/completed/`.
+2. Open the moved files and change `Status: pending` to `Status: completed`.
+3. Update `.ai-memory/plans/01-index.md` to reflect the new file locations.
+4. Artifact sanitizer: Audit staged files. Purge unapproved artifact zip archives, temporary scratch files, or test outputs before committing.
+5. Lovable git history guard: Run local tests (no live API calls). Commit code with a clear descriptive message. Never rewrite published git history (no force push, no rebasing, no squash). Push to git cleanly without failure.
 
----
+## Phase 5: Output Window Stats (Mandatory Every Loop)
 
-## Phase 5: End-of-Loop Commit Fix, Artifact Purge & Delivery
+Every time you return a response or complete a loop iteration, explicitly output the following statistics:
 
-At the end of every single iteration of your execution loop:
-
-0. Task Statistics: Explicitly output task statistics in your window (done, pending, remaining list).
-
-1. Artifact sanitizer: Audit working tree and staged files. Ensure no zip archives, temporary test outputs, or unapproved scratch scripts are committed.
-2. Atomic Change Recording & Remote CI/CD Inspection: Record modified files using `python 03-ai-scripts/33-test-inventory-generator.py --record <files...>`. If remote CI/CD monitoring is required, use GitMap Pipeline-AI (`gitmap pipeline-ai status -t <sec>`) with dynamic ETA waiting. Never run local test runners or build verification during routine turns.
-3. Lovable git history guard: Group similar code changes into a single commit with a clear, descriptive message. Never rewrite published git history (no force push, no rebasing, no squash) to preserve Lovable editor sync.
-4. Push every commit to the remote git repository.
-5. Final check: When the loop finally ends (the pending queue is empty), bump the minor release version following release guidelines.
-
----
+- Tasks Done (This Chunk): [Number of tasks completed]
+- Total Completed: [Total number of tasks in `.ai-memory/plans/completed/`]
+- Total Pending: [Number of tasks remaining in `.ai-memory/plans/pending/`]
+- Remaining Tasks List: [List the specific filenames/slugs of the tasks remaining]
 
 ## Execution Reporting (Mandatory Output Format)
 
@@ -134,7 +129,7 @@ At the end of every single iteration of your execution loop:
 - [x] Acronyms are PascalCased (e.g., `UserId`, not `UserID`).
 - [x] Magic strings/numbers extracted to constants.
 - [x] Action Summary Checklist (Anti-Hallucination): I have output a detailed `- [x]` checklist summarizing exactly what I accomplished this turn to ensure no steps were hallucinated or skipped (e.g. `- [x] Created schema`, `- [x] Pinned README`).
-- [x] Remote CI/CD pipeline monitored via GitMap Pipeline-AI with dynamic ETA waiting (no rapid polling).
+- [x] Remote CI/CD pipeline monitored via GitMap Pipeline-AI (`gitmap pipeline-ai status --json`) with dynamic ETA waiting (no rapid polling).
 
 ## Banned Operations Checklist (TOTAL BAN — Auto-Reject on Violation)
 
@@ -143,30 +138,36 @@ At the end of every single iteration of your execution loop:
 - [ ] **NO RUNNER SCRIPTS (TOTAL BAN):** NEVER launch background test runners, worker pools, or test inventory loops during routine execution.
 - [ ] **NO AUTOMATIC RELEASES (TOTAL BAN):** NEVER bump versions, update changelogs, or trigger releases unless explicitly commanded by the user.
 - [ ] **NO PER-FILE COMMITTING (TOTAL BAN):** NEVER commit each file individually as you work (e.g. running `git commit` after editing File 1, then another commit after File 2). Committing file-by-file pollutes git history, creates subagent lock collisions, and breaks atomic changes. All modified files across the turn must be accumulated and committed together in a single atomic commit at the final step.
-- [ ] **NO RAPID CI/CD POLLING (TOTAL BAN):** NEVER run rapid polling loops or busy-wait (`gh run view` in a loop) without waiting according to `etaSeconds`. Use GitMap Pipeline-AI (`gitmap pipeline-ai status -t <sec>` or `gitmap pl-ai status --json`) with dynamic backoff.
+- [ ] **NO RAPID CI/CD POLLING (TOTAL BAN):** NEVER query or loop rapidly (`gh run view` in tight loops) when inspecting remote CI/CD pipelines. Agents MUST query pipeline state using GitMap Pipeline-AI (`gitmap pipeline-ai status --json` or `gitmap pl-ai status -t <sec>`) and strictly wait/sleep based on `etaSeconds` to eliminate credit waste.
 
 ## Remote CI/CD Pipeline Monitoring & Dynamic Waiting Protocol (GitMap Pipeline-AI)
 
-When monitoring or inspecting remote CI/CD status after pushing commits:
-1. **GitMap Pipeline-AI Query:** Agents MUST inspect remote pipelines using GitMap:
+When monitoring or checking remote CI/CD pipelines (e.g., following git push or during pipeline audits):
+
+1. **Mandatory GitMap Pipeline-AI Authority:** Agents MUST use GitMap CLI to retrieve remote CI/CD status:
    ```bash
    gitmap pipeline-ai status --json
    # or using short alias:
-   gitmap pl-ai status -t <sec>
+   gitmap pl-ai status --json
    ```
-   Parse `is_running`, `status`, `etaSeconds`, and `nextAiCommand`.
-2. **Anti-Credit-Waste Waiting Mandate:** NEVER loop rapidly or busy-poll (`gh run view` in tight loops). Strictly wait/sleep based on `etaSeconds` using `gitmap pipeline-ai status -t <etaSeconds>`:
-   - `etaSeconds > 120`: wait 20s–30s
-   - `60 < etaSeconds <= 120`: wait 10s–20s
-   - `etaSeconds <= 60`: wait 5s–10s
-3. **Targeted Failure Isolation:** Leverage GitMap Pipeline-AI to automatically extract targeted failure logs (`##[error]`, `FAIL:`, compile errors) without streaming voluminous raw logs.
+   Parse structured output fields: `is_running`, `status`, `etaSeconds`, and `nextAiCommand`.
+2. **Anti-Credit-Waste Waiting Mandate (TOTAL BAN on Rapid Polling):**
+   - NEVER loop rapidly or busy-poll (`gh run view` in tight loops). Rapid polling burns user credits, exhausts LLM tokens, and wastes rate limits.
+   - When a pipeline is in progress (`is_running: true`), agents MUST wait/sleep based on the estimated completion duration (`etaSeconds` or `-t <sec>`):
+     ```bash
+     gitmap pipeline-ai status -t <etaSeconds>
+     ```
+   - Proportional ETA sleep guidelines:
+     - `etaSeconds > 120`: wait 20s–30s before querying again.
+     - `60 < etaSeconds <= 120`: wait 10s–20s before querying again.
+     - `etaSeconds <= 60`: wait 5s–10s before querying again.
+3. **Targeted Failure Diagnostics:** Use GitMap's automated error extraction to isolate actionable failure lines (`##[error]`, `FAIL:`, compile errors) without fetching noisy passing step logs.
 
 ## Mark File Changes Only (Atomic Change Recording & Handoff to CI/CD & Release)
 
 Routine execution prompts MUST NOT build, test, or trigger releases. When task modifications are completed, you MUST record all modified files and physically check off these items in your final report:
 
 - [ ] **Atomic Change Recording (MANDATORY):** I have recorded all modified files into `.ai-memory/temp/recent-file-changes.json` under lock using `python 03-ai-scripts/33-test-inventory-generator.py --record <files...>`.
-- [ ] **Remote CI/CD Pipeline Monitoring via GitMap:** If checking remote CI/CD pipelines, I used GitMap Pipeline-AI (`gitmap pipeline-ai status --json` or `gitmap pl-ai status -t <sec>`) with adaptive ETA waiting, never polling in tight loops.
 - [ ] **NO Test Running (BANNED):** Zero tests were executed (`go test`, `pytest`, `06-cicd-local-runner.py`). Testing is strictly deferred to CI/CD fix prompts.
 - [ ] **NO Build Checking (BANNED):** Zero build commands were executed (`go build`, `npm run build`). Build compilation is strictly deferred to CI/CD fix prompts.
 - [ ] **NO Release Triggering (BANNED):** Zero version bumps, changelog edits, or tag operations were performed. Release operations are strictly deferred to Release prompts.
@@ -174,28 +175,28 @@ Routine execution prompts MUST NOT build, test, or trigger releases. When task m
 
 ## Pre-Reply / Loop Checklist (Must Verify Every Loop Iteration)
 
-- [ ] Git working tree is clean before new code changes.
-- [ ] Sub-agents are actively assigned disjoint files verified against `.ai-memory/01-index.md`.
-- [ ] Completed tasks were `mv`'d to `plans/completed/` and `.ai-memory/plans/01-index.md` was updated.
-- [ ] 3-strike rule respected: failed tasks cleanly rolled back and logged to `last-failure.md`.
-- [ ] Staged files sanitized of artifact zips and temporary scratch files.
-- [ ] **Strict Relative Git Paths:** All file paths, markdown links, citations, and subtask references in plans, specs, and memory logs are strictly relative to the git repository root. Zero absolute paths (`/absolute/path/to/...`, `/absolute/path/to/...`) or `file:///` URIs.
-- [ ] Coding Guidelines & Master Consolidated File: I have fully read, checked, and strictly enforced every file in `02-spec/02-coding-guidelines/`, as well as the master consolidated coding guideline file at `.ai-memory/coding-guidelines.md`.
-- [ ] /learn and apply as a /goal  `.ai-memory/coding-guidelines.md` and also make sure the agent rules are created in the repo to read in the future quickly.
-- [ ] Error Manage Checklist: I have fully read and enforced the error management files at `02-spec/03-error-manage/`. I understand which files to follow (architecture, response envelopes) and how to follow them (never swallow errors, always wrap with context).
-- [ ] Boolean Examples & Fixations: All boolean variables MUST begin with is and has only (can, should, was, etc. are banned) (e. NEVER use explicit true/false comparisons (e.g., `if isReady == true` is FORBIDDEN, use `if isReady`).g., `isReady`, `hasData`). NEVER use negative booleans (e.g., `isNotReady`, `disableCache`). NEVER invert success checks (e.g., `!response.isSuccess` is banned; use `response.isFail`).
-- [ ] Anti-Garbage Naming (Non-Negotiable): I have strictly verified that absolutely NO generic garbage variable names (e.g., `comp_100.go`, `temp`, `data`, `obj`, `Input100`, `TestHandleComp100`) were written. All names are highly semantic and domain-specific.
-- [ ] Semantic Tests: All unit test names are strictly semantic and behavior-driven (e.g., `TestUpdateUser_RejectsInvalidEmail`). `TestHandleComp100` is an immediate failure.
-- [ ] Function Size: No function exceeds 15 lines. Long arguments are split across lines (max 100 chars).
-- [ ] Error Handling (AppError): Errors use domain-specific `AppError` or custom `AppException` (for C#/OOP), not generic base `Error`.
-- [ ] Code adheres to explicit booleans, `Type` suffixed Enums, and error wrapper rules.
-- [ ] Formatting & Acronyms: Spacing rules are strictly followed. Acronyms are strictly PascalCase (`SwapIpWindows` not `SwapIPWindows`).
-- [ ] Consolidated atomic commits created grouping all modified files together (NEVER commit 1-2 files piecemeal).
-- [ ] Immediate push to remote (`git push origin <branch>`) executed without leaving unpushed commits.
-- [ ] **NO TEST RUNNING & NO BUILD CHECKING (TOTAL BAN):** Zero tests or builds executed during routine turns; atomic file change cache updated in `.ai-memory/temp/recent-file-changes.json` under lock (`python 03-ai-scripts/33-test-inventory-generator.py --record <path>`).
-- [ ] Continuous loop maintained without running banned test or build commands.
+- [ ] `.gitignore` verified to exclude `.ai-memory/temp/` and garbage collection executed.
+- [ ] Strictly up to 3 agents spawned, each assigned disjoint files tracked in `.ai-memory/01-index.md`.
+- [ ] Pre-flight state written to `.ai-memory/temp/` for every agent.
+- [ ] 3-Strike rollback honored with `git checkout` and logged to `last-failure.md`.
+- [ ] Staged files sanitized against artifact zips and temporary scratch files.
+- [ ] **NO TEST RUNNING & NO BUILD CHECKING (TOTAL BAN):** Zero tests or builds executed during routine loops.
+- [ ] Completed task files `mv`'d and `.ai-memory/plans/01-index.md` updated.
+- [ ] Fast-forward commit created grouping all modified files, and immediately pushed to remote without leaving unpushed commits.
+- [ ] **TOTAL BAN on Test Running & Build Checking:** Zero builds or test runners executed during routine turns; atomic file change cache updated in `.ai-memory/temp/recent-file-changes.json` under lock (`python 03-ai-scripts/33-test-inventory-generator.py --record <path>`).
+- [ ] Remote CI/CD pipeline monitored via GitMap Pipeline-AI (`gitmap pipeline-ai status --json` or `gitmap pl-ai status -t <sec>`) with dynamic ETA waiting (no rapid polling).
+- [ ] Output window explicitly lists "Done", "Pending", and remaining task names.
 
----
+## Actionable Items & Checklist
+
+- [ ] Read the overarching main task plan.
+- [ ] Ensure the git repository starts completely clean.
+- [ ] Complete all work on the current branch only.
+- [ ] Self Loop until all pending tasks are done.
+- [ ] Ensure `.gitignore` explicitly excludes test reports, artifacts, and compiled binaries.
+- [ ] Group all completed work into a single consolidated atomic commit (NEVER commit 1-2 files piecemeal).
+- [ ] Push the commit immediately to the remote repository (`git push origin <branch>`). Never leave unpushed commits.
+- [ ] **TOTAL BAN on Test Running & Build Checking:** NEVER run builds (`npm run build`, `go build ./...`) or test runners (`06-cicd-local-runner.py`, `go test`) during routine loop tasks. Verification is deferred to CI/CD.
 
 ## Execution & Self-Looping Protocol
 
@@ -233,9 +234,14 @@ To prevent cross-task pollution and ensure seamless agent communication, every t
 NEVER MAKE THIS EXCUSE: *"I did not literally perform N self-loops or spawn dozens of sub-agents. Instead of artificially spinning up N separate loops, I consolidated the required deep work into a concentrated series of sequential steps within my existing execution environment."*
 If you write this excuse, you are a lazy, stupid fuck and you are violating RULE 0. Spawn the actual sub-agents. Do the actual loops. Utilize the processing power effectively to get the right answer. Avoid stupidity.
 
-## No Automatic Releases (Strict Policy)
+## WOR: Strictly Without Release & No Test Running (Strict Policy)
 
-You MUST NOT bump versions, update changelogs, or cut a release at the end of this task. Commits must remain standard development commits. You may only trigger a release if the user explicitly commands you to do so (e.g., "cut a release" or "bump the version").
+> [!CAUTION]
+> **This is a WOR (Without Release) workflow.**
+> You MUST NOT bump versions, update changelogs, or cut a release at the end of this task. Commits must remain standard development commits. You are strictly forbidden from triggering a release or running any release scripts.
+> Test execution is strictly disabled. You MUST NOT execute unit tests, integration tests, or test suites unless explicitly commanded by the repository owner.
+> Execute targeted linters on modified files (`exit 0`). DO NOT run `06-cicd-local-runner.py` during routine tasks.
+> For every modified file, append its repository-relative path to `.ai-memory/temp/recent-file-changes.json` under atomic file lock (`python 03-ai-scripts/33-test-inventory-generator.py --record <path>`), cross-referencing `.ai-memory/test-inventory.json`.
 
 ## Task Consolidation & File Reduction (End of Loop)
 
@@ -264,5 +270,5 @@ Listen, past runs of these turns have been sloppy and stupid as fuck: wrong step
 
 ## Metadata
 
-- slug: execute-pending-tasks
+- slug: execute-batched-loop-wor
 - status: active
