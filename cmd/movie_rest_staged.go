@@ -21,7 +21,9 @@ import (
 type stagedCreateRequest struct {
 	ActionType      string `json:"action_type"`
 	MediaID         int64  `json:"media_id"`
+	SourcePath      string `json:"source_path,omitempty"`
 	DestinationPath string `json:"destination_path,omitempty"`
+	DeleteFolder    bool   `json:"delete_folder,omitempty"`
 }
 
 func handleStagedList(database *db.DB, w http.ResponseWriter, r *http.Request) {
@@ -58,11 +60,23 @@ func handleStagedCreate(database *db.DB, w http.ResponseWriter, r *http.Request)
 	if req.MediaID > 0 {
 		nullMediaID = sql.NullInt64{Int64: req.MediaID, Valid: true}
 		media, fetchErr := database.MediaByID(req.MediaID)
-		if fetchErr == nil && media != nil {
-			sourcePath = media.CurrentFilePath
-			snapBytes, _ := json.Marshal(media)
-			snapshot = string(snapBytes)
+		if fetchErr == nil {
+			if media != nil {
+				sourcePath = media.CurrentFilePath
+				if req.DeleteFolder {
+					if media.CurrentFilePath != "" {
+						sourcePath = filepath.Dir(media.CurrentFilePath)
+					}
+				}
+
+				snapBytes, _ := json.Marshal(media)
+				snapshot = string(snapBytes)
+			}
 		}
+	}
+
+	if req.SourcePath != "" {
+		sourcePath = req.SourcePath
 	}
 
 	rec := &db.StagedActionRecord{

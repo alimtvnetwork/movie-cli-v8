@@ -155,6 +155,10 @@
   .staged-btn.discard { background: #27272a; color: #a1a1aa; }
   .staged-btn.discard:hover { background: #3f3f46; color: #fff; }
   .card.staged-delete { opacity: 0.55; border: 1px dashed #f59e0b; position: relative; }
+  .card.staged-delete .delete, .card.staged-delete .delete-folder-btn { display: none; }
+  .card .undo-btn { display: none; background: #f59e0b; color: #000; font-weight: bold; }
+  .card.staged-delete .undo-btn { display: inline-flex; }
+  .action-btn.delete-folder-btn { font-size: 0.8rem; }
   .card.staged-delete::after {
     content: "MARKED FOR TRASH (STAGED)"; position: absolute; top: 0.5rem; right: 0.5rem;
     background: rgba(245,158,11,0.9); color: #000; font-size: 0.65rem; font-weight: 700;
@@ -274,7 +278,9 @@
           <div class="card-actions">
             <button onclick="markWatched({{.ID}}, this)" class="action-btn watched-btn" title="Mark as watched">👁</button>
             <button onclick="showSimilar({{.ID}}, '{{.Title}}')" class="action-btn similar-btn" title="Find similar">🔍</button>
-            <button onclick="deleteMedia({{.ID}}, this)" class="action-btn delete" title="Remove">🗑</button>
+            <button onclick="undoStagedAction({{.ID}}, this)" class="action-btn undo-btn" title="Undo / Unstage">↩</button>
+            <button onclick="deleteFolder({{.ID}}, this)" class="action-btn delete-folder-btn" title="Delete Folder (Move to Trash)">📁🗑</button>
+            <button onclick="deleteMedia({{.ID}}, this)" class="action-btn delete" title="Remove File">🗑</button>
           </div>
         </div>
       </div>
@@ -732,6 +738,9 @@ function renderStagedBar() {
   var bar = document.getElementById('stagedBar');
   var countSpan = document.querySelector('#stagedCount span');
   if (!bar) return;
+  document.querySelectorAll('.card.staged-delete').forEach(function(c) {
+    c.classList.remove('staged-delete');
+  });
   if (stagedActions && stagedActions.length > 0) {
     countSpan.textContent = stagedActions.length;
     bar.classList.add('show');
@@ -743,9 +752,6 @@ function renderStagedBar() {
     });
   } else {
     bar.classList.remove('show');
-    document.querySelectorAll('.card.staged-delete').forEach(function(c) {
-      c.classList.remove('staged-delete');
-    });
   }
 }
 
@@ -767,6 +773,54 @@ async function deleteMedia(id, btn) {
     await loadStagedActions();
   } catch(e) {
     showToast('Network error: ' + e.message, true);
+  }
+}
+
+async function deleteFolder(id, btn) {
+  if (restRequired()) return;
+  if (!confirm('Stage removal of this media\'s parent folder? (Files will NOT be deleted until you click Accept All)')) return;
+  try {
+    var r = await fetch(API_BASE + '/api/staged', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action_type: 'delete',
+        media_id: id,
+        delete_folder: true
+      })
+    });
+    if (!r.ok) {
+      var errText = await r.text();
+      showToast('Action failed: ' + errText, true);
+      return;
+    }
+    var card = btn.closest('.card');
+    if (card) {
+      card.classList.add('staged-delete');
+    }
+    showToast('Folder marked for trash (staged). Click Accept All to execute.');
+    await loadStagedActions();
+  } catch(e) {
+    showToast('Network error: ' + e.message, true);
+  }
+}
+
+async function undoStagedAction(mediaId, btn) {
+  if (restRequired()) return;
+  var action = stagedActions.find(function(a) {
+    return a.media_id && a.media_id.Valid && a.media_id.Int64 === mediaId;
+  });
+  if (!action) return;
+  try {
+    var r = await fetch(API_BASE + '/api/staged/' + action.staged_action_id, { method: 'DELETE' });
+    if (r.ok) {
+      showToast('Staged action undone');
+      var card = btn ? btn.closest('.card') : document.querySelector('.card[data-id="' + mediaId + '"]');
+      if (card) card.classList.remove('staged-delete');
+      await loadStagedActions();
+    }
+  } catch(e) {
+    showToast('Failed to undo: ' + e.message, true);
   }
 }
 
