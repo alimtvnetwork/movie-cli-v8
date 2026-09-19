@@ -31,4 +31,17 @@ dist-ssr
 /scan
 .gitmap/release-assets
 release-assets
-.gitmap/backup/
+.gitmap/backup/
+
+# Test reports, coverage, and artifacts
+*.test-report.*
+test-reports/
+coverage/
+*.out
+coverage.txt
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+

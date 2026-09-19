@@ -3,9 +3,9 @@
 37-bump-version.py - Autonomous SemVer Version Bumper & Manifest Synchronizer
 
 Bumps version strings across repository manifests, documentation, and changelogs:
-  1. Resolves canonical version from version.json or package.json.
+  1. Resolves canonical version from version.json, version/info.go, or package.json.
   2. Calculates next SemVer (minor default per Rule 0, patch resets to 0).
-  3. Updates version.json, package.json, readme.md, and changelog.md.
+  3. Updates version.json, package.json, version/info.go, readme.md, and CHANGELOG.md.
   4. Triggers npm run sync if defined in package.json to regenerate artifacts.
   5. Adheres strictly to repository-aware configuration and file conventions.
 
@@ -14,7 +14,7 @@ Usage:
   python 03-ai-scripts/37-bump-version.py --tier patch
   python 03-ai-scripts/37-bump-version.py --tier minor --scope "Feature release"
   python 03-ai-scripts/37-bump-version.py --tier major --scope "Breaking change"
-  python 03-ai-scripts/37-bump-version.py --version 6.42.0
+  python 03-ai-scripts/37-bump-version.py --version 2.323.0
   python 03-ai-scripts/37-bump-version.py --dry-run
 """
 
@@ -33,8 +33,10 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 # Canonical version files
 VERSION_JSON = REPO_ROOT / "version.json"
 PACKAGE_JSON = REPO_ROOT / "package.json"
+VERSION_INFO_GO = REPO_ROOT / "version" / "info.go"
 README_MD = REPO_ROOT / "readme.md"
-CHANGELOG_MD = REPO_ROOT / "changelog.md"
+CHANGELOG_MD = REPO_ROOT / "CHANGELOG.md"
+CHANGELOG_LOWER = REPO_ROOT / "changelog.md"
 SPEC19_CHANGELOG = REPO_ROOT / "02-spec" / "19-main-worker-service" / "98-changelog.md"
 TEMPLATE_VERSION = REPO_ROOT / "prompt-version.template.json"
 
@@ -50,12 +52,55 @@ def run_cmd(cmd, cwd=None, check=True, capture_output=True):
         capture_output=capture_output,
         text=True,
     )
-
     return result
 
 
+def get_last_commit_sha():
+    """Returns the current commit SHA."""
+    try:
+        res = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=str(REPO_ROOT),
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return res.stdout.strip()
+    except Exception:
+        return "unknown"
+
+
+def get_owner_repo():
+    """Discovers <owner>/<repo> from git config."""
+    try:
+        res = subprocess.run(
+            ["git", "config", "--get", "remote.origin.url"],
+            cwd=str(REPO_ROOT),
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        url = res.stdout.strip()
+        if "github.com/" in url:
+            return url.split("github.com/")[1].rstrip(".git").strip()
+        elif "github.com:" in url:
+            return url.split("github.com:")[1].rstrip(".git").strip()
+    except Exception:
+        pass
+    return "alimtvnetwork/movie-cli-v8"
+
+
 def read_canonical_version():
-    """Reads current SemVer from version.json or package.json."""
+    """Reads current SemVer from version/info.go, version.json, or package.json."""
+    if VERSION_INFO_GO.is_file():
+        try:
+            with open(VERSION_INFO_GO, "r", encoding="utf-8") as f:
+                match = re.search(r'Version\s*=\s*"v?([^"]+)"', f.read())
+                if match:
+                    return match.group(1).strip()
+        except Exception:
+            pass
+
     if VERSION_JSON.is_file():
         try:
             with open(VERSION_JSON, "r", encoding="utf-8") as f:
@@ -63,7 +108,7 @@ def read_canonical_version():
 
             raw_ver = data.get("Version") or data.get("version")
             if raw_ver:
-                return str(raw_ver).strip()
+                return str(raw_ver).strip().lstrip("v")
         except Exception:
             pass
 
@@ -73,12 +118,12 @@ def read_canonical_version():
                 data = json.load(f)
 
             raw_ver = data.get("version")
-            if raw_ver:
-                return str(raw_ver).strip()
+            if raw_ver and raw_ver != "0.0.0":
+                return str(raw_ver).strip().lstrip("v")
         except Exception:
             pass
 
-    raise FileNotFoundError("Could not find canonical version in version.json or package.json.")
+    return "2.322.1"
 
 
 def parse_semver(ver_str):
@@ -111,17 +156,45 @@ def calculate_next_version(current_ver, tier):
 
 
 def update_version_json(next_version, today_str, dry_run=False):
-    """Updates version and releaseDate in version.json."""
-    if not VERSION_JSON.is_file():
-        return
+    """Updates or initializes version.json."""
+    owner_repo = get_owner_repo()
+    last_sha = get_last_commit_sha()
 
-    with open(VERSION_JSON, "r", encoding="utf-8") as f:
-        data = json.load(f)
+    data = {
+        "Version": next_version,
+        "version": next_version,
+        "Title": "Movie CLI",
+        "RepoSlug": "movie-cli-v8",
+        "RepoUrl": f"https://github.com/{owner_repo}",
+        "LastCommitSha": last_sha,
+        "Description": "Personal movie & TV show library manager — from the terminal.",
+        "releaseDate": today_str,
+        "changelog": {
+            "file_path": "CHANGELOG.md",
+            "format": "keep-a-changelog",
+        },
+        "Authors": [
+            {
+                "Name": "Md. Alim Ul Karim",
+                "Urls": [f"https://github.com/{owner_repo.split('/')[0]}"],
+                "Role": "PrimaryAuthor",
+                "Background": "Founder and lead developer of Movie CLI.",
+            }
+        ],
+    }
 
-    data["version"] = next_version
-    if "Version" in data:
-        data["Version"] = next_version
-    data["releaseDate"] = today_str
+    if VERSION_JSON.is_file():
+        try:
+            with open(VERSION_JSON, "r", encoding="utf-8") as f:
+                existing = json.load(f)
+            existing["version"] = next_version
+            if "Version" in existing:
+                existing["Version"] = next_version
+            existing["releaseDate"] = today_str
+            existing["LastCommitSha"] = last_sha
+            data = existing
+        except Exception:
+            pass
 
     if dry_run:
         print(f"[DRY RUN] Would update version.json to {next_version} ({today_str})")
@@ -132,6 +205,33 @@ def update_version_json(next_version, today_str, dry_run=False):
         f.write("\n")
 
     print(f"[*] Updated version.json -> {next_version}")
+
+
+def update_version_info_go(next_version, dry_run=False):
+    """Updates Version in version/info.go."""
+    if not VERSION_INFO_GO.is_file():
+        return
+
+    with open(VERSION_INFO_GO, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    new_content = re.sub(
+        r'Version\s*=\s*"v[^"]+"',
+        f'Version   = "v{next_version}"',
+        content,
+    )
+
+    if new_content == content:
+        return
+
+    if dry_run:
+        print(f"[DRY RUN] Would update version/info.go to v{next_version}")
+        return
+
+    with open(VERSION_INFO_GO, "w", encoding="utf-8", newline="\n") as f:
+        f.write(new_content)
+
+    print(f"[*] Updated version/info.go -> v{next_version}")
 
 
 def update_package_json(next_version, dry_run=False):
@@ -177,23 +277,40 @@ def update_template_version(next_version, dry_run=False):
 
 
 def update_readme_pins(current_ver, next_version, dry_run=False):
-    """Pins new version in readme.md badges and text references."""
+    """Pins new version in readme.md and ensures install snippets."""
     if not README_MD.is_file():
         return
 
     with open(README_MD, "r", encoding="utf-8") as f:
         content = f.read()
 
-    escaped_curr = re.escape(current_ver)
-    new_content = re.sub(rf"\bv?{escaped_curr}\b", f"v{next_version}", content)
-    # Also handle bare version without 'v' if previously bare
-    new_content = re.sub(rf"\b{escaped_curr}\b", next_version, new_content)
+    owner_repo = get_owner_repo()
+
+    # Update legacy pinned version v2.130.0 -> v{next_version}
+    new_content = re.sub(r"v2\.130\.0", f"v{next_version}", content)
+
+    if current_ver:
+        new_content = re.sub(rf"\bv?{re.escape(current_ver)}\b", f"v{next_version}", new_content)
+
+    install_snippet = f"""### Install Movie CLI v{next_version}
+
+To pin your repository to this exact version, run the following one-liner:
+Unix/Bash: `curl -sL https://raw.githubusercontent.com/{owner_repo}/v{next_version}/install.sh | bash -s -- ".ai-memory/prompts" "v{next_version}"`
+PowerShell: `Invoke-WebRequest -Uri https://raw.githubusercontent.com/{owner_repo}/v{next_version}/install.ps1 -OutFile install.ps1; .\\install.ps1 -TargetDir ".ai-memory/prompts" -Version "v{next_version}"`
+"""
+
+    if f"Install Movie CLI v{next_version}" not in new_content:
+        if "### Pinned to a specific release" in new_content:
+            new_content = new_content.replace(
+                "### Pinned to a specific release",
+                f"{install_snippet}\n### Pinned to a specific release",
+            )
 
     if new_content == content:
         return
 
     if dry_run:
-        print(f"[DRY RUN] Would update version references in readme.md: {current_ver} -> {next_version}")
+        print(f"[DRY RUN] Would update version references in readme.md: -> v{next_version}")
         return
 
     with open(README_MD, "w", encoding="utf-8", newline="\n") as f:
@@ -203,26 +320,47 @@ def update_readme_pins(current_ver, next_version, dry_run=False):
 
 
 def update_changelogs(next_version, scope, today_str, dry_run=False):
-    """Prepends release entries to changelog.md and spec19 changelog if present."""
-    entry_header = f"## [v{next_version}] - {today_str}\n\n### Added\n- {scope}\n\n"
+    """Prepends release entries to CHANGELOG.md / changelog.md."""
+    owner_repo = get_owner_repo()
+    cl_target = CHANGELOG_MD if CHANGELOG_MD.is_file() else CHANGELOG_LOWER
 
-    if CHANGELOG_MD.is_file():
-        with open(CHANGELOG_MD, "r", encoding="utf-8") as f:
+    entry_header = f"""## v{next_version}
+
+### Added
+- **Web UI & Browser Auto-Launch (`movie ui`)**: Dedicated CLI command starting the local REST server and automatically opening the web dashboard in the system's default browser.
+- **Staged Deletions & Action History**: Soft-staged deletions across UI and CLI. Deletion requests are recorded in `StagedAction` table with individual and batch undo/discard capability before accepting.
+- **"Delete Folder" Action in Web UI**: Added `📁🗑 Delete Folder` action to media cards in the report UI to stage removal of an entire parent movie folder.
+- **Cross-Platform Safe OS Trash Bin Deletion (`pkg/trashbin`)**: Replaced all unlinking/hard-deletion logic with safe OS Recycle Bin / Trash Bin movement across Windows (`SHFileOperationW` + PowerShell fallback), macOS (`osascript` Finder), and Linux (`gio trash` / XDG Trash spec).
+- **AppFault Error Management Standard**: Standardized structured error handling using `*appfault.AppError`, `appfault.Wrap`, and `appfault.New` across packages.
+- **TMDB Image & Backdrop Fallback**: Added `BackdropPath` support to `db.Media` and TMDB models, plus multi-tier fallback querying TMDB `/images` endpoint for posters and backdrops.
+- **Full System Reset Command & REST Endpoint (`movie reset`)**: CLI command and `POST /api/system/reset` to safely wipe `.movie-output`, `.movie`, SQLite DB (`movie.db*`), thumbnails, JSON sidecars, and error logs with interactive confirmation. Media files are strictly untouched.
+- **Colorful ANSI Terminal Help**: Replaced default Cobra help with grouped ANSI color styling (Cyan headers, Green commands, Yellow flags, Dim descriptions).
+
+### Install Movie CLI v{next_version}
+
+To pin your repository to this exact version, run the following one-liner:
+Unix/Bash: `curl -sL https://raw.githubusercontent.com/{owner_repo}/v{next_version}/install.sh | bash -s -- ".ai-memory/prompts" "v{next_version}"`
+PowerShell: `Invoke-WebRequest -Uri https://raw.githubusercontent.com/{owner_repo}/v{next_version}/install.ps1 -OutFile install.ps1; .\\install.ps1 -TargetDir ".ai-memory/prompts" -Version "v{next_version}"`
+
+"""
+
+    if cl_target.is_file():
+        with open(cl_target, "r", encoding="utf-8") as f:
             cl_content = f.read()
 
-        if f"[v{next_version}]" not in cl_content and f"[{next_version}]" not in cl_content:
+        if f"## v{next_version}" not in cl_content:
             if dry_run:
-                print(f"[DRY RUN] Would prepend changelog entry to changelog.md for v{next_version}")
+                print(f"[DRY RUN] Would prepend changelog entry to {cl_target.name} for v{next_version}")
             else:
                 if "# Changelog\n" in cl_content:
                     cl_content = cl_content.replace("# Changelog\n", f"# Changelog\n\n{entry_header}", 1)
                 else:
                     cl_content = f"# Changelog\n\n{entry_header}{cl_content}"
 
-                with open(CHANGELOG_MD, "w", encoding="utf-8", newline="\n") as f:
+                with open(cl_target, "w", encoding="utf-8", newline="\n") as f:
                     f.write(cl_content)
 
-                print(f"[*] Prepended changelog entry in changelog.md -> v{next_version}")
+                print(f"[*] Prepended changelog entry in {cl_target.name} -> v{next_version}")
 
     if SPEC19_CHANGELOG.is_file():
         with open(SPEC19_CHANGELOG, "r", encoding="utf-8") as f:
@@ -256,7 +394,6 @@ def run_repo_sync_if_available(dry_run=False):
                 return
 
             print("[*] Running npm run sync to regenerate spec trees and manifests...")
-            is_win = sys.platform == "win32"
             run_cmd(["npm", "run", "sync"], check=False)
             print("[*] Completed npm run sync.")
     except Exception as e:
@@ -275,9 +412,11 @@ def execute_bump(tier="minor", explicit_version=None, scope=None, dry_run=False)
     today_str = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
     bump_scope = scope or f"Routine release v{next_ver}"
 
-    print(f"[*] Bumping version: {current_ver} -> {next_ver} (Tier: {tier})")
+    print(f"[*] Previous version: v{current_ver}")
+    print(f"[*] Next version:     v{next_ver} (Tier: {tier})")
 
     update_version_json(next_ver, today_str, dry_run=dry_run)
+    update_version_info_go(next_ver, dry_run=dry_run)
     update_package_json(next_ver, dry_run=dry_run)
     update_template_version(next_ver, dry_run=dry_run)
     update_readme_pins(current_ver, next_ver, dry_run=dry_run)

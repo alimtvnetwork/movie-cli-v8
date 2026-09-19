@@ -1,0 +1,24 @@
+{
+  "Version": "2.323.0",
+  "version": "2.323.0",
+  "Title": "Movie CLI",
+  "RepoSlug": "movie-cli-v8",
+  "RepoUrl": "https://github.com/alimtvnetwork/movie-cli-v8",
+  "LastCommitSha": "d64eecada88efc0008d43c7927b543535a4e098d",
+  "Description": "Personal movie & TV show library manager \u2014 from the terminal.",
+  "releaseDate": "2026-09-19",
+  "changelog": {
+    "file_path": "CHANGELOG.md",
+    "format": "keep-a-changelog"
+  },
+  "Authors": [
+    {
+      "Name": "Md. Alim Ul Karim",
+      "Urls": [
+        "https://github.com/alimtvnetwork"
+      ],
+      "Role": "PrimaryAuthor",
+      "Background": "Founder and lead developer of Movie CLI."
+    }
+  ]
+}

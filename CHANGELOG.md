@@ -1,5 +1,24 @@
 # Changelog
 
+## v2.323.0
+
+### Added
+- **Web UI & Browser Auto-Launch (`movie ui`)**: Dedicated CLI command starting the local REST server and automatically opening the web dashboard in the system's default browser.
+- **Staged Deletions & Action History**: Soft-staged deletions across UI and CLI. Deletion requests are recorded in `StagedAction` table with individual and batch undo/discard capability before accepting.
+- **"Delete Folder" Action in Web UI**: Added `📁🗑 Delete Folder` action to media cards in the report UI to stage removal of an entire parent movie folder.
+- **Cross-Platform Safe OS Trash Bin Deletion (`pkg/trashbin`)**: Replaced all unlinking/hard-deletion logic with safe OS Recycle Bin / Trash Bin movement across Windows (`SHFileOperationW` + PowerShell fallback), macOS (`osascript` Finder), and Linux (`gio trash` / XDG Trash spec).
+- **AppFault Error Management Standard**: Standardized structured error handling using `*appfault.AppError`, `appfault.Wrap`, and `appfault.New` across packages.
+- **TMDB Image & Backdrop Fallback**: Added `BackdropPath` support to `db.Media` and TMDB models, plus multi-tier fallback querying TMDB `/images` endpoint for posters and backdrops.
+- **Full System Reset Command & REST Endpoint (`movie reset`)**: CLI command and `POST /api/system/reset` to safely wipe `.movie-output`, `.movie`, SQLite DB (`movie.db*`), thumbnails, JSON sidecars, and error logs with interactive confirmation. Media files are strictly untouched.
+- **Colorful ANSI Terminal Help**: Replaced default Cobra help with grouped ANSI color styling (Cyan headers, Green commands, Yellow flags, Dim descriptions).
+
+### Install Movie CLI v2.323.0
+
+To pin your repository to this exact version, run the following one-liner:
+Unix/Bash: `curl -sL https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v8/v2.323.0/install.sh | bash -s -- ".ai-memory/prompts" "v2.323.0"`
+PowerShell: `Invoke-WebRequest -Uri https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v8/v2.323.0/install.ps1 -OutFile install.ps1; .\install.ps1 -TargetDir ".ai-memory/prompts" -Version "v2.323.0"`
+
+
 All notable changes to this project will be documented in this file.
 
 ## v2.320.0

@@ -4,6 +4,13 @@
 
 ---
 
+## v2.323.0 — 2026-09-19 (Web UI, staged deletions, TMDB image fallback, reset command, and colorful help)
+
+**Scope:** Version bump. Web UI, staged deletions, TMDB image fallback, reset command, and colorful help.
+
+---
+
+
 ## v6.41.0 — 2026-09-17 (Nuclear package modularization prompt and 5-day test inventory freshness)
 
 **Scope:** Version bump (`6.40.0` → `6.41.0`). Nuclear package modularization prompt and 5-day test inventory freshness.

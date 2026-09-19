@@ -32,7 +32,7 @@
 - `.ai-memory/memory/learned/13-regex-centralization-dbengine-and-isdefined-standard.md`, why: canonical regex harvesting from 03-aukgo/core, redistributable dbengine package, isDefined standard, and zero-storage GitHub Actions mandate
 - `.ai-memory/memory/learned/14-write-prompts-git-audit-and-recent-tasks-register.md`, why: mandatory 30-commit git history audit before memory authoring, compact 20-task recent completion register in plans index, and standardized 19-box verification checklist
 - `.ai-memory/memory/standards/version-source-of-truth.md`, why: mandatory standard for version.json single source of truth, 'inherit' keyword for sub-packages, and release sync workflow
-- `.ai-memory/memory/01-index.md`, why: architectural map of version propagation, sync pipeline, and release ceremony
+- `.ai-memory/memory/02-release-architecture-map.md`, why: architectural map of version propagation, sync pipeline (37-bump-version.py, 14-version-sync-checker.py), and 5-step release branching ceremony
 - `.ai-memory/coding-guidelines.md`, why: baseline rules and coding standards
 - `.ai-memory/plans/01-index.md`, why: active roadmap, pending tasks, and recent completed tasks register (last 20 completed tasks/plans)
 - `.ai-memory/strictly-avoid.md`, why: hard constraints and anti-patterns
