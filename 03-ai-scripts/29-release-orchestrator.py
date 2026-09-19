@@ -5,19 +5,20 @@
 Automates the complete release heavy-lifting lifecycle:
   1. Detects and preserves the original starting branch.
   2. Resolves current version and calculates next SemVer (minor default per Rule 0).
-  3. Checks for and runs bump-version script (bootstrapping it if missing).
-  4. Commits version bump changes to the repository.
-  5. Creates/updates the release branch: release/vX.Y.Z pointing to that commit.
-  6. Creates the annotated git tag: vX.Y.Z on that commit.
-  7. Optionally pushes the release branch and tag to the remote repository.
-  8. Reverts working tree back to the original starting branch.
+  3. Pre-release quality gates verification (06-cicd-local-runner.py --run-tests).
+  4. STEP 1: Creates and checks out dedicated release branch: release/vX.Y.Z.
+  5. STEP 2: Executes version bump using the repository bump script (37-bump-version.py / bump_versions.py).
+  6. STEP 3: Commits version bump changes in the release branch.
+  7. STEP 4: Creates the annotated git tag: vX.Y.Z on that release commit.
+  8. STEP 5: Merges release branch commit back to main branch, pushes main, release branch, and tag to origin.
+  9. Reverts working tree back to the original starting branch.
 
 Usage:
   python 03-ai-scripts/29-release-orchestrator.py
   python 03-ai-scripts/29-release-orchestrator.py --tier patch
   python 03-ai-scripts/29-release-orchestrator.py --tier minor --scope "Feature release"
   python 03-ai-scripts/29-release-orchestrator.py --tier major --scope "Breaking change"
-  python 03-ai-scripts/29-release-orchestrator.py --version 5.30.0
+  python 03-ai-scripts/29-release-orchestrator.py --version 6.42.0
   python 03-ai-scripts/29-release-orchestrator.py --dry-run
   python 03-ai-scripts/29-release-orchestrator.py --no-push
 """
@@ -43,6 +44,7 @@ CHANGELOG_MD = REPO_ROOT / "changelog.md"
 # Known bump scripts
 NODE_BUMP_SCRIPT = REPO_ROOT / "scripts" / "bump-version.mjs"
 PYTHON_BUMP_SCRIPT = REPO_ROOT / ".ai-memory" / "release" / "bump_versions.py"
+AI_BUMP_SCRIPT = REPO_ROOT / "03-ai-scripts" / "37-bump-version.py"
 
 
 def run_cmd(cmd, cwd=None, check=True, capture_output=True):
@@ -74,6 +76,20 @@ def get_current_branch():
         raise RuntimeError("Detached HEAD or unable to determine current git branch.")
 
     return branch
+
+
+def get_main_branch():
+    """Detects whether repository uses 'main' or 'master'."""
+    try:
+        branches = get_git_output("branch", "--list", "main", "master")
+        if "main" in branches:
+            return "main"
+        if "master" in branches:
+            return "master"
+    except Exception:
+        pass
+
+    return "main"
 
 
 def read_canonical_version():
@@ -134,80 +150,94 @@ def calculate_next_version(current_ver, tier):
 
 def bootstrap_bump_script_if_needed():
     """Creates a basic bump script if none exists in the repository."""
-    if NODE_BUMP_SCRIPT.is_file() or PYTHON_BUMP_SCRIPT.is_file():
+    if AI_BUMP_SCRIPT.is_file() or PYTHON_BUMP_SCRIPT.is_file() or NODE_BUMP_SCRIPT.is_file():
         return
 
-    scripts_dir = REPO_ROOT / "scripts"
+    scripts_dir = REPO_ROOT / "03-ai-scripts"
     scripts_dir.mkdir(parents=True, exist_ok=True)
 
-    bootstrap_content = '''#!/usr/bin/env node
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
-import { resolve, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
+    bootstrap_content = '''#!/usr/bin/env python3
+import argparse
+import datetime
+import json
+from pathlib import Path
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT = resolve(__dirname, "..");
+ROOT = Path(__file__).resolve().parent.parent
 
-const args = process.argv.slice(2);
-let version = null;
-let scope = "Routine release ceremony";
+parser = argparse.ArgumentParser()
+parser.add_argument("--version", "-v", required=True)
+parser.add_argument("--scope", "-s", default="Routine release")
+args = parser.parse_args()
 
-for (let i = 0; i < args.length; i++) {
-  if (args[i] === "--version" || args[i] === "-v") version = args[++i];
-  if (args[i] === "--scope" || args[i] === "-s") scope = args[++i];
-}
+v_json = ROOT / "version.json"
+if v_json.is_file():
+    data = json.loads(v_json.read_text(encoding="utf-8"))
+    data["version"] = args.version
+    data["releaseDate"] = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
+    v_json.write_text(json.dumps(data, indent=2) + "\\n", encoding="utf-8")
 
-if (!version) {
-  console.error("Missing required --version argument");
-  process.exit(1);
-}
+p_json = ROOT / "package.json"
+if p_json.is_file():
+    data = json.loads(p_json.read_text(encoding="utf-8"))
+    data["version"] = args.version
+    p_json.write_text(json.dumps(data, indent=2) + "\\n", encoding="utf-8")
 
-// 1. Update version.json
-const verJsonPath = resolve(ROOT, "version.json");
-if (existsSync(verJsonPath)) {
-  const data = JSON.parse(readFileSync(verJsonPath, "utf8"));
-  data.version = version;
-  data.releaseDate = new Date().toISOString().split("T")[0];
-  writeFileSync(verJsonPath, JSON.stringify(data, null, 2) + "\\n", "utf8");
-}
-
-// 2. Update package.json
-const pkgPath = resolve(ROOT, "package.json");
-if (existsSync(pkgPath)) {
-  const pkg = JSON.parse(readFileSync(pkgPath, "utf8"));
-  pkg.version = version;
-  writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + "\\n", "utf8");
-}
-
-console.log(`Successfully bumped to ${version}`);
+print(f"Successfully bumped to {args.version}")
 '''
-    with open(NODE_BUMP_SCRIPT, "w", encoding="utf-8") as f:
+    with open(AI_BUMP_SCRIPT, "w", encoding="utf-8") as f:
         f.write(bootstrap_content)
 
-    print(f"[*] Bootstrapped missing bump script: {NODE_BUMP_SCRIPT.relative_to(REPO_ROOT)}")
+    print(f"[*] Bootstrapped missing bump script: {AI_BUMP_SCRIPT.relative_to(REPO_ROOT)}")
+
+
+def create_and_checkout_release_branch(next_version, dry_run=False):
+    """Step 1: Creates and switches to a dedicated release branch."""
+    branch_name = f"release/v{next_version}"
+    if dry_run:
+        print(f"[DRY RUN] Would create and checkout release branch: '{branch_name}'")
+        return branch_name
+
+    print(f"[*] Step 1: Creating and switching to release branch: '{branch_name}'...")
+    run_cmd(["git", "checkout", "-b", branch_name])
+    current = get_current_branch()
+    print(f"[*] Active branch is now: '{current}'")
+
+    return branch_name
 
 
 def execute_version_bump(next_version, scope, dry_run=False):
-    """Executes the version bump via existing scripts or standalone fallback."""
+    """Step 2: Executes the version bump on the release branch via scripts or standalone fallback."""
     if dry_run:
         print(f"[DRY RUN] Would bump version to {next_version} (scope: {scope})")
         return
 
-    # Check 1: Node bump script (try flag syntax first, then positional syntax)
+    print(f"[*] Step 2: Executing version bump to v{next_version}...")
+
+    # Check 1: AI Scripts bump script (pure Python)
+    if AI_BUMP_SCRIPT.is_file():
+        print(f"[*] Invoking AI Python bump script: {AI_BUMP_SCRIPT.relative_to(REPO_ROOT)}")
+        res = run_cmd([sys.executable, str(AI_BUMP_SCRIPT), "--version", next_version, "--scope", scope], check=False)
+        if res.returncode == 0:
+            return
+
+    # Check 2: .ai-memory Python bump script
+    if PYTHON_BUMP_SCRIPT.is_file():
+        print(f"[*] Invoking Python bump script: {PYTHON_BUMP_SCRIPT.relative_to(REPO_ROOT)}")
+        res = run_cmd([sys.executable, str(PYTHON_BUMP_SCRIPT), "--version", next_version, "--scope", scope], check=False)
+        if res.returncode == 0:
+            return
+
+    # Check 3: Node bump script
     if NODE_BUMP_SCRIPT.is_file():
         print(f"[*] Invoking Node bump script: {NODE_BUMP_SCRIPT.relative_to(REPO_ROOT)}")
         res = run_cmd(["node", str(NODE_BUMP_SCRIPT), "--version", next_version, "--scope", scope], check=False)
         if res.returncode != 0:
             run_cmd(["node", str(NODE_BUMP_SCRIPT), next_version, scope], check=False)
-
-    # Check 2: Python bump script
-    elif PYTHON_BUMP_SCRIPT.is_file():
-        print(f"[*] Invoking Python bump script: {PYTHON_BUMP_SCRIPT.relative_to(REPO_ROOT)}")
-        run_cmd([sys.executable, str(PYTHON_BUMP_SCRIPT), "--version", next_version, "--scope", scope], check=False)
+        return
 
     today_str = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
 
-    # Update version.json
+    # Fallback in-place updates: version.json
     if VERSION_JSON.is_file():
         with open(VERSION_JSON, "r", encoding="utf-8") as f:
             v_data = json.load(f)
@@ -217,7 +247,7 @@ def execute_version_bump(next_version, scope, dry_run=False):
             json.dump(v_data, f, indent=2)
             f.write("\n")
 
-    # Update package.json
+    # Fallback: package.json
     if PACKAGE_JSON.is_file():
         with open(PACKAGE_JSON, "r", encoding="utf-8") as f:
             p_data = json.load(f)
@@ -226,7 +256,7 @@ def execute_version_bump(next_version, scope, dry_run=False):
             json.dump(p_data, f, indent=2)
             f.write("\n")
 
-    # Update changelog.md
+    # Fallback: changelog.md
     if CHANGELOG_MD.is_file():
         with open(CHANGELOG_MD, "r", encoding="utf-8") as f:
             cl_content = f.read()
@@ -243,11 +273,11 @@ def execute_version_bump(next_version, scope, dry_run=False):
 
 
 def stage_and_commit_release(next_version, scope, dry_run=False):
-    """Stages release files and commits on the current branch."""
+    """Step 3: Stages release files and commits on the release branch."""
     commit_msg = f"release: v{next_version} {scope}"
 
     if dry_run:
-        print(f"[DRY RUN] Would stage changes and commit: '{commit_msg}'")
+        print(f"[DRY RUN] Would stage changes and commit on release branch: '{commit_msg}'")
         return "dryrun_commit_sha"
 
     # Stage release-specific and sync-regenerated files
@@ -257,6 +287,8 @@ def stage_and_commit_release(next_version, scope, dry_run=False):
         CHANGELOG_MD,
         README_MD,
         NODE_BUMP_SCRIPT,
+        PYTHON_BUMP_SCRIPT,
+        AI_BUMP_SCRIPT,
         REPO_ROOT / ".gitmap" / "release",
         REPO_ROOT / "public" / "health-score.json",
         REPO_ROOT / "src" / "data" / "specTree.json",
@@ -270,44 +302,49 @@ def stage_and_commit_release(next_version, scope, dry_run=False):
     # Commit
     run_cmd(["git", "commit", "-m", commit_msg])
     commit_sha = get_git_output("rev-parse", "HEAD")
-    print(f"[*] Committed release changes: {commit_sha[:8]} ('{commit_msg}')")
+    print(f"[*] Step 3: Committed release changes on release branch: {commit_sha[:8]} ('{commit_msg}')")
 
     return commit_sha
 
 
-def create_release_branch_and_tag(next_version, commit_sha, dry_run=False):
-    """Creates release branch and tag pointing to commit_sha."""
-    branch_name = f"release/v{next_version}"
+def create_release_tag(next_version, commit_sha, dry_run=False):
+    """Step 4: Creates annotated git tag on the release commit."""
     tag_name = f"v{next_version}"
 
     if dry_run:
-        print(f"[DRY RUN] Would create branch '{branch_name}' and tag '{tag_name}' at {commit_sha}")
-        return branch_name, tag_name
-
-    # Switch to the new release branch pointing to the release commit
-    run_cmd(["git", "branch", "-f", branch_name, commit_sha])
-    run_cmd(["git", "checkout", branch_name])
-    print(f"[*] Checked out release branch: {branch_name} -> {commit_sha[:8]}")
+        print(f"[DRY RUN] Would create annotated tag '{tag_name}' at {commit_sha}")
+        return tag_name
 
     # Create annotated tag
     run_cmd(["git", "tag", "-a", tag_name, "-m", f"Release {tag_name}", commit_sha])
-    print(f"[*] Created tag: {tag_name} -> {commit_sha[:8]}")
+    print(f"[*] Step 4: Created annotated tag: {tag_name} -> {commit_sha[:8]}")
 
-    return branch_name, tag_name
+    return tag_name
 
 
-def push_release(branch_name, tag_name, original_branch=None, dry_run=False):
-    """Pushes release branch, tag, and original branch to remote repository."""
+def merge_release_to_main(release_branch, main_branch="main", dry_run=False):
+    """Step 5a: Puts release commit back to the main branch via merge."""
     if dry_run:
-        print(f"[DRY RUN] Would push branch '{branch_name}', tag '{tag_name}', and '{original_branch}' to origin")
+        print(f"[DRY RUN] Would checkout '{main_branch}' and merge '{release_branch}'")
         return
 
-    if original_branch:
-        print(f"[*] Pushing original branch '{original_branch}' to origin...")
-        run_cmd(["git", "push", "origin", original_branch])
+    print(f"[*] Step 5a: Checking out '{main_branch}' and merging '{release_branch}'...")
+    run_cmd(["git", "checkout", main_branch])
+    run_cmd(["git", "merge", release_branch])
+    print(f"[OK] Merged release branch '{release_branch}' into '{main_branch}'.")
 
-    print(f"[*] Pushing branch '{branch_name}' to origin...")
-    run_cmd(["git", "push", "origin", branch_name])
+
+def push_release(release_branch, tag_name, main_branch="main", dry_run=False):
+    """Step 5b: Pushes main branch, release branch, and tag to remote repository."""
+    if dry_run:
+        print(f"[DRY RUN] Would push main '{main_branch}', release branch '{release_branch}', and tag '{tag_name}' to origin")
+        return
+
+    print(f"[*] Step 5b: Pushing '{main_branch}' to origin...")
+    run_cmd(["git", "push", "origin", main_branch])
+
+    print(f"[*] Pushing release branch '{release_branch}' to origin...")
+    run_cmd(["git", "push", "origin", release_branch])
 
     print(f"[*] Pushing tag '{tag_name}' to origin...")
     run_cmd(["git", "push", "origin", tag_name])
@@ -351,10 +388,11 @@ def verify_pre_release_quality_gates(dry_run=False, skip_tests=False):
 
 
 def orchestrate_release(tier="minor", explicit_version=None, scope=None, dry_run=False, push=True, skip_tests=False):
-    """Executes the complete release orchestration flow."""
+    """Executes the complete 5-step release orchestration flow."""
     # 1. Capture starting branch
     original_branch = get_current_branch()
-    print(f"[*] Starting release orchestration on branch: '{original_branch}'")
+    main_branch = get_main_branch()
+    print(f"[*] Starting release orchestration on branch: '{original_branch}' (main branch: '{main_branch}')")
 
     # 2. Resolve versions
     current_ver = read_canonical_version()
@@ -369,23 +407,31 @@ def orchestrate_release(tier="minor", explicit_version=None, scope=None, dry_run
     # Pre-release quality gates and full unit test execution
     verify_pre_release_quality_gates(dry_run=dry_run, skip_tests=skip_tests)
 
+    release_branch = f"release/v{next_ver}"
+    tag_name = f"v{next_ver}"
+
     try:
-        # 3. Bump version
+        # STEP 1: Create and checkout release branch FIRST
+        create_and_checkout_release_branch(next_ver, dry_run=dry_run)
+
+        # STEP 2: Bump version on the release branch using script
         execute_version_bump(next_ver, default_scope, dry_run=dry_run)
 
-        # 4. Commit bump changes
+        # STEP 3: Commit bump changes in the release branch
         commit_sha = stage_and_commit_release(next_ver, default_scope, dry_run=dry_run)
 
-        # 5 & 6. Create release branch and tag pointing to the commit
-        branch_name, tag_name = create_release_branch_and_tag(next_ver, commit_sha, dry_run=dry_run)
+        # STEP 4: Create annotated tag on that release commit
+        create_release_tag(next_ver, commit_sha, dry_run=dry_run)
 
-        # 7. Push branch and tag if enabled
+        # STEP 5: Put that commit back to the main branch (and push)
+        merge_release_to_main(release_branch, main_branch=main_branch, dry_run=dry_run)
+
         is_push_enabled = push and not dry_run
         if is_push_enabled:
-            push_release(branch_name, tag_name, original_branch=original_branch, dry_run=dry_run)
+            push_release(release_branch, tag_name, main_branch=main_branch, dry_run=dry_run)
 
     finally:
-        # 8. Always revert back to the exact starting branch
+        # Restore original starting branch if different from current
         revert_to_original_branch(original_branch, dry_run=dry_run)
 
     print("\n" + "=" * 60)
@@ -393,8 +439,9 @@ def orchestrate_release(tier="minor", explicit_version=None, scope=None, dry_run
     print(f"  - Starting Branch:  {original_branch}")
     print(f"  - Previous Version: {current_ver}")
     print(f"  - Released Version: {next_ver}")
-    print(f"  - Release Branch:   release/v{next_ver}")
-    print(f"  - Release Tag:      v{next_ver}")
+    print(f"  - Release Branch:   {release_branch}")
+    print(f"  - Release Tag:      {tag_name}")
+    print(f"  - Merged To Main:   {main_branch}")
     print(f"  - Active Branch:    {get_current_branch()} [Preserved]")
     print("=" * 60 + "\n")
 
@@ -402,7 +449,7 @@ def orchestrate_release(tier="minor", explicit_version=None, scope=None, dry_run
 def parse_arguments():
     """Configures CLI argument parser."""
     parser = argparse.ArgumentParser(
-        description="29-release-orchestrator: Autonomous release lifecycle with branch preservation."
+        description="29-release-orchestrator: Autonomous release lifecycle with 5-step release branching."
     )
     parser.add_argument(
         "-t",

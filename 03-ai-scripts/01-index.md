@@ -62,6 +62,7 @@ Follow this sequence before and during any repository modification task:
 | **34** | `34-purge-github-actions-artifacts.py` | Purges stored GitHub Actions artifacts to enforce Zero-Storage Mandate | ~25ms | `ci-cd`, `artifacts`, `github-actions`, `quota`, `cleanup` |
 | **35** | `35-db-struct-enum-generator.py` | Inspects Go models, generates column enums and strongly-typed repository builders | ~20ms | `db`, `generator`, `scaffolder`, `repository`, `enums` |
 | **36** | `36-multi-repo-folder-migrator.py` | Migrates child repositories from `.lovable`/`spec` to `.ai-memory`/`02-spec` | ~50ms | `migrator`, `multi-repo`, `structure`, `ai-memory` |
+| **37** | `37-bump-version.py` | Repository-aware SemVer version bumper & manifest synchronizer | ~15ms | `version`, `bump`, `semver`, `sync`, `changelog` |
 
 ---
 
@@ -1140,6 +1141,40 @@ python 03-ai-scripts/35-db-struct-enum-generator.py --file 04-code/golang/pkg/mo
 
 # Generate enums into explicit output directory
 python 03-ai-scripts/35-db-struct-enum-generator.py --file 04-code/golang/pkg/models/item.go --out-dir 04-code/golang/pkg/generated/item
+```
+
+</details>
+
+<details>
+<summary><strong>37 — <code>37-bump-version.py</code>: Repository-Aware SemVer Version Bumper & Synchronizer</strong></summary>
+
+#### Why It Exists
+
+Automates accurate SemVer version bumping and synchronization across project manifests (`version.json`, `package.json`), documentation (`readme.md`), and changelogs (`changelog.md`), preventing manual version drift and ensuring release pipelines have a reliable cross-platform Python tool.
+
+#### What It Does
+
+- Discovers canonical version from `version.json` or `package.json`.
+- Calculates next SemVer version (`minor` by default per Rule 0, or `patch`/`major`).
+- Updates `version.json`, `package.json`, `prompt-version.template.json`, and `readme.md` version badges and install snippets.
+- Prepends formatted changelog entries to `changelog.md`.
+- Triggers `npm run sync` if defined to regenerate spec trees and health scores.
+- Supports `--dry-run` to preview all file modifications.
+
+#### CLI Usage & Examples
+
+```bash
+# Preview minor version bump without modifying files (check / dry-run mode)
+python 03-ai-scripts/37-bump-version.py --dry-run
+
+# Bump minor version (default) with custom scope
+python 03-ai-scripts/37-bump-version.py --tier minor --scope "Add release branching lifecycle"
+
+# Bump patch version
+python 03-ai-scripts/37-bump-version.py --tier patch --scope "Fix release orchestrator flow"
+
+# Explicit version bump
+python 03-ai-scripts/37-bump-version.py --version 6.42.0
 ```
 
 </details>
