@@ -4,6 +4,7 @@ package cmd
 import (
 	"encoding/json"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 
@@ -243,4 +244,66 @@ func splitGenres(genres string) []string {
 		}
 	}
 	return out
+}
+
+func handleSystemReset(w http.ResponseWriter, r *http.Request, database *db.DB) {
+	if r.Method != http.MethodPost {
+		writeRestError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "POST required for system reset")
+		return
+	}
+
+	var req struct {
+		IsForce      bool `json:"is_force"`
+		IsKeepConfig bool `json:"is_keep_config"`
+		IsAll        bool `json:"is_all"`
+		IsDryRun     bool `json:"is_dry_run"`
+	}
+
+	if r.Body != nil {
+		_ = json.NewDecoder(r.Body).Decode(&req)
+	}
+
+	opts := ResetOptions{
+		IsForce:      req.IsForce,
+		IsKeepConfig: req.IsKeepConfig,
+		IsAll:        req.IsAll,
+		IsDryRun:     req.IsDryRun,
+	}
+
+	targets := discoverResetTargets(database, opts)
+	if opts.IsDryRun {
+		writeJSON(w, map[string]interface{}{
+			"status":   "dry_run",
+			"targets":  targets,
+			"message":  "Dry run preview generated. No data was deleted.",
+		})
+		return
+	}
+
+	if !opts.IsForce {
+		writeRestError(w, http.StatusBadRequest, "CONFIRMATION_REQUIRED", "System reset requires is_force=true in request payload")
+		return
+	}
+
+	_, _ = database.Exec("DELETE FROM StagedAction; DELETE FROM MoveHistory; DELETE FROM ScanHistory; DELETE FROM MediaTag; DELETE FROM Tag; DELETE FROM Media; DELETE FROM ScanFolder; DELETE FROM ErrorLog; VACUUM;")
+	if !opts.IsKeepConfig {
+		_, _ = database.Exec("DELETE FROM Config;")
+	}
+
+	wiped := 0
+	for _, t := range targets {
+		if t.HasTarget {
+			if !strings.Contains(t.Path, "movie.db") {
+				if rmErr := os.RemoveAll(t.Path); rmErr == nil {
+					wiped++
+				}
+			}
+		}
+	}
+
+	writeJSON(w, map[string]interface{}{
+		"status":      "success",
+		"wiped_count": wiped,
+		"message":     "System reset completed successfully.",
+	})
 }

@@ -11,6 +11,7 @@ Master directory of architectural and execution plans.
 
 ## Completed Plans
 
+- [12-movie-cli-ui-trash-error-and-reset-overhaul.md](completed/12-movie-cli-ui-trash-error-and-reset-overhaul.md): Movie CLI UI, staged trash-bin deletion, AppFault error management, TMDB image handling, reset command, and colorful terminal help.
 - [02-multi-repo-folder-structure-and-gitmap-fixes.md](completed/02-multi-repo-folder-structure-and-gitmap-fixes.md): Multi-repo folder structure migration and gitmap AGY pipeline fixes.
 - [01-repository-infrastructure-cicd-and-consolidation.md](completed/01-repository-infrastructure-cicd-and-consolidation.md): Repository hygiene, encoding normalization, lowercase conventions, AI scripts `<details>` documentation, CI/CD quality automation, and plan memory consolidation.
 - [02-appfault-result-monad-and-verification-systems.md](completed/02-appfault-result-monad-and-verification-systems.md): Go `*appfault.AppError` standard, `Result[T]` generic containers, dynamic type conversions, deterministic map sorting, and `ReflectSetTo` fast path.

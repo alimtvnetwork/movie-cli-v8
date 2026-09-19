@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -152,6 +153,45 @@ func buildRESTMux(database *db.DB) *http.ServeMux {
 	}))
 	mux.HandleFunc("/api/dashboard/export", corsWrap(func(w http.ResponseWriter, r *http.Request) {
 		handleDashboardExport(w, r, database)
+	}))
+	mux.HandleFunc("/api/staged", corsWrap(func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			handleStagedList(database, w, r)
+		case http.MethodPost:
+			handleStagedCreate(database, w, r)
+		case http.MethodDelete:
+			handleStagedDiscardAll(database, w)
+		default:
+			writeRestError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "method not allowed")
+		}
+	}))
+	mux.HandleFunc("/api/staged/", corsWrap(func(w http.ResponseWriter, r *http.Request) {
+		path := strings.TrimPrefix(r.URL.Path, "/api/staged/")
+		if path == "apply" && r.Method == http.MethodPost {
+			handleStagedApplyAll(database, w)
+			return
+		}
+		parts := strings.Split(path, "/")
+		if len(parts) > 0 {
+			id, err := strconv.ParseInt(parts[0], 10, 64)
+			if err != nil {
+				writeRestError(w, http.StatusBadRequest, "INVALID_ID", "invalid staged action id")
+				return
+			}
+			if len(parts) == 2 && parts[1] == "apply" && r.Method == http.MethodPost {
+				handleStagedApplySingle(database, w, id)
+				return
+			}
+			if r.Method == http.MethodDelete {
+				handleStagedDiscard(database, w, id)
+				return
+			}
+		}
+		writeRestError(w, http.StatusNotFound, "NOT_FOUND", "endpoint not found")
+	}))
+	mux.HandleFunc("/api/system/reset", corsWrap(func(w http.ResponseWriter, r *http.Request) {
+		handleSystemReset(w, r, database)
 	}))
 
 	return mux

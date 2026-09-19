@@ -139,6 +139,28 @@
     .card-top { flex-direction: column; align-items: center; text-align: center; }
     .card-genre, .card-tags { justify-content: center; }
   }
+
+  /* Staged operations floating bar */
+  .staged-bar {
+    position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+    background: #18181b; border: 1px solid #f59e0b; border-radius: 30px;
+    padding: 0.6rem 1.25rem; display: none; align-items: center; gap: 1rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 50; animation: slideUp 0.2s ease-out;
+  }
+  .staged-bar.show { display: flex; }
+  .staged-count { font-size: 0.85rem; font-weight: 600; color: #f59e0b; display: flex; align-items: center; gap: 0.4rem; }
+  .staged-btn { border: none; border-radius: 20px; padding: 0.35rem 0.85rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+  .staged-btn.accept { background: #22c55e; color: #09090b; }
+  .staged-btn.accept:hover { background: #16a34a; }
+  .staged-btn.discard { background: #27272a; color: #a1a1aa; }
+  .staged-btn.discard:hover { background: #3f3f46; color: #fff; }
+  .card.staged-delete { opacity: 0.55; border: 1px dashed #f59e0b; position: relative; }
+  .card.staged-delete::after {
+    content: "MARKED FOR TRASH (STAGED)"; position: absolute; top: 0.5rem; right: 0.5rem;
+    background: rgba(245,158,11,0.9); color: #000; font-size: 0.65rem; font-weight: 700;
+    padding: 0.2rem 0.5rem; border-radius: 4px; pointer-events: none;
+  }
+  @keyframes slideUp { from { transform: translate(-50%, 20px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
 </style>
 </head>
 <body>
@@ -275,6 +297,12 @@
   </div>
 </div>
 
+<div id="stagedBar" class="staged-bar">
+  <div id="stagedCount" class="staged-count">⚡ <span>0</span> Changes Staged</div>
+  <button onclick="discardAllStaged()" class="staged-btn discard">Undo / Discard All</button>
+  <button onclick="acceptAllStaged()" class="staged-btn accept">Accept All (Move to Trash)</button>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -337,6 +365,7 @@ async function checkRest() {
     banner.innerHTML = '<span class="dot" style="background:var(--success)"></span> Connected to REST server on port <strong>' + API_PORT + '</strong>';
     loadAllTags();
     enableDashboardMode();
+    loadStagedActions();
   } catch(e) {
     // REST not running — banner stays visible
   }
@@ -686,22 +715,93 @@ function closeSimilar() {
   document.getElementById('similarModal').classList.remove('show');
 }
 
-// --- Delete ---
+// --- Staged Operations & Safe Delete ---
+var stagedActions = [];
+
+async function loadStagedActions() {
+  if (restRequired()) return;
+  try {
+    var r = await fetch(API_BASE + '/api/staged');
+    if (!r.ok) return;
+    stagedActions = await r.json();
+    renderStagedBar();
+  } catch(e) {}
+}
+
+function renderStagedBar() {
+  var bar = document.getElementById('stagedBar');
+  var countSpan = document.querySelector('#stagedCount span');
+  if (!bar) return;
+  if (stagedActions && stagedActions.length > 0) {
+    countSpan.textContent = stagedActions.length;
+    bar.classList.add('show');
+    stagedActions.forEach(function(a) {
+      if (a.media_id && a.media_id.Valid) {
+        var card = document.querySelector('.card[data-id="' + a.media_id.Int64 + '"]');
+        if (card) card.classList.add('staged-delete');
+      }
+    });
+  } else {
+    bar.classList.remove('show');
+    document.querySelectorAll('.card.staged-delete').forEach(function(c) {
+      c.classList.remove('staged-delete');
+    });
+  }
+}
+
 async function deleteMedia(id, btn) {
   if (restRequired()) return;
-  if (!confirm('Remove this item from the library?')) return;
+  if (!confirm('Stage removal of this item? (Files will NOT be deleted until you click Accept All)')) return;
   try {
     var r = await fetch(API_BASE + '/api/media/' + id, { method: 'DELETE' });
     if (!r.ok) {
       var errText = await r.text();
-      showToast('Delete failed: ' + errText, true);
+      showToast('Action failed: ' + errText, true);
       return;
     }
-    btn.closest('.card').classList.add('removed');
-    showToast('Removed from library');
-    updateResultsInfo();
+    var card = btn.closest('.card');
+    if (card) {
+      card.classList.add('staged-delete');
+    }
+    showToast('Marked for trash (staged). Click Accept All to execute.');
+    await loadStagedActions();
   } catch(e) {
     showToast('Network error: ' + e.message, true);
+  }
+}
+
+async function discardAllStaged() {
+  if (restRequired()) return;
+  if (!confirm('Undo / discard all staged actions?')) return;
+  try {
+    var r = await fetch(API_BASE + '/api/staged', { method: 'DELETE' });
+    if (r.ok) {
+      stagedActions = [];
+      renderStagedBar();
+      showToast('All staged actions discarded');
+    }
+  } catch(e) {
+    showToast('Failed to discard: ' + e.message, true);
+  }
+}
+
+async function acceptAllStaged() {
+  if (restRequired()) return;
+  if (!confirm('Accept and apply all staged changes? Files will be safely moved to your Trash Bin.')) return;
+  try {
+    var r = await fetch(API_BASE + '/api/staged/apply', { method: 'POST' });
+    if (!r.ok) {
+      var err = await r.text();
+      showToast('Apply failed: ' + err, true);
+      return;
+    }
+    var res = await r.json();
+    showToast('Applied ' + res.applied + ' changes (moved to trash)!');
+    stagedActions = [];
+    renderStagedBar();
+    if (typeof loadAllMedia === 'function') loadAllMedia();
+  } catch(e) {
+    showToast('Failed to apply: ' + e.message, true);
   }
 }
 

@@ -14,6 +14,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/alimtvnetwork/movie-cli-v8/cleaner"
 	"github.com/alimtvnetwork/movie-cli-v8/db"
@@ -108,7 +109,21 @@ func trackScanAction(ctx *ScanContext, result TrackScanResult) {
 
 // downloadThumbnail downloads poster from TMDb and saves to output + data dirs.
 func downloadThumbnail(input ThumbnailInput) {
-	if input.PosterPath == "" {
+	posterPath := input.PosterPath
+	if posterPath == "" {
+		if input.Media != nil {
+			if strings.HasPrefix(input.Media.ThumbnailPath, "/") {
+				posterPath = input.Media.ThumbnailPath
+			}
+			if posterPath == "" {
+				if strings.HasPrefix(input.Media.BackdropPath, "/") {
+					posterPath = input.Media.BackdropPath
+				}
+			}
+		}
+	}
+
+	if posterPath == "" {
 		return
 	}
 
@@ -125,7 +140,7 @@ func downloadThumbnail(input ThumbnailInput) {
 	}
 
 	thumbPath := filepath.Join(thumbDir, thumbFileName)
-	if dlErr := input.Client.DownloadPoster(input.PosterPath, thumbPath); dlErr != nil {
+	if dlErr := input.Client.DownloadPoster(posterPath, thumbPath); dlErr != nil {
 		logPosterDownloadError(input.Media.CleanTitle, dlErr)
 		return
 	}

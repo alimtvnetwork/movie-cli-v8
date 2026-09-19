@@ -10,6 +10,7 @@ import (
 
 	"github.com/alimtvnetwork/movie-cli-v8/db"
 	"github.com/alimtvnetwork/movie-cli-v8/errlog"
+	"github.com/alimtvnetwork/movie-cli-v8/pkg/trashbin"
 )
 
 const rmConfirmThreshold = 5
@@ -97,14 +98,17 @@ func purgeOnDiskFile(m *db.Media) {
 	if !rmPurge {
 		return
 	}
+
 	if m.CurrentFilePath == "" {
 		return
 	}
-	if err := os.Remove(m.CurrentFilePath); err != nil && !os.IsNotExist(err) {
-		errlog.Warn("rm --purge: delete %s: %v", m.CurrentFilePath, err)
+
+	if err := trashbin.MoveToTrash(m.CurrentFilePath); err != nil && !os.IsNotExist(err) {
+		errlog.Warn("rm --purge: trash %s: %v", m.CurrentFilePath, err)
 		return
 	}
-	fmt.Printf("  🔥 purged file: %s\n", m.CurrentFilePath)
+
+	fmt.Printf("  🗑️ moved file to trash: %s\n", m.CurrentFilePath)
 }
 
 func removeRmSidecar(m *db.Media) {

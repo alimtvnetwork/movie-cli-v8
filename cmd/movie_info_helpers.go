@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/alimtvnetwork/movie-cli-v8/cleaner"
 	"github.com/alimtvnetwork/movie-cli-v8/errlog"
@@ -18,19 +19,40 @@ import (
 
 // downloadThumbnailForMedia downloads a poster and sets m.ThumbnailPath.
 func downloadThumbnailForMedia(input ThumbnailInput) {
+	posterPath := input.PosterPath
+	if posterPath == "" {
+		if input.Media != nil {
+			if strings.HasPrefix(input.Media.ThumbnailPath, "/") {
+				posterPath = input.Media.ThumbnailPath
+			}
+			if posterPath == "" {
+				if strings.HasPrefix(input.Media.BackdropPath, "/") {
+					posterPath = input.Media.BackdropPath
+				}
+			}
+		}
+	}
+
+	if posterPath == "" {
+		return
+	}
+
 	slug := cleaner.ToSlug(input.Media.CleanTitle)
 	if input.Media.Year > 0 {
 		slug += "-" + strconv.Itoa(input.Media.Year)
 	}
+
 	thumbDir := filepath.Join(input.Database.BasePath, "thumbnails", slug)
 	if mkdirErr := os.MkdirAll(thumbDir, 0755); mkdirErr != nil {
 		errlog.Warn("Cannot create thumbnail dir: %v", mkdirErr)
 		return
 	}
+
 	thumbPath := filepath.Join(thumbDir, slug+".jpg")
-	if dlErr := input.Client.DownloadPoster(input.PosterPath, thumbPath); dlErr != nil {
+	if dlErr := input.Client.DownloadPoster(posterPath, thumbPath); dlErr != nil {
 		errlog.Warn("Thumbnail download failed: %v", dlErr)
 		return
 	}
+
 	input.Media.ThumbnailPath = thumbPath
 }

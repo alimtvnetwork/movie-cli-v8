@@ -3,17 +3,18 @@ package tmdb
 
 // SearchResult holds a search result from TMDb.
 type SearchResult struct {
-	Overview    string  `json:"overview"`
-	Title       string  `json:"title"`
-	Name        string  `json:"name"`
-	ReleaseDate string  `json:"release_date"`
-	FirstAir    string  `json:"first_air_date"`
-	PosterPath  string  `json:"poster_path"`
-	MediaType   string  `json:"media_type"`
-	GenreIDs    []int   `json:"genre_ids"`
-	VoteAvg     float64 `json:"vote_average"`
-	Popularity  float64 `json:"popularity"`
-	ID          int     `json:"id"`
+	Overview     string  `json:"overview"`
+	Title        string  `json:"title"`
+	Name         string  `json:"name"`
+	ReleaseDate  string  `json:"release_date"`
+	FirstAir     string  `json:"first_air_date"`
+	PosterPath   string  `json:"poster_path"`
+	BackdropPath string  `json:"backdrop_path"`
+	MediaType    string  `json:"media_type"`
+	GenreIDs     []int   `json:"genre_ids"`
+	VoteAvg      float64 `json:"vote_average"`
+	Popularity   float64 `json:"popularity"`
+	ID           int     `json:"id"`
 }
 
 type searchResponse struct {
@@ -26,6 +27,7 @@ type MovieDetails struct {
 	Overview         string  `json:"overview"`
 	ReleaseDate      string  `json:"release_date"`
 	PosterPath       string  `json:"poster_path"`
+	BackdropPath     string  `json:"backdrop_path"`
 	ImdbID           string  `json:"imdb_id"`
 	OriginalLanguage string  `json:"original_language"`
 	Tagline          string  `json:"tagline"`
@@ -56,6 +58,7 @@ type TVDetails struct {
 	Overview         string   `json:"overview"`
 	FirstAirDate     string   `json:"first_air_date"`
 	PosterPath       string   `json:"poster_path"`
+	BackdropPath     string   `json:"backdrop_path"`
 	OriginalLanguage string   `json:"original_language"`
 	Tagline          string   `json:"tagline"`
 	Genres           []Genre  `json:"genres"`
@@ -65,6 +68,23 @@ type TVDetails struct {
 	Popularity       float64  `json:"popularity"`
 	ID               int      `json:"id"`
 	Seasons          int      `json:"number_of_seasons"`
+}
+
+// ImageItem holds a single image metadata item from TMDb /images.
+type ImageItem struct {
+	FilePath    string  `json:"file_path"`
+	Width       int     `json:"width"`
+	Height      int     `json:"height"`
+	Iso639_1    string  `json:"iso_639_1"`
+	VoteAverage float64 `json:"vote_average"`
+}
+
+// MediaImagesResponse holds backdrops, posters, and stills from TMDb /images.
+type MediaImagesResponse struct {
+	Backdrops []ImageItem `json:"backdrops"`
+	Posters   []ImageItem `json:"posters"`
+	Stills    []ImageItem `json:"stills"`
+	ID        int         `json:"id"`
 }
 
 // TVSeason holds a single season of a TV show with its episode list.

@@ -36,6 +36,22 @@ func fetchMovieDetails(client *tmdb.Client, tmdbID int, m *db.Media) {
 		applyMovieDetails(m, details)
 	}
 
+	if m.ThumbnailPath == "" {
+		imgs, imgErr := client.GetMovieImages(tmdbID)
+		if imgErr == nil {
+			if imgs != nil {
+				if len(imgs.Posters) > 0 {
+					m.ThumbnailPath = imgs.Posters[0].FilePath
+				}
+				if m.BackdropPath == "" {
+					if len(imgs.Backdrops) > 0 {
+						m.BackdropPath = imgs.Backdrops[0].FilePath
+					}
+				}
+			}
+		}
+	}
+
 	credits, creditErr := client.GetMovieCredits(tmdbID)
 	if creditErr != nil {
 		logTMDbSubError("movie credits", tmdbID, creditErr)
@@ -72,6 +88,18 @@ func applyMovieDetails(m *db.Media, details *tmdb.MovieDetails) {
 	}
 	if details.Popularity > 0 {
 		m.Popularity = details.Popularity
+	}
+
+	if details.PosterPath != "" {
+		if m.ThumbnailPath == "" {
+			m.ThumbnailPath = details.PosterPath
+		}
+	}
+
+	if details.BackdropPath != "" {
+		if m.BackdropPath == "" {
+			m.BackdropPath = details.BackdropPath
+		}
 	}
 }
 
@@ -111,6 +139,22 @@ func fetchTVDetails(client *tmdb.Client, tmdbID int, m *db.Media) {
 		applyTVDetails(m, details)
 	}
 
+	if m.ThumbnailPath == "" {
+		imgs, imgErr := client.GetTVImages(tmdbID)
+		if imgErr == nil {
+			if imgs != nil {
+				if len(imgs.Posters) > 0 {
+					m.ThumbnailPath = imgs.Posters[0].FilePath
+				}
+				if m.BackdropPath == "" {
+					if len(imgs.Backdrops) > 0 {
+						m.BackdropPath = imgs.Backdrops[0].FilePath
+					}
+				}
+			}
+		}
+	}
+
 	credits, creditErr := client.GetTVCredits(tmdbID)
 	if creditErr != nil {
 		logTMDbSubError("TV credits", tmdbID, creditErr)
@@ -144,6 +188,18 @@ func applyTVDetails(m *db.Media, details *tmdb.TVDetails) {
 	}
 	if details.Popularity > 0 {
 		m.Popularity = details.Popularity
+	}
+
+	if details.PosterPath != "" {
+		if m.ThumbnailPath == "" {
+			m.ThumbnailPath = details.PosterPath
+		}
+	}
+
+	if details.BackdropPath != "" {
+		if m.BackdropPath == "" {
+			m.BackdropPath = details.BackdropPath
+		}
 	}
 }
 

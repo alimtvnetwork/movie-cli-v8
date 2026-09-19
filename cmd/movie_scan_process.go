@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/alimtvnetwork/movie-cli-v8/cleaner"
 	"github.com/alimtvnetwork/movie-cli-v8/db"
@@ -186,9 +187,21 @@ func applyTMDbResult(ctx *ScanContext, m *db.Media, best tmdb.SearchResult) {
 		fetchMovieDetails(ctx.Client, best.ID, m)
 	}
 
+	posterPath := best.PosterPath
+	if posterPath == "" {
+		if strings.HasPrefix(m.ThumbnailPath, "/") {
+			posterPath = m.ThumbnailPath
+		}
+	}
+	if posterPath == "" {
+		if strings.HasPrefix(m.BackdropPath, "/") {
+			posterPath = m.BackdropPath
+		}
+	}
+
 	downloadThumbnail(ThumbnailInput{
 		Client: ctx.Client, Database: ctx.Database,
-		Media: m, PosterPath: best.PosterPath, OutputDir: ctx.OutputDir,
+		Media: m, PosterPath: posterPath, OutputDir: ctx.OutputDir,
 	})
 	fmt.Printf("     ⭐ %.1f  %s\n", m.TmdbRating, m.Title)
 }

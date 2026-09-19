@@ -2,6 +2,7 @@
 package cmd
 
 import (
+	"database/sql"
 	"encoding/json"
 	"html/template"
 	"net/http"
@@ -45,11 +46,32 @@ func handleMediaGet(w http.ResponseWriter, database *db.DB, id int64) {
 }
 
 func handleMediaDelete(w http.ResponseWriter, database *db.DB, id int64) {
-	if delErr := database.DeleteMedia(id); delErr != nil {
-		http.Error(w, delErr.Error(), http.StatusInternalServerError)
+	media, getErr := database.GetMediaByID(id)
+	if getErr != nil || media == nil {
+		http.Error(w, "media not found", http.StatusNotFound)
 		return
 	}
-	writeJSON(w, map[string]string{"status": "deleted"})
+
+	snapBytes, _ := json.Marshal(media)
+	rec := &db.StagedActionRecord{
+		ActionType:    db.StagedDelete,
+		MediaId:       sql.NullInt64{Int64: id, Valid: true},
+		SourcePath:    media.CurrentFilePath,
+		MediaSnapshot: string(snapBytes),
+		Status:        db.StatusPending,
+	}
+
+	stagedID, err := database.InsertStagedAction(rec)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	writeJSON(w, map[string]interface{}{
+		"status":           "staged_delete",
+		"staged_action_id": stagedID,
+		"message":          "Media deletion staged. Review and click Accept All to move to trash.",
+	})
 }
 
 func handleMediaPatch(req MediaPatchRequest) {

@@ -168,9 +168,6 @@ func enrichInfoMedia(client *tmdb.Client, m *db.Media, selected tmdb.SearchResul
 }
 
 func downloadInfoThumbnail(input ThumbnailInput) {
-	if input.PosterPath == "" {
-		return
-	}
 	downloadThumbnailForMedia(input)
 }
 

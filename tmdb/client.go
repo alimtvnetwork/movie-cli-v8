@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
@@ -190,29 +191,78 @@ func TrailerURL(videos []VideoResult) string {
 
 // DownloadPoster downloads a poster image and saves it to dst.
 func (c *Client) DownloadPoster(posterPath, dst string) error {
-	if posterPath == "" {
-		return appfault.New("no poster available")
+	return c.DownloadImage(posterPath, dst, "w500")
+}
+
+// DownloadImage downloads an image with the specified size (w500, w780, w1280, original) and saves it to dst.
+func (c *Client) DownloadImage(imagePath, dst, size string) error {
+	if imagePath == "" {
+		return appfault.New("no image available")
 	}
 
-	imgURL := imageBaseURL + posterPath
+	if size == "" {
+		size = "w500"
+	}
+
+	imgURL := fmt.Sprintf("https://image.tmdb.org/t/p/%s%s", size, imagePath)
 	DefaultLimiter().Wait()
 	resp, err := c.HttpClient.Get(imgURL)
 	if err != nil {
 		if IsNetworkError(err) {
 			return ErrNetworkError
 		}
-		return err
+		return appfault.Wrapf(err, "fetch image %s", imgURL)
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+		return appfault.New("download image returned status %d", resp.StatusCode)
+	}
+
+	if mkErr := os.MkdirAll(filepath.Dir(dst), 0755); mkErr != nil {
+		return appfault.Wrapf(mkErr, "create destination directory for %s", dst)
+	}
+
 	f, err := os.Create(dst)
 	if err != nil {
-		return err
+		return appfault.Wrapf(err, "create image file %s", dst)
 	}
 	defer f.Close()
 
 	_, err = io.Copy(f, resp.Body)
-	return err
+	if err != nil {
+		return appfault.Wrapf(err, "write image bytes to %s", dst)
+	}
+
+	return nil
+}
+
+// GetMovieImages queries /movie/{id}/images with multi-language support.
+func (c *Client) GetMovieImages(tmdbID int) (*MediaImagesResponse, error) {
+	params := url.Values{}
+	params.Set("include_image_language", "en,null")
+
+	var resp MediaImagesResponse
+	urlPath := fmt.Sprintf("/movie/%d/images", tmdbID)
+	if err := c.get(c.buildURL(urlPath, params), &resp); err != nil {
+		return nil, appfault.Wrapf(err, "get movie %d images", tmdbID)
+	}
+
+	return &resp, nil
+}
+
+// GetTVImages queries /tv/{id}/images with multi-language support.
+func (c *Client) GetTVImages(tmdbID int) (*MediaImagesResponse, error) {
+	params := url.Values{}
+	params.Set("include_image_language", "en,null")
+
+	var resp MediaImagesResponse
+	urlPath := fmt.Sprintf("/tv/%d/images", tmdbID)
+	if err := c.get(c.buildURL(urlPath, params), &resp); err != nil {
+		return nil, appfault.Wrapf(err, "get tv %d images", tmdbID)
+	}
+
+	return &resp, nil
 }
 
 // GetRecommendations returns recommended movies or TV shows.

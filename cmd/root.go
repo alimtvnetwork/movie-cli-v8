@@ -49,7 +49,6 @@ System:
 Documentation: https://github.com/alimtvnetwork/movie-cli-v8`, version.Short()),
 	Version: version.Short(),
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("movie-cli %s\n\n", version.Short())
 		_ = cmd.Help()
 	},
 }
@@ -58,6 +57,7 @@ func init() {
 	// Keep the CLI surface focused on project commands only.
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 	rootCmd.SetVersionTemplate(fmt.Sprintf("movie-cli %s\n", version.Full()))
+	setupColorfulHelp(rootCmd)
 	rootCmd.AddCommand(
 		helloCmd,
 		versionCmd,
@@ -85,6 +85,8 @@ func init() {
 		movieHistoryCmd,
 		movieDBCmd,
 		movieRestCmd,
+		movieUiCmd,
+		movieResetCmd,
 		movieLogsCmd,
 		movieCdCmd,
 		movieRescanCmd,

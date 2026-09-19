@@ -24,6 +24,7 @@ func allMigrations() []Migration {
 		{Version: 4, Description: "MediaStatus lookup + Media.IsDeleted/MediaStatusId for soft-delete", Apply: migrateV4},
 		{Version: 5, Description: "ReconciliationActionType + ReconciliationHistory for SmartRescan", Apply: migrateV5},
 		{Version: 6, Description: "Seed reverse-sync action types into ReconciliationActionType", Apply: migrateV6},
+		{Version: 7, Description: "StagedAction table for staged changes and BackdropPath column in Media", Apply: migrateV7},
 	}
 }
 

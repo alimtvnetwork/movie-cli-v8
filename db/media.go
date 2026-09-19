@@ -9,6 +9,7 @@ type Media struct {
 	Description      string
 	Director         string
 	ThumbnailPath    string
+	BackdropPath     string
 	OriginalFileName string
 	OriginalFilePath string
 	CurrentFilePath  string
@@ -51,7 +52,8 @@ const mediaColumns = `MediaId, Title, CleanTitle, Year, Type,
 	COALESCE(Runtime, 0), COALESCE(Budget, 0), COALESCE(Revenue, 0),
 	COALESCE(TrailerUrl, ''), COALESCE(Tagline, ''),
 	COALESCE(ScanHistoryId, 0),
-	COALESCE(UpdatedAt, '')`
+	COALESCE(UpdatedAt, ''),
+	COALESCE(BackdropPath, '')`
 
 // InsertMedia inserts a new media record and returns the ID.
 func (d *DB) InsertMedia(m *Media) (int64, error) {
@@ -75,13 +77,13 @@ func (d *DB) InsertMedia(m *Media) (int64, error) {
 	res, err := d.Exec(`
 		INSERT INTO Media (Title, CleanTitle, Year, Type, TmdbId, ImdbId,
 			Description, ImdbRating, TmdbRating, Popularity, LanguageId, CollectionId,
-			Director, ThumbnailPath, OriginalFileName, OriginalFilePath,
+			Director, ThumbnailPath, BackdropPath, OriginalFileName, OriginalFilePath,
 			CurrentFilePath, FileExtension, FileSizeMb,
 			Runtime, Budget, Revenue, TrailerUrl, Tagline, ScanHistoryId)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		m.Title, m.CleanTitle, m.Year, m.Type, tmdbID, m.ImdbID,
 		m.Description, m.ImdbRating, m.TmdbRating, m.Popularity, langID, collID,
-		m.Director, m.ThumbnailPath, m.OriginalFileName, m.OriginalFilePath,
+		m.Director, m.ThumbnailPath, m.BackdropPath, m.OriginalFileName, m.OriginalFilePath,
 		m.CurrentFilePath, m.FileExtension, m.FileSizeMb,
 		m.Runtime, m.Budget, m.Revenue, m.TrailerURL, m.Tagline, scanID,
 	)
@@ -108,14 +110,14 @@ func (d *DB) UpdateMediaByID(m *Media) error {
 	_, err := d.Exec(`
 		UPDATE Media SET Title=?, CleanTitle=?, Year=?, Type=?, TmdbId=?, ImdbId=?,
 			Description=?, ImdbRating=?, TmdbRating=?, Popularity=?, LanguageId=?, CollectionId=?,
-			Director=?, ThumbnailPath=?, CurrentFilePath=?,
+			Director=?, ThumbnailPath=?, BackdropPath=?, CurrentFilePath=?,
 			FileExtension=?, FileSizeMb=?,
 			Runtime=?, Budget=?, Revenue=?, TrailerUrl=?, Tagline=?,
 			UpdatedAt=datetime('now')
 		WHERE MediaId=?`,
 		m.Title, m.CleanTitle, m.Year, m.Type, tmdbID, m.ImdbID,
 		m.Description, m.ImdbRating, m.TmdbRating, m.Popularity, langID, collID,
-		m.Director, m.ThumbnailPath, m.CurrentFilePath,
+		m.Director, m.ThumbnailPath, m.BackdropPath, m.CurrentFilePath,
 		m.FileExtension, m.FileSizeMb,
 		m.Runtime, m.Budget, m.Revenue, m.TrailerURL, m.Tagline,
 		m.ID,
@@ -136,14 +138,14 @@ func (d *DB) UpdateMediaByTmdbID(m *Media) error {
 	_, err := d.Exec(`
 		UPDATE Media SET Title=?, CleanTitle=?, Year=?, Type=?, ImdbId=?,
 			Description=?, ImdbRating=?, TmdbRating=?, Popularity=?, LanguageId=?, CollectionId=?,
-			Director=?, ThumbnailPath=?, CurrentFilePath=?,
+			Director=?, ThumbnailPath=?, BackdropPath=?, CurrentFilePath=?,
 			FileExtension=?, FileSizeMb=?,
 			Runtime=?, Budget=?, Revenue=?, TrailerUrl=?, Tagline=?,
 			UpdatedAt=datetime('now')
 		WHERE TmdbId=?`,
 		m.Title, m.CleanTitle, m.Year, m.Type, m.ImdbID,
 		m.Description, m.ImdbRating, m.TmdbRating, m.Popularity, langID, collID,
-		m.Director, m.ThumbnailPath, m.CurrentFilePath,
+		m.Director, m.ThumbnailPath, m.BackdropPath, m.CurrentFilePath,
 		m.FileExtension, m.FileSizeMb,
 		m.Runtime, m.Budget, m.Revenue, m.TrailerURL, m.Tagline,
 		m.TmdbID,
