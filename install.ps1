@@ -110,9 +110,11 @@ class InstallerFailure : System.Exception {
 }
 
 # --- Logging helpers ---
-function Write-Step([string]$msg) { Write-Host "  $msg" -ForegroundColor Cyan }
-function Write-OK([string]$msg)   { Write-Host "  $msg" -ForegroundColor Green }
-function Write-Err([string]$msg)  { Write-Host "  $msg" -ForegroundColor Red }
+function Write-Step([string]$msg) { Write-Host "  ■ $msg" -ForegroundColor Cyan }
+function Write-OK([string]$msg)   { Write-Host "  ✓ $msg" -ForegroundColor Green }
+function Write-Warn([string]$msg) { Write-Host "  ⚠ $msg" -ForegroundColor Yellow }
+function Write-Err([string]$msg)  { Write-Host "  ✗ $msg" -ForegroundColor Red }
+function Write-Info([string]$msg) { Write-Host "  • $msg" -ForegroundColor DarkGray }
 
 function Get-Sha256Hex([string]$path) {
     if (Get-Command Get-FileHash -ErrorAction SilentlyContinue) {
@@ -348,6 +350,7 @@ function Install-Binary([string]$zipPath, [string]$targetDir) {
 
 # --- Manage PATH ---
 function Add-ToPath([string]$dir) {
+    $result = @{ Target = "User PATH"; Status = "already present" }
     try {
         $currentUserPath = [Environment]::GetEnvironmentVariable("PATH", "User")
         $parts = if ($currentUserPath) { $currentUserPath -split ";" } else { @() }
@@ -356,11 +359,13 @@ function Add-ToPath([string]$dir) {
         if (-not $hasDir) {
             $newPath = if ([string]::IsNullOrWhiteSpace($currentUserPath)) { $dir } else { $currentUserPath.TrimEnd(";") + ";" + $dir }
             [Environment]::SetEnvironmentVariable("PATH", $newPath, "User")
+            $result.Status = "added to registry"
             Write-OK "Added $dir to User PATH."
         } else {
             Write-Step "$dir is already in User PATH."
         }
     } catch {
+        $result.Status = "skipped (non-Windows)"
         Write-Step "Skipped User PATH persistence (non-Windows environment)."
     }
 
@@ -370,6 +375,7 @@ function Add-ToPath([string]$dir) {
         $env:PATH = if ([string]::IsNullOrWhiteSpace($env:PATH)) { $dir } else { $env:PATH.TrimEnd(";") + ";" + $dir }
         Write-OK "Refreshed PATH for current session."
     }
+    return $result
 }
 
 function Remove-FromPath([string]$dir) {
@@ -382,6 +388,87 @@ function Remove-FromPath([string]$dir) {
         Write-OK "Removed $dir from User PATH."
     } catch {
         # Ignore on non-Windows
+    }
+}
+
+function Write-InstallSummary([string]$version, [string]$binPath, [string]$installDir, [hashtable]$pathResult, [bool]$isNoPath, [string]$prevVersion = "") {
+    Write-Host ""
+    Write-Host "  -----------------------------------------------" -ForegroundColor DarkGray
+    Write-Host "  movie install summary" -ForegroundColor White
+    Write-Host "  -----------------------------------------------" -ForegroundColor DarkGray
+    if ($prevVersion -and $prevVersion -ne $version) {
+        Write-Host "    Version    : $version (upgraded from $prevVersion)"
+    } else {
+        Write-Host "    Version    : $version"
+    }
+    Write-Host "    Binary     : $binPath"
+    Write-Host "    Install Dir: $installDir"
+
+    if ($isNoPath) {
+        Write-Host "    PATH       : skipped (-NoPath)"
+        return
+    }
+
+    Write-Host "    PATH target: $($pathResult.Target) ($($pathResult.Status))"
+    Write-Host "    Session    : refreshed for current PowerShell session"
+
+    Write-Host ""
+    Write-Host "  Profiles modified:" -ForegroundColor White
+    Write-Host "    - User PATH (registry)  : CMD, new PowerShell windows"
+    Write-Host "    - Current session       : active PowerShell session"
+
+    Write-Host ""
+    Write-Host "  If movie is not found in a new terminal, run:" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "    PowerShell:  `$env:PATH = `"$installDir;`$env:PATH`"" -ForegroundColor Cyan
+    Write-Host "    CMD:         set PATH=$installDir;%PATH%" -ForegroundColor Cyan
+    Write-Host ""
+}
+
+function Invoke-InstallVerification([string]$binPath, [string]$installDir, [bool]$isNoPath) {
+    $userData = Join-Path $env:USERPROFILE ".movie"
+
+    Write-Host ""
+    Write-Step "Verifying installation..."
+
+    # 1. Version
+    if (Test-Path $binPath) {
+        try {
+            $verLine = (& $binPath version 2>&1 | Out-String).Trim().Split("`n")[0]
+            Write-Host ("    PASS  Version: {0}" -f $verLine) -ForegroundColor Green
+        }
+        catch {
+            Write-Host ("    WARN  Could not run {0} version: {1}" -f $binPath, $_) -ForegroundColor Yellow
+        }
+    }
+    else {
+        Write-Host ("    WARN  Binary missing: {0}" -f $binPath) -ForegroundColor Yellow
+    }
+
+    # 2. PATH active in this session
+    $resolved = Get-Command $BinaryName -ErrorAction SilentlyContinue
+    if ($resolved) {
+        Write-Host ("    PASS  PATH active: {0} -> {1}" -f $BinaryName, $resolved.Source) -ForegroundColor Green
+    }
+    elseif ($isNoPath) {
+        Write-Host ("    WARN  PATH skipped (-NoPath); invoke with full path: {0}" -f $binPath) -ForegroundColor Yellow
+    }
+    else {
+        Write-Host ("    WARN  {0} not on PATH yet - open a new terminal." -f $BinaryName) -ForegroundColor Yellow
+    }
+
+    # 3. Data folder
+    if (Test-Path $userData) {
+        Write-Host ("    PASS  Data folder exists: {0}" -f $userData) -ForegroundColor Green
+    }
+    else {
+        try {
+            New-Item -ItemType Directory -Path $userData -Force | Out-Null
+            Write-Host ("    PASS  Data folder created: {0}" -f $userData) -ForegroundColor Green
+        }
+        catch {
+            Write-Host ("    WARN  Could not create data folder: {0}" -f $userData) -ForegroundColor Yellow
+        }
     }
 }
 
@@ -451,7 +538,7 @@ $resolvedVersion = if ($Version) {
     Resolve-LatestVersion
 }
 
-$binPath = Join-Path $resolvedDir $script:BinaryExeName
+$binPath = Join-Path $resolvedDir $BinaryName
 $previousVersion = $null
 if (Test-Path $binPath) {
     try {
@@ -464,6 +551,10 @@ if (Test-Path $binPath) {
     } catch {}
 }
 
+Write-Host ""
+Write-Host "  +=============================================+" -ForegroundColor Cyan
+Write-Host "  |  movie CLI Installer                        |" -ForegroundColor Cyan
+Write-Host "  +=============================================+" -ForegroundColor Cyan
 Write-Host ""
 if ($previousVersion -and $previousVersion -ne $resolvedVersion) {
     Write-Host "  movie installer: upgrading $previousVersion -> $resolvedVersion" -ForegroundColor White
@@ -482,24 +573,31 @@ try {
     Remove-Item $asset.TmpDir -Recurse -Force -ErrorAction SilentlyContinue
 }
 
+$pathResult = @{ Target = "-NoPath"; Status = "skipped" }
 if (-not $NoPath) {
-    Add-ToPath $resolvedDir
+    $pathResult = Add-ToPath $resolvedDir
 }
 
-Write-Host ""
-$installedExe = Join-Path $resolvedDir $BinaryName
-if (Test-Path $installedExe) {
+$installedVersion = $resolvedVersion
+if (Test-Path $binPath) {
     try {
-        $verOut = (& $installedExe version 2>&1 | Out-String).Trim()
-        Write-OK "Verified: $verOut"
-    } catch {
-        Write-OK "Verified executable: $installedExe"
-    }
+        $rawVer = (& $binPath version 2>&1 | Out-String).Trim()
+        if ($rawVer -match 'v?(\d+\.\d+\.\d+)') {
+            $installedVersion = "v$($Matches[1])"
+        }
+    } catch { }
 }
+
+Write-InstallSummary $installedVersion $binPath $resolvedDir $pathResult $NoPath.IsPresent $previousVersion
+
+Invoke-InstallVerification $binPath $resolvedDir $NoPath.IsPresent
 
 Write-Host ""
 Write-Host "  Quick start:" -ForegroundColor Cyan
-Write-Host "    movie scan <folder>" -ForegroundColor White
-Write-Host "    movie ui" -ForegroundColor White
-Write-Host "    movie help" -ForegroundColor White
+Write-Host "    movie scan <folder>   - Scan media directory and enrich metadata" -ForegroundColor White
+Write-Host "    movie ui              - Open web dashboard in browser" -ForegroundColor White
+Write-Host "    movie doctor          - Check environment & health" -ForegroundColor White
+Write-Host "    movie help            - View all available commands" -ForegroundColor White
+Write-Host ""
+Write-OK "Done! Run 'movie --help' to get started."
 Write-Host ""

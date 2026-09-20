@@ -112,10 +112,11 @@ function To-ConsoleSafe {
     return $Text
 }
 
-function Say     { param($msg, $color = "Gray")  Write-Host ($P + (To-ConsoleSafe $msg)) -ForegroundColor $color }
-function SayOk   { param($msg) Write-Host ($P + "[OK] " + (To-ConsoleSafe $msg)) -ForegroundColor Green }
-function SayWarn { param($msg) Write-Host ($P + "[WARN] " + (To-ConsoleSafe $msg)) -ForegroundColor Yellow }
-function SayErr  { param($msg) Write-Host ($P + "[ERR] " + (To-ConsoleSafe $msg)) -ForegroundColor Red }
+function Say     { param($msg, $color = "Gray")  Write-Host ($P + "• " + (To-ConsoleSafe $msg)) -ForegroundColor $color }
+function SayStep { param($msg) Write-Host ($P + "■ " + (To-ConsoleSafe $msg)) -ForegroundColor Cyan }
+function SayOk   { param($msg) Write-Host ($P + "✓ " + (To-ConsoleSafe $msg)) -ForegroundColor Green }
+function SayWarn { param($msg) Write-Host ($P + "⚠ " + (To-ConsoleSafe $msg)) -ForegroundColor Yellow }
+function SayErr  { param($msg) Write-Host ($P + "✗ " + (To-ConsoleSafe $msg)) -ForegroundColor Red }
 
 function Resolve-VersionBinary {
     if ($targetBinary -and (Test-Path $targetBinary)) {
@@ -139,7 +140,7 @@ if (-not (Test-Path $runScript)) {
     exit 1
 }
 
-Say "Running update via $runScript" "Cyan"
+SayStep "Running update via $runScript"
 $runExit = 0
 if ($targetBinary) {
     Say "Deploy target: $targetBinary"
@@ -172,16 +173,16 @@ if ($oldVersion -eq $newVersion) {
 # Show changelog from the updated target binary
 if ($versionBinary -and (Test-Path $versionBinary)) {
     Write-Host ""
-    Say "Latest changelog:" "Cyan"
+    SayStep "Latest changelog:"
     $clOutput = & $versionBinary changelog --latest 2>&1
     foreach ($cl in $clOutput) { Write-Host ($P + "  " + (To-ConsoleSafe "$cl")) }
 }
 
 # Top-and-tail banner
 Write-Host ""
-Write-Host ($P + "+======================================+") -ForegroundColor Cyan
-Write-Host ($P + "|  [OK] Update complete               |") -ForegroundColor Cyan
-Write-Host ($P + "+======================================+") -ForegroundColor Cyan
+Write-Host ($P + "+=============================================+") -ForegroundColor Cyan
+Write-Host ($P + "|  ✓ Update complete                          |") -ForegroundColor Cyan
+Write-Host ($P + "+=============================================+") -ForegroundColor Cyan
 Write-Host ""
 `, repoPath, targetBinary, workerBinary)
 }

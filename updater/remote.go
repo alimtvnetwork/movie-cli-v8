@@ -8,9 +8,11 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
+	"github.com/alimtvnetwork/movie-cli-v8/version"
 )
 
 const (
@@ -37,6 +39,35 @@ func ResolveCurrentInstallDir() string {
 		}
 
 		return filepath.Dir(activePath)
+	}
+
+	return ""
+}
+
+// ResolveCurrentBinaryPath returns the path of the currently running binary,
+// or falls back to the active binary on PATH.
+func ResolveCurrentBinaryPath() string {
+	selfPath, err := os.Executable()
+	if err == nil {
+		if realPath, errEval := filepath.EvalSymlinks(selfPath); errEval == nil {
+			selfPath = realPath
+		}
+
+		return selfPath
+	}
+
+	binName := "movie.exe"
+	if runtime.GOOS != "windows" {
+		binName = "movie"
+	}
+
+	activePath, errLook := exec.LookPath(binName)
+	if errLook == nil {
+		if realPath, errEval := filepath.EvalSymlinks(activePath); errEval == nil {
+			activePath = realPath
+		}
+
+		return activePath
 	}
 
 	return ""
@@ -72,7 +103,25 @@ func RunRemoteUpdate(installDir string) error {
 		ext = ".sh"
 	}
 
-	fmt.Printf("==> Fetching remote installer: %s\n", url)
+	if installDir == "" {
+		installDir = ResolveCurrentInstallDir()
+	}
+
+	activeBin := ResolveCurrentBinaryPath()
+	currentVer := version.Version
+
+	fmt.Println()
+	fmt.Println("  +=============================================+")
+	fmt.Println("  |  movie-cli updater                          |")
+	fmt.Println("  +=============================================+")
+	if activeBin != "" {
+		fmt.Printf("  • Active binary : %s\n", activeBin)
+	}
+	fmt.Printf("  • Current ver   : %s\n", currentVer)
+	fmt.Println("  • Update method : remote release installer (canonical)")
+	fmt.Println()
+
+	fmt.Printf("  ■ Fetching remote installer: %s\n", url)
 
 	scriptPath, err := downloadRemoteInstaller(url, ext)
 	if err != nil {
@@ -81,23 +130,20 @@ func RunRemoteUpdate(installDir string) error {
 
 	defer os.Remove(scriptPath)
 
-	if installDir == "" {
-		installDir = ResolveCurrentInstallDir()
-	}
-
-	fmt.Printf("==> Running installer for directory: %s\n", installDir)
+	fmt.Printf("  ■ Running installer for directory: %s\n", installDir)
 
 	if errRun := executeRemoteInstaller(scriptPath, installDir); errRun != nil {
 		return appfault.Wrap("remote installer execution failed", errRun)
 	}
 
-	fmt.Println("==> Remote update complete.")
-	printPostUpdateVersion(installDir)
+	fmt.Println()
+	fmt.Println("  ✓ Remote installer completed successfully.")
+	_ = printPostUpdateVersion(installDir)
 
 	return nil
 }
 
-func printPostUpdateVersion(installDir string) {
+func printPostUpdateVersion(installDir string) error {
 	binName := "movie.exe"
 	if runtime.GOOS != "windows" {
 		binName = "movie"
@@ -106,10 +152,20 @@ func printPostUpdateVersion(installDir string) {
 	binPath := filepath.Join(installDir, binName)
 	if _, err := os.Stat(binPath); err == nil {
 		cmd := exec.Command(binPath, "version")
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		_ = cmd.Run()
+		out, errRun := cmd.Output()
+		if errRun == nil {
+			verStr := strings.TrimSpace(string(out))
+			if verStr != "" {
+				fmt.Printf("  • New active version: %s\n\n", verStr)
+
+				return nil
+			}
+		}
 	}
+
+	fmt.Println()
+
+	return nil
 }
 
 func downloadRemoteInstaller(url, ext string) (string, error) {

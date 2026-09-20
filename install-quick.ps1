@@ -67,7 +67,7 @@ function Invoke-Safe {
         $msg = "FAIL:  $Step :: $($_.Exception.Message)"
         Write-Log $msg "ERROR"
         $script:InstallErrors.Add("$Step -> $($_.Exception.Message)")
-        Write-Host "  [ERROR] $Step : $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "  ✗ $Step : $($_.Exception.Message)" -ForegroundColor Red
         if ($Fatal) { throw }
         return $null
     }
@@ -187,8 +187,10 @@ if (-not $alreadyDelegated -and -not $NoDiscovery -and [string]::IsNullOrWhiteSp
 
 function Read-InstallDir([string]$default) {
     Write-Host ""
-    Write-Host "  movie CLI quick installer" -ForegroundColor Cyan
-    Write-Host "  ------------------------" -ForegroundColor DarkGray
+    Write-Host "  +=============================================+" -ForegroundColor Cyan
+    Write-Host "  |  movie CLI Quick Installer                  |" -ForegroundColor Cyan
+    Write-Host "  +=============================================+" -ForegroundColor Cyan
+    Write-Host ""
     Write-Host "  Choose install directory. Press Enter to accept the default." -ForegroundColor Gray
     Write-Host "  Default: $default" -ForegroundColor DarkGray
 
@@ -226,8 +228,8 @@ if ([string]::IsNullOrWhiteSpace($InstallDir)) {
 }
 
 Write-Host ""
-Write-Host "  Installing movie CLI to: $InstallDir" -ForegroundColor Green
-Write-Host "  Log file: $LogFile" -ForegroundColor DarkGray
+Write-Host "  ■ Installing movie CLI to: $InstallDir" -ForegroundColor Cyan
+Write-Host "  • Log file: $LogFile" -ForegroundColor DarkGray
 Write-Host ""
 
 Invoke-Safe "Save deploy path" { Save-DeployPath $InstallDir }
@@ -252,10 +254,10 @@ try {
     Write-Log "install-quick.ps1 completed successfully"
 } catch {
     Write-Log "Error during install: $_" "ERROR"
-    Write-Host "  [ERROR] Install failed: $_" -ForegroundColor Red
+    Write-Host "  ✗ Install failed: $_" -ForegroundColor Red
     exit 1
 }
 
 if ($script:InstallErrors.Count -gt 0) {
-    Write-Host "  [SUMMARY] Completed with $($script:InstallErrors.Count) warning(s)." -ForegroundColor Yellow
+    Write-Host "  ⚠ Completed with $($script:InstallErrors.Count) warning(s)." -ForegroundColor Yellow
 }

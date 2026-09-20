@@ -87,9 +87,10 @@ BOLD='\033[1m'
 NC='\033[0m'
 
 ok()   { printf "  ${GREEN}✓${NC} %s\n" "$1"; }
-step() { printf "  ${CYAN}→${NC} %s\n" "$1"; }
-warn() { printf "  ${YELLOW}!${NC} %s\n" "$1"; }
+step() { printf "  ${CYAN}■${NC} %s\n" "$1"; }
+warn() { printf "  ${YELLOW}⚠${NC} %s\n" "$1"; }
 err()  { printf "  ${RED}✗${NC} %s\n" "$1"; }
+info() { printf "  ${GRAY}•${NC} %s\n" "$1"; }
 die()  { err "$1"; [ -n "${2:-}" ] && printf "    ${GRAY}%s${NC}\n" "$2"; exit 1; }
 
 # ── Argument parsing ──────────────────────────────────────────
@@ -279,6 +280,9 @@ if [ -x "$INSTALL_DIR/$BINARY_NAME" ]; then
 fi
 
 echo ""
+printf "  ${CYAN}+=============================================+${NC}\n"
+printf "  ${CYAN}|  movie CLI Installer                        |${NC}\n"
+printf "  ${CYAN}+=============================================+${NC}\n\n"
 if [ -n "$PREV_VERSION" ] && [ "$PREV_VERSION" != "$VERSION" ]; then
     printf "  ${BOLD}movie installer: upgrading %s -> %s${NC}\n" "$PREV_VERSION" "$VERSION"
 elif [ -n "$PREV_VERSION" ]; then
@@ -351,13 +355,56 @@ if [ "$NO_PATH" -eq 0 ]; then
 fi
 
 echo ""
+printf "  ${GRAY}-----------------------------------------------${NC}\n"
+printf "  ${BOLD}movie install summary${NC}\n"
+printf "  ${GRAY}-----------------------------------------------${NC}\n"
+if [ -n "$PREV_VERSION" ] && [ "$PREV_VERSION" != "$VERSION" ]; then
+    printf "    Version    : %s (upgraded from %s)\n" "$VERSION" "$PREV_VERSION"
+else
+    printf "    Version    : %s\n" "$VERSION"
+fi
+printf "    Binary     : %s/%s\n" "$INSTALL_DIR" "$BINARY_NAME"
+printf "    Install Dir: %s\n" "$INSTALL_DIR"
+if [ "$NO_PATH" -eq 1 ]; then
+    printf "    PATH       : skipped (--no-path)\n"
+else
+    printf "    PATH       : configured in shell profiles\n"
+fi
+
+echo ""
+step "Verifying installation..."
 if [ -x "$INSTALL_DIR/$BINARY_NAME" ]; then
-    VER_OUT="$("$INSTALL_DIR/$BINARY_NAME" version 2>&1 || true)"
-    ok "Verified: $VER_OUT"
+    VER_OUT="$("$INSTALL_DIR/$BINARY_NAME" version 2>&1 | head -1 || true)"
+    printf "    ${GREEN}PASS${NC}  Version: %s\n" "$VER_OUT"
+else
+    printf "    ${YELLOW}WARN${NC}  Binary missing: %s/%s\n" "$INSTALL_DIR" "$BINARY_NAME"
+fi
+
+if command -v "$BINARY_NAME" >/dev/null 2>&1; then
+    ACTIVE_CMD="$(command -v "$BINARY_NAME")"
+    printf "    ${GREEN}PASS${NC}  PATH active: %s -> %s\n" "$BINARY_NAME" "$ACTIVE_CMD"
+elif [ "$NO_PATH" -eq 1 ]; then
+    printf "    ${YELLOW}WARN${NC}  PATH skipped (--no-path); invoke with full path: %s/%s\n" "$INSTALL_DIR" "$BINARY_NAME"
+else
+    printf "    ${YELLOW}WARN${NC}  %s not on PATH yet - open a new terminal.\n" "$BINARY_NAME"
+fi
+
+USER_DATA="$HOME/.movie"
+if [ -d "$USER_DATA" ]; then
+    printf "    ${GREEN}PASS${NC}  Data folder exists: %s\n" "$USER_DATA"
+else
+    if mkdir -p "$USER_DATA" 2>/dev/null; then
+        printf "    ${GREEN}PASS${NC}  Data folder created: %s\n" "$USER_DATA"
+    else
+        printf "    ${YELLOW}WARN${NC}  Could not create data folder: %s\n" "$USER_DATA"
+    fi
 fi
 
 echo ""
 printf "  ${CYAN}Quick start:${NC}\n"
-printf "    movie scan <folder>\n"
-printf "    movie ui\n"
-printf "    movie help\n\n"
+printf "    movie scan <folder>   - Scan media directory and enrich metadata\n"
+printf "    movie ui              - Open web dashboard in browser\n"
+printf "    movie doctor          - Check environment & health\n"
+printf "    movie help            - View all available commands\n\n"
+ok "Done! Run 'movie --help' to get started."
+echo ""

@@ -1,3 +1,9 @@
+## v2.334.0 — 2026-09-20 (enhance installer and update terminal UI to match GitMap standard)
+
+**Scope:** Version bump. enhance installer and update terminal UI to match GitMap standard.
+
+---
+
 ## v2.333.0 — 2026-09-20 (adopt GitMap self-update gold standard with remote installer and blocking handoff)
 
 **Scope:** Version bump. adopt GitMap self-update gold standard with remote installer and blocking handoff.

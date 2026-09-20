@@ -51,7 +51,7 @@ func runUpdateWithDoctor(repoPath string, isSourceRebuild bool) {
 			return
 		}
 
-		fmt.Fprintln(os.Stderr, "⚠ Remote installer failed — falling back to source rebuild...")
+		fmt.Fprintln(os.Stderr, "  ⚠ Remote installer failed — falling back to source rebuild...")
 	}
 
 	exitOnUpdateError("Update failed", updater.Run(repoPath))
@@ -70,7 +70,7 @@ func runUpdateWithDoctor(repoPath string, isSourceRebuild bool) {
 func runPreflight() *doctor.Report {
 	report, err := doctor.Preflight()
 	if err != nil {
-		fmt.Printf("⚠ Preflight diagnose skipped: %v\n", err)
+		fmt.Printf("  ⚠ Preflight diagnose skipped: %v\n", err)
 
 		return nil
 	}
@@ -80,7 +80,7 @@ func runPreflight() *doctor.Report {
 
 func autoFixPostUpdate() {
 	fmt.Println()
-	fmt.Println("==> Auto-running `movie doctor --fix` (preflight detected fixable issues)")
+	fmt.Println("  ■ Auto-running `movie doctor --fix` (preflight detected fixable issues)")
 
 	report, err := doctor.Diagnose()
 	if err != nil {
@@ -90,7 +90,7 @@ func autoFixPostUpdate() {
 	}
 
 	if !report.HasFixable() {
-		fmt.Println("  Post-update state is already clean — nothing to fix.")
+		fmt.Println("  ✓ Post-update state is already clean — nothing to fix.")
 
 		return
 	}
