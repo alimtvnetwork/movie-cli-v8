@@ -105,6 +105,8 @@ func init() {
 
 // Execute is called by main.go. It is the single public entry point.
 func Execute() {
+	_ = initVirtualTerminal()
+
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)

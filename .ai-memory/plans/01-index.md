@@ -10,6 +10,7 @@ Master directory of architectural and execution plans.
 - [11-code-red-refactor-remediation.md](pending/11-code-red-refactor-remediation.md): Remediate Code Red enum, boolean, and query wrapper violations across the codebase.
 ## Completed Plans
 
+- [18-fix-windows-terminal-ansi-virtual-terminal.md](completed/18-fix-windows-terminal-ansi-virtual-terminal.md): Fix Windows terminal broken ANSI escape characters by initializing Virtual Terminal Processing and graceful fallback.
 - [17-invalid-api-key-reprompt-and-release.md](completed/17-invalid-api-key-reprompt-and-release.md): Proactive TMDb API key verification, interactive re-prompt loop, and minor release.
 - [16-advanced-installer-and-release-process-parity.md](completed/16-advanced-installer-and-release-process-parity.md): Advanced installer and release process parity following GitMap (dual-mode eval auto-source, versioned repo discovery, self-uninstall command, and static smoke linter).
 - [15-gitmap-installer-and-release-parity.md](completed/15-gitmap-installer-and-release-parity.md): Full installer and release process parity with GitMap (deploy-manifest.json, init.ps1/init.sh, run.sh, smoke-installer.py, CI/CD dryrun validation).

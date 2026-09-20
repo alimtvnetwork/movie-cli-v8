@@ -29,15 +29,16 @@ func isColorEnabled() bool {
 	}
 
 	fd := os.Stdout.Fd()
-	if isatty.IsTerminal(fd) {
-		return true
+	isTerm := isatty.IsTerminal(fd) || isatty.IsCygwinTerminal(fd)
+	if !isTerm {
+		return false
 	}
 
-	if isatty.IsCygwinTerminal(fd) {
-		return true
+	if !initVirtualTerminal() {
+		return false
 	}
 
-	return false
+	return true
 }
 
 func colorText(text, colorCode string, isColor bool) string {

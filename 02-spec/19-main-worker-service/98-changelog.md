@@ -1,3 +1,9 @@
+## v2.329.0 — 2026-09-20 (Fix Windows terminal broken ANSI escape codes with Virtual Terminal Processing)
+
+**Scope:** Version bump. Fix Windows terminal broken ANSI escape codes with Virtual Terminal Processing.
+
+---
+
 ## v2.328.0 — 2026-09-20 (Prompt again for invalid TMDb API key and verify credentials)
 
 **Scope:** Version bump. Prompt again for invalid TMDb API key and verify credentials.
