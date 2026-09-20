@@ -10,6 +10,7 @@ Master directory of architectural and execution plans.
 - [11-code-red-refactor-remediation.md](pending/11-code-red-refactor-remediation.md): Remediate Code Red enum, boolean, and query wrapper violations across the codebase.
 ## Completed Plans
 
+- [16-advanced-installer-and-release-process-parity.md](completed/16-advanced-installer-and-release-process-parity.md): Advanced installer and release process parity following GitMap (dual-mode eval auto-source, versioned repo discovery, self-uninstall command, and static smoke linter).
 - [15-gitmap-installer-and-release-parity.md](completed/15-gitmap-installer-and-release-parity.md): Full installer and release process parity with GitMap (deploy-manifest.json, init.ps1/init.sh, run.sh, smoke-installer.py, CI/CD dryrun validation).
 - [14-improve-installer-and-release-process.md](completed/14-improve-installer-and-release-process.md): Overhaul binary installers, quick one-liners, uninstaller suite, and release workflow dry-run contract verification following GitMap.
 

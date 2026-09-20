@@ -164,18 +164,18 @@ curl -fsSL https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v8/main/get
 
 ### Install a specific version (pinned)
 
-Installs exactly the version in the URL — never auto-upgrades. Use this for CI pipelines, Dockerfiles, reproducible setups, or when you need to roll back. Replace `v2.326.0` with the [release tag](https://github.com/alimtvnetwork/movie-cli-v8/releases) you want.
+Installs exactly the version in the URL — never auto-upgrades. Use this for CI pipelines, Dockerfiles, reproducible setups, or when you need to roll back. Replace `v2.327.0` with the [release tag](https://github.com/alimtvnetwork/movie-cli-v8/releases) you want.
 
 **Windows (PowerShell)**
 
 ```powershell
-irm https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.326.0/install.ps1 | iex
+irm https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.327.0/install.ps1 | iex
 ```
 
 **Linux / macOS**
 
 ```bash
-curl -fsSL https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.326.0/install.sh | bash
+curl -fsSL https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.327.0/install.sh | bash
 ```
 
 > **Which one should I use?** Use **latest** for personal machines so you stay current. Use **pinned** anywhere reproducibility matters — the pinned script is hard-locked to the version in the URL and will install that exact tag forever, even after newer releases ship. ([contract spec](spec/12-ci-cd-pipeline/06-version-pinned-install-scripts.md))
@@ -379,6 +379,7 @@ One line per command. Search lands on the exact row; the section name on the rig
 <tr id="movie-scan-path-refresh"><td><a href="#scanning--library" title="Jump to the Scanning & Library section"><code>movie scan &lt;path&gt; --refresh</code></a></td><td align="center">→</td><td><a href="#scanning--library">Scanning & Library</a></td><td><code>movie scan --refresh </code></td><td align="right"><code>#movie-scan-path-refresh</code></td></tr>
 <tr id="movie-search-query"><td><a href="#scanning--library" title="Jump to the Scanning & Library section"><code>movie search &lt;query&gt;</code></a></td><td align="center">→</td><td><a href="#scanning--library">Scanning & Library</a></td><td><code>movie search </code></td><td align="right"><code>#movie-search-query</code></td></tr>
 <tr id="movie-search-query-year-yyyy"><td><a href="#scanning--library" title="Jump to the Scanning & Library section"><code>movie search &lt;query&gt; --year &lt;yyyy&gt;</code></a></td><td align="center">→</td><td><a href="#scanning--library">Scanning & Library</a></td><td><code>movie search --year </code></td><td align="right"><code>#movie-search-query-year-yyyy</code></td></tr>
+<tr id="movie-self-uninstall"><td><a href="#configuration--system" title="Jump to the Configuration & System section"><code>movie self-uninstall</code></a></td><td align="center">→</td><td><a href="#configuration--system">Configuration & System</a></td><td><code>movie self-uninstall</code></td><td align="right"><code>#movie-self-uninstall</code></td></tr>
 <tr id="movie-stats"><td><a href="#discovery--organization" title="Jump to the Discovery & Organization section"><code>movie stats</code></a></td><td align="center">→</td><td><a href="#discovery--organization">Discovery & Organization</a></td><td><code>movie stats</code></td><td align="right"><code>#movie-stats</code></td></tr>
 <tr id="movie-stats-by-dimension"><td><a href="#discovery--organization" title="Jump to the Discovery & Organization section"><code>movie stats --by &lt;dimension&gt;</code></a></td><td align="center">→</td><td><a href="#discovery--organization">Discovery & Organization</a></td><td><code>movie stats --by </code></td><td align="right"><code>#movie-stats-by-dimension</code></td></tr>
 <tr id="movie-suggest"><td><a href="#discovery--organization" title="Jump to the Discovery & Organization section"><code>movie suggest</code></a></td><td align="center">→</td><td><a href="#discovery--organization">Discovery & Organization</a></td><td><code>movie suggest</code></td><td align="right"><code>#movie-suggest</code></td></tr>
@@ -453,6 +454,7 @@ movie scan <path> --dry-run                →   Scanning & Library         #mov
 movie scan <path> --refresh                →   Scanning & Library         #movie-scan-path-refresh
 movie search <query>                       →   Scanning & Library         #movie-search-query
 movie search <query> --year <yyyy>         →   Scanning & Library         #movie-search-query-year-yyyy
+movie self-uninstall                       →   Configuration & System     #movie-self-uninstall
 movie stats                                →   Discovery & Organization   #movie-stats
 movie stats --by <dimension>               →   Discovery & Organization   #movie-stats-by-dimension
 movie suggest                              →   Discovery & Organization   #movie-suggest
@@ -762,6 +764,7 @@ movie config set <key> <value>
 movie config set source_folder <path>
 movie config set tmdb_api_key <key>
 movie hello
+movie self-uninstall
 movie update
 movie version
 ```
@@ -773,6 +776,7 @@ movie config set <key> <value>
 movie config set source_folder <path>
 movie config set tmdb_api_key <key>
 movie hello
+movie self-uninstall
 movie update
 movie version
 ```
@@ -920,27 +924,27 @@ curl -fsSL https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v8/main/get
 
 `get.{ps1,sh}` first checks `releases/latest/download/install.{ps1,sh}`. If a release is published it installs the pre-built binary; otherwise it falls back to a source-build from `main`, prints exactly which path it took, and tells the maintainer how to publish a release so future installs skip the build step.
 
-#### Install Movie CLI v2.326.0
+#### Install Movie CLI v2.327.0
 
 To pin your repository to this exact version, run the following one-liner:
-Unix/Bash: `curl -sL https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v8/v2.326.0/install.sh | bash -s -- ".ai-memory/prompts" "v2.326.0"`
-PowerShell: `Invoke-WebRequest -Uri https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v8/v2.326.0/install.ps1 -OutFile install.ps1; .\install.ps1 -TargetDir ".ai-memory/prompts" -Version "v2.326.0"`
+Unix/Bash: `curl -sL https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v8/v2.327.0/install.sh | bash -s -- ".ai-memory/prompts" "v2.327.0"`
+PowerShell: `Invoke-WebRequest -Uri https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v8/v2.327.0/install.ps1 -OutFile install.ps1; .\install.ps1 -TargetDir ".ai-memory/prompts" -Version "v2.327.0"`
 
 ### Pinned to a specific release
 
 **Windows (PowerShell)**
 
 ```powershell
-irm https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.326.0/install.ps1 | iex
+irm https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.327.0/install.ps1 | iex
 ```
 
 **Linux / macOS (Bash)**
 
 ```bash
-curl -fsSL https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.326.0/install.sh | bash
+curl -fsSL https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.327.0/install.sh | bash
 ```
 
-The script attached to each release has the version baked in (`PINNED_VERSION="v2.326.0"`) and will install **exactly** that tag — it never falls back to "latest" and never delegates to the bootstrap scripts. Replace `v2.326.0` with any [published release](https://github.com/alimtvnetwork/movie-cli-v8/releases).
+The script attached to each release has the version baked in (`PINNED_VERSION="v2.327.0"`) and will install **exactly** that tag — it never falls back to "latest" and never delegates to the bootstrap scripts. Replace `v2.327.0` with any [published release](https://github.com/alimtvnetwork/movie-cli-v8/releases).
 
 > **When to use which**
 > - **Latest** — personal machines, demos, "just give me the newest one"

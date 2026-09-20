@@ -1,3 +1,9 @@
+## v2.327.0 — 2026-09-20 (Advanced installer parity: dual-mode auto-source, versioned repo discovery, and self-uninstall)
+
+**Scope:** Version bump. Advanced installer parity: dual-mode auto-source, versioned repo discovery, and self-uninstall.
+
+---
+
 ## v2.326.0 — 2026-09-20 (GitMap installer and release parity overhaul)
 
 **Scope:** Version bump. GitMap installer and release parity overhaul.

@@ -99,6 +99,7 @@ func init() {
 		removeContextMenuCmd,
 		contextMenuStatusCmd,
 		movieRmCmd,
+		movieSelfUninstallCmd,
 	)
 }
 

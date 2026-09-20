@@ -107,6 +107,7 @@ COMMANDS: list[tuple[str, str, str]] = [
     ("movie scan <path> --refresh",                "Scanning & Library",      "movie scan --refresh "),
     ("movie search <query>",                       "Scanning & Library",      "movie search "),
     ("movie search <query> --year <yyyy>",         "Scanning & Library",      "movie search --year "),
+    ("movie self-uninstall",                       "Configuration & System",  "movie self-uninstall"),
     ("movie stats",                                "Discovery & Organization","movie stats"),
     ("movie stats --by <dimension>",               "Discovery & Organization","movie stats --by "),
     ("movie suggest",                              "Discovery & Organization","movie suggest"),

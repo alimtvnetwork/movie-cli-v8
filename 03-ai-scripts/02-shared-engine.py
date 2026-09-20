@@ -272,6 +272,7 @@ CI_JOBS_MATRIX: dict[str, list[str]] = {
     "Go Unit & Package Tests": ["go", "test", "./...", "-v", "-count=1"],
     "Go Integration Tests (DB)": ["go", "test", "./db/...", "-v", "-count=1"],
     "Installer Smoke Dry-Run": [sys.executable, ".github/scripts/smoke-installer.py", "dryrun"],
+    "Static Installer Smoke Linter": [sys.executable, "03-ai-scripts/16-installer-smoke-tester.py", "--all-paths"],
 }
 
 
