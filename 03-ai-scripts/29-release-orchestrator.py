@@ -38,8 +38,10 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 # Canonical version files
 VERSION_JSON = REPO_ROOT / "version.json"
 PACKAGE_JSON = REPO_ROOT / "package.json"
+VERSION_INFO_GO = REPO_ROOT / "version" / "info.go"
 README_MD = REPO_ROOT / "readme.md"
 CHANGELOG_MD = REPO_ROOT / "changelog.md"
+CHANGELOG_UPPER = REPO_ROOT / "CHANGELOG.md"
 
 # Known bump scripts
 NODE_BUMP_SCRIPT = REPO_ROOT / "scripts" / "bump-version.mjs"
@@ -284,7 +286,9 @@ def stage_and_commit_release(next_version, scope, dry_run=False):
     release_candidates = [
         VERSION_JSON,
         PACKAGE_JSON,
+        VERSION_INFO_GO,
         CHANGELOG_MD,
+        CHANGELOG_UPPER,
         README_MD,
         NODE_BUMP_SCRIPT,
         PYTHON_BUMP_SCRIPT,
@@ -298,6 +302,7 @@ def stage_and_commit_release(next_version, scope, dry_run=False):
     for vf in release_candidates:
         if vf.exists():
             run_cmd(["git", "add", str(vf)])
+    run_cmd(["git", "add", "-u"])
 
     # Commit
     run_cmd(["git", "commit", "-m", commit_msg])

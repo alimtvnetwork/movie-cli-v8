@@ -294,9 +294,15 @@ def update_readme_pins(current_ver, next_version, dry_run=False):
 
     install_snippet = f"""### Install Movie CLI v{next_version}
 
-To pin your repository to this exact version, run the following one-liner:
-Unix/Bash: `curl -sL https://raw.githubusercontent.com/{owner_repo}/v{next_version}/install.sh | bash -s -- ".ai-memory/prompts" "v{next_version}"`
-PowerShell: `Invoke-WebRequest -Uri https://raw.githubusercontent.com/{owner_repo}/v{next_version}/install.ps1 -OutFile install.ps1; .\\install.ps1 -TargetDir ".ai-memory/prompts" -Version "v{next_version}"`
+**Windows (PowerShell):**
+```powershell
+irm https://github.com/{owner_repo}/releases/download/v{next_version}/install.ps1 | iex
+```
+
+**Linux / macOS (Bash):**
+```bash
+curl -fsSL https://github.com/{owner_repo}/releases/download/v{next_version}/install.sh | bash
+```
 """
 
     if f"Install Movie CLI v{next_version}" not in new_content:
@@ -324,23 +330,32 @@ def update_changelogs(next_version, scope, today_str, dry_run=False):
     owner_repo = get_owner_repo()
     cl_target = CHANGELOG_MD if CHANGELOG_MD.is_file() else CHANGELOG_LOWER
 
+    bullets = []
+    if scope:
+        bullets.append(f"- **{scope}**")
+    bullets.extend([
+        "- **Binary Release Installers (`install.ps1`, `install.sh`)**: Modeled after GitMap, transitioned from legacy source compilation to official binary release downloads with SHA-256 verification against `checksums.txt`, persistent user PATH updates, and smart upgrade detection.",
+        "- **Quick Installers & Clean Uninstallers**: Added `install-quick.ps1`, `install-quick.sh`, `uninstall-quick.ps1`, and `uninstall-quick.sh` supporting fast interactive installation and complete uninstallation.",
+        "- **Release Workflow Contract Verification (`.github/workflows/release.yml`)**: Automated dry-run validation (`dist/install.sh --dry-run`, `dist/install.ps1 -DryRun`), release asset staging for quick scripts, and enhanced release notes.",
+    ])
+    bullets_md = "\n".join(bullets)
+
     entry_header = f"""## v{next_version}
 
-### Added
-- **Web UI & Browser Auto-Launch (`movie ui`)**: Dedicated CLI command starting the local REST server and automatically opening the web dashboard in the system's default browser.
-- **Staged Deletions & Action History**: Soft-staged deletions across UI and CLI. Deletion requests are recorded in `StagedAction` table with individual and batch undo/discard capability before accepting.
-- **"Delete Folder" Action in Web UI**: Added `📁🗑 Delete Folder` action to media cards in the report UI to stage removal of an entire parent movie folder.
-- **Cross-Platform Safe OS Trash Bin Deletion (`pkg/trashbin`)**: Replaced all unlinking/hard-deletion logic with safe OS Recycle Bin / Trash Bin movement across Windows (`SHFileOperationW` + PowerShell fallback), macOS (`osascript` Finder), and Linux (`gio trash` / XDG Trash spec).
-- **AppFault Error Management Standard**: Standardized structured error handling using `*appfault.AppError`, `appfault.Wrap`, and `appfault.New` across packages.
-- **TMDB Image & Backdrop Fallback**: Added `BackdropPath` support to `db.Media` and TMDB models, plus multi-tier fallback querying TMDB `/images` endpoint for posters and backdrops.
-- **Full System Reset Command & REST Endpoint (`movie reset`)**: CLI command and `POST /api/system/reset` to safely wipe `.movie-output`, `.movie`, SQLite DB (`movie.db*`), thumbnails, JSON sidecars, and error logs with interactive confirmation. Media files are strictly untouched.
-- **Colorful ANSI Terminal Help**: Replaced default Cobra help with grouped ANSI color styling (Cyan headers, Green commands, Yellow flags, Dim descriptions).
+### Added / Changed
+{bullets_md}
 
-### Install Movie CLI v{next_version}
+### Quick Install Movie CLI v{next_version}
 
-To pin your repository to this exact version, run the following one-liner:
-Unix/Bash: `curl -sL https://raw.githubusercontent.com/{owner_repo}/v{next_version}/install.sh | bash -s -- ".ai-memory/prompts" "v{next_version}"`
-PowerShell: `Invoke-WebRequest -Uri https://raw.githubusercontent.com/{owner_repo}/v{next_version}/install.ps1 -OutFile install.ps1; .\\install.ps1 -TargetDir ".ai-memory/prompts" -Version "v{next_version}"`
+**Windows (PowerShell):**
+```powershell
+irm https://github.com/{owner_repo}/releases/download/v{next_version}/install.ps1 | iex
+```
+
+**Linux / macOS (Bash):**
+```bash
+curl -fsSL https://github.com/{owner_repo}/releases/download/v{next_version}/install.sh | bash
+```
 
 """
 
