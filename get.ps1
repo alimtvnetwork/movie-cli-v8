@@ -40,8 +40,8 @@ $Branch      = 'main'
 $ReleaseUrl  = "https://github.com/$Owner/$Repo/releases/latest/download/install.ps1"
 $SourceUrl   = "https://raw.githubusercontent.com/$Owner/$Repo/$Branch/install.ps1"
 $ReleasesUI  = "https://github.com/$Owner/$Repo/releases"
-$ProbeTimeout = 10
-$LogFile     = Join-Path $env:TEMP 'movie-get.log'
+$baseTemp = if ($env:TEMP) { $env:TEMP } elseif ($env:TMP) { $env:TMP } else { [System.IO.Path]::GetTempPath() }
+$LogFile     = Join-Path $baseTemp 'movie-get.log'
 
 # ── Logging ───────────────────────────────────────────────────
 function Write-Log {

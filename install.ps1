@@ -160,11 +160,15 @@ if (-not [string]::IsNullOrWhiteSpace($Version)) {
 # --- Resolve install directory ---
 function Resolve-InstallDir([string]$dir) {
     if ($dir -ne "") { return $dir }
-    $legacy = Join-Path $env:LOCALAPPDATA "movie"
+    $base = $env:LOCALAPPDATA
+    if (-not $base) {
+        $base = if ($env:HOME) { Join-Path $env:HOME ".local" } else { "." }
+    }
+    $legacy = Join-Path $base "movie"
     if (Test-Path (Join-Path $legacy $script:BinaryExeName)) {
         return $legacy
     }
-    return Join-Path $env:LOCALAPPDATA $script:AppSubdir
+    return Join-Path $base $script:AppSubdir
 }
 
 function Resolve-Arch([string]$archStr) {
@@ -241,7 +245,8 @@ function Get-Asset([string]$versionStr, [string]$archStr) {
         exit 0
     }
 
-    $tmpDir = Join-Path $env:TEMP "movie-install-$(Get-Random)"
+    $baseTemp = if ($env:TEMP) { $env:TEMP } elseif ($env:TMP) { $env:TMP } else { [System.IO.Path]::GetTempPath() }
+    $tmpDir = Join-Path $baseTemp "movie-install-$(Get-Random)"
     New-Item -ItemType Directory -Path $tmpDir -Force | Out-Null
 
     $zipPath = Join-Path $tmpDir $assetName
@@ -321,27 +326,41 @@ function Install-Binary([string]$zipPath, [string]$targetDir) {
 
 # --- Manage PATH ---
 function Add-ToPath([string]$dir) {
-    $currentUserPath = [Environment]::GetEnvironmentVariable("PATH", "User")
-    $parts = if ($currentUserPath) { $currentUserPath -split ";" } else { @() }
-    $hasDir = $parts | Where-Object { $_.Trim() -ieq $dir }
+    try {
+        $currentUserPath = [Environment]::GetEnvironmentVariable("PATH", "User")
+        $parts = if ($currentUserPath) { $currentUserPath -split ";" } else { @() }
+        $hasDir = $parts | Where-Object { $_.Trim() -ieq $dir }
 
-    if (-not $hasDir) {
-        $newPath = if ([string]::IsNullOrWhiteSpace($currentUserPath)) { $dir } else { $currentUserPath.TrimEnd(";") + ";" + $dir }
-        [Environment]::SetEnvironmentVariable("PATH", $newPath, "User")
-        $env:PATH = "$env:PATH;$dir"
-        Write-OK "Added $dir to User PATH."
-    } else {
-        Write-Step "$dir is already in User PATH."
+        if (-not $hasDir) {
+            $newPath = if ([string]::IsNullOrWhiteSpace($currentUserPath)) { $dir } else { $currentUserPath.TrimEnd(";") + ";" + $dir }
+            [Environment]::SetEnvironmentVariable("PATH", $newPath, "User")
+            Write-OK "Added $dir to User PATH."
+        } else {
+            Write-Step "$dir is already in User PATH."
+        }
+    } catch {
+        Write-Step "Skipped User PATH persistence (non-Windows environment)."
+    }
+
+    $sessionParts = if ($env:PATH) { $env:PATH -split ";" } else { @() }
+    $hasSessionDir = $sessionParts | Where-Object { $_.Trim() -ieq $dir }
+    if (-not $hasSessionDir) {
+        $env:PATH = if ([string]::IsNullOrWhiteSpace($env:PATH)) { $dir } else { $env:PATH.TrimEnd(";") + ";" + $dir }
+        Write-OK "Refreshed PATH for current session."
     }
 }
 
 function Remove-FromPath([string]$dir) {
-    $currentUserPath = [Environment]::GetEnvironmentVariable("PATH", "User")
-    if (-not $currentUserPath) { return }
-    $parts = $currentUserPath -split ";" | Where-Object { $_.Trim() -and ($_.Trim() -ine $dir) }
-    $newPath = $parts -join ";"
-    [Environment]::SetEnvironmentVariable("PATH", $newPath, "User")
-    Write-OK "Removed $dir from User PATH."
+    try {
+        $currentUserPath = [Environment]::GetEnvironmentVariable("PATH", "User")
+        if (-not $currentUserPath) { return }
+        $parts = $currentUserPath -split ";" | Where-Object { $_.Trim() -and ($_.Trim() -ine $dir) }
+        $newPath = $parts -join ";"
+        [Environment]::SetEnvironmentVariable("PATH", $newPath, "User")
+        Write-OK "Removed $dir from User PATH."
+    } catch {
+        # Ignore on non-Windows
+    }
 }
 
 # --- Uninstall ---

@@ -27,11 +27,16 @@ $ProgressPreference    = "SilentlyContinue"
 
 $Repo         = "alimtvnetwork/movie-cli-v8"
 $InstallerUrl = "https://raw.githubusercontent.com/$Repo/main/install.ps1"
-$DefaultDir   = Join-Path $env:LOCALAPPDATA "movie-cli"
+$baseAppDir   = $env:LOCALAPPDATA
+if (-not $baseAppDir) {
+    $baseAppDir = if ($env:HOME) { Join-Path $env:HOME ".local" } else { "." }
+}
+$DefaultDir   = Join-Path $baseAppDir "movie-cli"
 
 if ([string]::IsNullOrWhiteSpace($LogFile)) {
-    $stamp   = (Get-Date).ToString("yyyyMMdd-HHmmss")
-    $LogFile = Join-Path $env:TEMP "movie-install-quick-$stamp.log"
+    $stamp    = (Get-Date).ToString("yyyyMMdd-HHmmss")
+    $baseTemp = if ($env:TEMP) { $env:TEMP } elseif ($env:TMP) { $env:TMP } else { [System.IO.Path]::GetTempPath() }
+    $LogFile  = Join-Path $baseTemp "movie-install-quick-$stamp.log"
 }
 
 function Write-Log([string]$message, [string]$level = "INFO") {

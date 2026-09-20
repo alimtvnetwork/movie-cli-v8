@@ -38,8 +38,8 @@ $MAX_LOOKAHEAD     = 25
 $PROBE_TIMEOUT_SEC = 5
 $PROBE_BRANCH      = 'main'
 
-# Optional persistent log file
-$LogFile = Join-Path $env:TEMP 'movie-bootstrap.log'
+$baseTemp = if ($env:TEMP) { $env:TEMP } elseif ($env:TMP) { $env:TMP } else { [System.IO.Path]::GetTempPath() }
+$LogFile = Join-Path $baseTemp 'movie-bootstrap.log'
 
 # ── Logging ───────────────────────────────────────────────────
 function Write-Log {

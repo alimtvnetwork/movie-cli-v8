@@ -24,6 +24,7 @@ Tracks every CI/CD validator finding (CODE-RED-*, STYLE-*) encountered during se
 | 07 | [Cross-spec missing-file checker false-positives in `26-spec-outsides`](resolved-issues/07-cross-spec-missing-file-link-checker.md) | ✅ Solved | missing-file | 2026-04-23 |
 | 08 | [Stale go.mod requirement and Linux trash unused import](.ai-memory/cicd-issues/01-stale-gomod-and-linux-unused-import.md) | ✅ Solved | GO-MOD-TIDY, GO-VET | 2026-09-20 |
 | 09 | [Case sensitivity on Linux runners for command index](.ai-memory/cicd-issues/02-command-index-readme-case-sensitivity.md) | ✅ Solved | COMMAND-INDEX, CASE-SENSITIVITY | 2026-09-20 |
+| 10 | [PowerShell $env:LOCALAPPDATA null on Linux release dry-run](.ai-memory/cicd-issues/03-pwsh-localappdata-null-on-linux-runner.md) | ✅ Solved | PWSH-CROSS-PLATFORM, DRY-RUN | 2026-09-20 |
 
 
 ---

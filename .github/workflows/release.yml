@@ -209,11 +209,15 @@ jobs:
 
           function Resolve-InstallDir([string]$dir) {
               if ($dir -ne "") { return $dir }
-              $legacy = Join-Path $env:LOCALAPPDATA "movie"
+              $base = $env:LOCALAPPDATA
+              if (-not $base) {
+                  $base = if ($env:HOME) { Join-Path $env:HOME ".local" } else { "." }
+              }
+              $legacy = Join-Path $base "movie"
               if (Test-Path (Join-Path $legacy $BinaryName)) {
                   return $legacy
               }
-              return Join-Path $env:LOCALAPPDATA "movie-cli"
+              return Join-Path $base "movie-cli"
           }
 
           function Resolve-Arch([string]$archStr) {
@@ -232,7 +236,8 @@ jobs:
               $assetUrl = "$baseUrl/$assetName"
               $checksumUrl = "$baseUrl/checksums.txt"
 
-              $tmpDir = Join-Path $env:TEMP "movie-install-$(Get-Random)"
+              $baseTemp = if ($env:TEMP) { $env:TEMP } elseif ($env:TMP) { $env:TMP } else { [System.IO.Path]::GetTempPath() }
+              $tmpDir = Join-Path $baseTemp "movie-install-$(Get-Random)"
               New-Item -ItemType Directory -Path $tmpDir -Force | Out-Null
 
               $zipPath = Join-Path $tmpDir $assetName
@@ -326,16 +331,20 @@ jobs:
           }
 
           function Add-ToPath([string]$dir) {
-              $currentUserPath = [Environment]::GetEnvironmentVariable("PATH", "User")
-              $parts = if ($currentUserPath) { $currentUserPath -split ";" } else { @() }
-              $hasDir = $parts | Where-Object { $_.Trim() -ieq $dir }
+              try {
+                  $currentUserPath = [Environment]::GetEnvironmentVariable("PATH", "User")
+                  $parts = if ($currentUserPath) { $currentUserPath -split ";" } else { @() }
+                  $hasDir = $parts | Where-Object { $_.Trim() -ieq $dir }
 
-              if (-not $hasDir) {
-                  $newPath = if ([string]::IsNullOrWhiteSpace($currentUserPath)) { $dir } else { $currentUserPath.TrimEnd(";") + ";" + $dir }
-                  [Environment]::SetEnvironmentVariable("PATH", $newPath, "User")
-                  Write-OK "Added to user PATH (persistent)."
-              } else {
-                  Write-Step "Already in user PATH (persistent)."
+                  if (-not $hasDir) {
+                      $newPath = if ([string]::IsNullOrWhiteSpace($currentUserPath)) { $dir } else { $currentUserPath.TrimEnd(";") + ";" + $dir }
+                      [Environment]::SetEnvironmentVariable("PATH", $newPath, "User")
+                      Write-OK "Added to user PATH (persistent)."
+                  } else {
+                      Write-Step "Already in user PATH (persistent)."
+                  }
+              } catch {
+                  Write-Step "Skipped User PATH persistence (non-Windows environment)."
               }
 
               $sessionParts = if ($env:PATH) { $env:PATH -split ";" } else { @() }
@@ -690,6 +699,9 @@ jobs:
 
       - name: Validate generated install scripts contract via dry-run
         shell: bash
+        env:
+          LOCALAPPDATA: /home/runner/.local
+          TEMP: /tmp
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           echo "Validating dist/install.sh --dry-run..."

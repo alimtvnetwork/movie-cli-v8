@@ -38,21 +38,29 @@ function Write-Err($msg)  { Write-Host "    $msg" -ForegroundColor Red }
 
 function Resolve-TargetDir {
     if ($InstallDir) { return $InstallDir }
-    $defaultCandidate = Join-Path $env:LOCALAPPDATA "movie-cli"
+    $baseAppDir = $env:LOCALAPPDATA
+    if (-not $baseAppDir) {
+        $baseAppDir = if ($env:HOME) { Join-Path $env:HOME ".local" } else { "." }
+    }
+    $defaultCandidate = Join-Path $baseAppDir "movie-cli"
     if (Test-Path $defaultCandidate) { return $defaultCandidate }
-    $legacyCandidate = Join-Path $env:LOCALAPPDATA "movie"
+    $legacyCandidate = Join-Path $baseAppDir "movie"
     if (Test-Path $legacyCandidate) { return $legacyCandidate }
     return $defaultCandidate
 }
 
 function Remove-PathEntry([string]$dir) {
     if (-not $dir) { return }
-    $userPath = [Environment]::GetEnvironmentVariable("PATH", "User")
-    if (-not $userPath) { return }
-    $parts = $userPath -split ";" | Where-Object { $_.Trim() -and ($_.Trim() -ine $dir) }
-    $newPath = $parts -join ";"
-    [Environment]::SetEnvironmentVariable("PATH", $newPath, "User")
-    Write-Ok "Cleaned $dir from User PATH."
+    try {
+        $userPath = [Environment]::GetEnvironmentVariable("PATH", "User")
+        if (-not $userPath) { return }
+        $parts = $userPath -split ";" | Where-Object { $_.Trim() -and ($_.Trim() -ine $dir) }
+        $newPath = $parts -join ";"
+        [Environment]::SetEnvironmentVariable("PATH", $newPath, "User")
+        Write-Ok "Cleaned $dir from User PATH."
+    } catch {
+        # Ignore on non-Windows
+    }
 }
 
 Write-Host ""
@@ -93,7 +101,8 @@ if (Test-Path $target) {
 
 Remove-PathEntry $target
 
-$userData = Join-Path $env:USERPROFILE ".movie"
+$userHome = if ($env:USERPROFILE) { $env:USERPROFILE } elseif ($env:HOME) { $env:HOME } else { "." }
+$userData = Join-Path $userHome ".movie"
 if (Test-Path $userData) {
     if ($KeepData) {
         Write-Step "Preserving user data: $userData"
