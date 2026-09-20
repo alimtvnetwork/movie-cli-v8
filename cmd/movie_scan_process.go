@@ -151,6 +151,12 @@ func enrichFromTMDb(ctx *ScanContext, m *db.Media, result cleaner.Result) {
 		}
 
 		if tmdbErr != nil {
+			if errors.Is(tmdbErr, tmdb.ErrAuthInvalid) {
+				if !ctx.HasTMDb {
+					return
+				}
+			}
+
 			logTMDbSearchError(buildTMDbSearchQuery(result), tmdbErr)
 
 			return

@@ -65,37 +65,36 @@ func resolveScanTmdbCredentials(database *db.DB) tmdbCredentials {
 // loops until valid credentials are provided or the user skips.
 func promptForValidTmdbCredentials(database *db.DB) tmdbCredentials {
 	fmt.Println("⚠️  TMDb is not configured or current credentials are invalid.")
-	fmt.Println("   Enter a valid TMDb API key and/or TMDb access token.")
+	fmt.Println("   Enter a valid TMDb API key or Bearer token.")
 	fmt.Println("   (Leave blank and press Enter to continue without metadata):")
 
 	scanner := bufio.NewScanner(os.Stdin)
 
 	for {
-		fmt.Print("   TMDb API key: ")
+		fmt.Print("   TMDb API key or token: ")
 
 		if !scanner.Scan() {
 			break
 		}
 
-		inputKey := strings.TrimSpace(scanner.Text())
+		rawInput := strings.Trim(strings.TrimSpace(scanner.Text()), "\"'`")
 
-		fmt.Print("   TMDb access token: ")
+		if rawInput == "" {
+			fmt.Println("⚠️  No TMDb credentials provided. Scanning will continue without metadata.")
+			fmt.Println()
 
-		if !scanner.Scan() {
-			break
+			return tmdbCredentials{}
 		}
 
-		inputToken := strings.TrimSpace(scanner.Text())
+		var inputKey string
+		var inputToken string
 
-		fmt.Println()
+		if strings.HasPrefix(rawInput, "eyJ") {
+			inputToken = rawInput
+		}
 
-		if inputKey == "" {
-			if inputToken == "" {
-				fmt.Println("⚠️  No TMDb credentials provided. Scanning will continue without metadata.")
-				fmt.Println()
-
-				return tmdbCredentials{}
-			}
+		if !strings.HasPrefix(rawInput, "eyJ") {
+			inputKey = rawInput
 		}
 
 		testClient := tmdb.NewClientWithToken(inputKey, inputToken)
@@ -110,7 +109,7 @@ func promptForValidTmdbCredentials(database *db.DB) tmdbCredentials {
 		}
 
 		if errors.Is(testErr, tmdb.ErrAuthInvalid) {
-			fmt.Println("❌ That TMDb API key or token is invalid (rejected by TMDb). Please try again:")
+			fmt.Println("❌ That TMDb API key or token was rejected as invalid. Please try again:")
 			fmt.Println()
 
 			continue
@@ -128,12 +127,20 @@ func promptForValidTmdbCredentials(database *db.DB) tmdbCredentials {
 func saveTmdbCredentialsToDB(database *db.DB, apiKey, token string) {
 	if apiKey != "" {
 		if err := database.SetConfig("TmdbApiKey", apiKey); err != nil {
+			errlog.Warn("Could not save TmdbApiKey: %v", err)
+		}
+
+		if err := database.SetConfig("tmdb_api_key", apiKey); err != nil {
 			errlog.Warn("Could not save tmdb_api_key: %v", err)
 		}
 	}
 
 	if token != "" {
 		if err := database.SetConfig("TmdbToken", token); err != nil {
+			errlog.Warn("Could not save TmdbToken: %v", err)
+		}
+
+		if err := database.SetConfig("tmdb_token", token); err != nil {
 			errlog.Warn("Could not save tmdb_token: %v", err)
 		}
 	}
@@ -156,20 +163,28 @@ func ensureValidTmdbClient(database *db.DB) *tmdb.Client {
 
 // readTmdbCredentials reads TMDb credentials from config first, then env.
 func readTmdbCredentials(database *db.DB) tmdbCredentials {
-	creds := tmdbCredentials{
-		ApiKey: strings.TrimSpace(readTmdbConfigValue(database, "TmdbApiKey")),
-		Token:  strings.TrimSpace(readTmdbConfigValue(database, "TmdbToken")),
+	apiKey := strings.TrimSpace(readTmdbConfigValue(database, "TmdbApiKey"))
+	if apiKey == "" {
+		apiKey = strings.TrimSpace(readTmdbConfigValue(database, "tmdb_api_key"))
 	}
 
-	if creds.ApiKey == "" {
-		creds.ApiKey = strings.TrimSpace(os.Getenv("TMDB_API_KEY"))
+	token := strings.TrimSpace(readTmdbConfigValue(database, "TmdbToken"))
+	if token == "" {
+		token = strings.TrimSpace(readTmdbConfigValue(database, "tmdb_token"))
 	}
 
-	if creds.Token == "" {
-		creds.Token = strings.TrimSpace(os.Getenv("TMDB_TOKEN"))
+	if apiKey == "" {
+		apiKey = strings.TrimSpace(os.Getenv("TMDB_API_KEY"))
 	}
 
-	return creds
+	if token == "" {
+		token = strings.TrimSpace(os.Getenv("TMDB_TOKEN"))
+	}
+
+	return tmdbCredentials{
+		ApiKey: apiKey,
+		Token:  token,
+	}
 }
 
 func readTmdbConfigValue(database *db.DB, key string) string {

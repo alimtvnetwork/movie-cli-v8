@@ -88,8 +88,9 @@ func classifyHTTPError(err error) error {
 
 func handleResponse(resp *http.Response, target interface{}, attempt int) error {
 	switch {
-	case resp.StatusCode == 401:
+	case resp.StatusCode == 401 || resp.StatusCode == 403:
 		resp.Body.Close()
+
 		return appfault.New("%w. Run: movie config set tmdb_api_key YOUR_KEY", ErrAuthInvalid)
 
 	case resp.StatusCode == 429:

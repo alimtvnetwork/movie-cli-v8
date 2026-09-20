@@ -1,3 +1,9 @@
+## v2.330.0 — 2026-09-20 (re-prompt loop for invalid TMDb API key and error spam suppression)
+
+**Scope:** Version bump. re-prompt loop for invalid TMDb API key and error spam suppression.
+
+---
+
 ## v2.329.0 — 2026-09-20 (Fix Windows terminal broken ANSI escape codes with Virtual Terminal Processing)
 
 **Scope:** Version bump. Fix Windows terminal broken ANSI escape codes with Virtual Terminal Processing.

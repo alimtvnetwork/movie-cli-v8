@@ -65,3 +65,24 @@ func TestVerifyAuth_InvalidAuth(t *testing.T) {
 		t.Fatalf("expected ErrAuthInvalid, got: %v", err)
 	}
 }
+
+func TestVerifyAuth_ForbiddenAuth(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusForbidden)
+		_, _ = w.Write([]byte(`{"status_code":3,"status_message":"Authentication failed: You do not have permissions to access the service."}`))
+	}))
+	defer ts.Close()
+
+	c := NewClient("forbidden_key")
+	c.BaseURL = ts.URL
+
+	err := c.VerifyAuth()
+	if err == nil {
+		t.Fatal("expected error for forbidden key, got nil")
+	}
+
+	if !errors.Is(err, ErrAuthInvalid) {
+		t.Fatalf("expected ErrAuthInvalid, got: %v", err)
+	}
+}
