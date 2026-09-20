@@ -701,11 +701,11 @@ function Deploy-Binary {
     # Safe deploy: rename existing binary first (rollback on failure)
     $hadExisting = Test-Path $destFile
     if ($hadExisting) {
-        if ($Update -and (Test-Path $backupFile)) {
+        if (Test-Path $backupFile) {
             try {
                 Remove-Item -Path $backupFile -Force -ErrorAction Stop
             } catch {
-                $backupFile = Join-Path $deployPath "$binaryName.old.$([System.Guid]::NewGuid().ToString('N').Substring(0,8))"
+                $backupFile = Join-Path $deployPath "$backupExt.$([System.Guid]::NewGuid().ToString('N').Substring(0,8))"
             }
         }
         try {
