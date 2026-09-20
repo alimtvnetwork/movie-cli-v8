@@ -7,7 +7,11 @@
 set -uo pipefail
 
 ROOT="${1:-.}"
-README="$ROOT/README.md"
+if [ -f "$ROOT/readme.md" ]; then
+    README="$ROOT/readme.md"
+else
+    README="$ROOT/README.md"
+fi
 QS="$ROOT/QUICKSTART.md"
 
 fail=0

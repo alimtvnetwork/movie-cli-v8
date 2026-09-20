@@ -217,6 +217,7 @@ jobs:
           set -e
           TARGETS=(
             README.md
+            readme.md
             QUICKSTART.md
             install.sh install.ps1
             get.sh    get.ps1

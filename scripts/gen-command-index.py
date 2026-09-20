@@ -41,7 +41,7 @@ import re
 import sys
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
-README = REPO_ROOT / "README.md"
+README = (REPO_ROOT / "readme.md") if (REPO_ROOT / "readme.md").exists() else (REPO_ROOT / "README.md")
 
 # ─── Source of truth ────────────────────────────────────────────────────────
 # Each entry: (command, section_label, example_keyword)

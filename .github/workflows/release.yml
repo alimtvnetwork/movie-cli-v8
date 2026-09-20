@@ -69,6 +69,7 @@ jobs:
           SURFACES=(
             "go.mod"
             "README.md"
+            "readme.md"
             "install.sh"
             "install.ps1"
             "run.ps1"

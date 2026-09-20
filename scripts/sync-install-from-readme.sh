@@ -40,7 +40,11 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-README="$ROOT/README.md"
+if [ -f "$ROOT/readme.md" ]; then
+  README="$ROOT/readme.md"
+else
+  README="$ROOT/README.md"
+fi
 CONFIG_FILE="$ROOT/scripts/sync-install-targets.txt"
 
 # Default targets — used when no config file, env var, or flag is provided.
