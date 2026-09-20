@@ -1,3 +1,9 @@
+## v2.325.0 — 2026-09-20 (overhaul binary release installers and quick scripts following gitmap)
+
+**Scope:** Version bump. overhaul binary release installers and quick scripts following gitmap.
+
+---
+
 # 98 — Changelog
 
 **Spec:** `19-main-worker-service`
