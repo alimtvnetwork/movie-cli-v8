@@ -46,3 +46,4 @@ Achieved full advanced feature parity with **GitMap** (`D:\work\gitmap`) across 
 - Local Quality Gates: 20/20 checks passed (100% green).
 - Command Index: 71 unit tests passed, 61 commands indexed.
 - Go packages: 100% passing tests and clean `go vet`.
+- Remote Pipeline & Release: GitHub Actions run #35488676446 completed with conclusion 'success'. Release v2.327.0 published with all 14 assets.
