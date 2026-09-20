@@ -65,6 +65,18 @@ UNINSTALL=0
 DRY_RUN=0
 FORCE=0
 
+load_deploy_manifest() {
+    local manifest_path="$(dirname "$0")/deploy-manifest.json"
+    if [ -f "$manifest_path" ] && command -v jq >/dev/null 2>&1; then
+        local sub
+        sub="$(jq -r '.appSubdir // empty' "$manifest_path" 2>/dev/null || true)"
+        if [ -n "$sub" ]; then
+            DEFAULT_INSTALL_DIR="$HOME/.local/$sub"
+        fi
+    fi
+}
+load_deploy_manifest
+
 # ── Output helpers ────────────────────────────────────────────
 GREEN='\033[0;32m'
 CYAN='\033[0;36m'

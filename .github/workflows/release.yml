@@ -640,9 +640,9 @@ jobs:
           sed -i "s|REPO_PLACEHOLDER|$REPO|g" dist/install.sh
           chmod +x dist/install.sh
 
-      - name: Stage quick installers and uninstallers
+      - name: Stage quick installers, deploy manifest and helpers
         run: |
-          cp install-quick.ps1 install-quick.sh uninstall-quick.ps1 uninstall-quick.sh dist/
+          cp install-quick.ps1 install-quick.sh uninstall-quick.ps1 uninstall-quick.sh deploy-manifest.json dist/
 
       - name: Enforce version-pinning contract on install scripts
         ## Hard gate per spec/12-ci-cd-pipeline/06-version-pinned-install-scripts.md.
@@ -683,10 +683,17 @@ jobs:
 
             ## The pinned literal must be present and equal to $VERSION.
             ## install.ps1 uses: $PinnedVersion = "vX.Y.Z"
-            ## install.sh  uses: PINNED_VERSION="vX.Y.Z"
-            if ! grep -qE "(PinnedVersion|PINNED_VERSION)\s*=\s*\"${VERSION}\"" "$script"; then
-              echo "::error file=$script::pinned version literal not found or does not match $VERSION"
-              FAIL=1
+            ## install.sh uses:   VERSION_PINNED="vX.Y.Z"
+            if [[ "$script" == *.ps1 ]]; then
+              if ! grep -q "PinnedVersion = \"$VERSION\"" "$script"; then
+                echo "::error file=$script::PinnedVersion != $VERSION"
+                FAIL=1
+              fi
+            else
+              if ! grep -q "VERSION_PINNED=\"$VERSION\"" "$script"; then
+                echo "::error file=$script::VERSION_PINNED != $VERSION"
+                FAIL=1
+              fi
             fi
           done
 
@@ -719,6 +726,9 @@ jobs:
           echo "Validating quick installers syntax..."
           bash -n dist/install-quick.sh dist/uninstall-quick.sh
           pwsh -NoProfile -Command "Get-Command -Syntax dist/install-quick.ps1, dist/uninstall-quick.ps1 | Out-Null"
+
+          echo "Validating installer smoke contract..."
+          python .github/scripts/smoke-installer.py dryrun
 
           echo "OK — all installer dry-run contract validations passed!"
 
@@ -842,3 +852,13 @@ jobs:
           files: dist/*
           draft: false
           prerelease: false
+
+      - name: Post-release installer smoke contract assert
+        env:
+          EXPECTED: ${{ steps.version.outputs.version }}
+          LOCALAPPDATA: /home/runner/.local
+          TEMP: /tmp
+        run: |
+          echo "Asserting post-release contract for $EXPECTED..."
+          python .github/scripts/smoke-installer.py dryrun
+          echo "OK — post-release installer verification passed!"

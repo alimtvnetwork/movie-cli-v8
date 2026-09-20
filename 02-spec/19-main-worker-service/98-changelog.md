@@ -1,3 +1,9 @@
+## v2.326.0 — 2026-09-20 (GitMap installer and release parity overhaul)
+
+**Scope:** Version bump. GitMap installer and release parity overhaul.
+
+---
+
 ## v2.325.0 — 2026-09-20 (overhaul binary release installers and quick scripts following gitmap)
 
 **Scope:** Version bump. overhaul binary release installers and quick scripts following gitmap.

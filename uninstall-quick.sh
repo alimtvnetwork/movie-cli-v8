@@ -39,6 +39,14 @@ echo ""
 printf "  ${BOLD}movie CLI Quick Uninstaller${NC}\n"
 printf "  ===========================\n\n"
 
+if command -v "$BINARY_NAME" >/dev/null 2>&1; then
+    printf "  ${CYAN}→${NC} Attempting self-uninstall via: %s uninstall -y\n" "$BINARY_NAME"
+    if "$BINARY_NAME" uninstall -y 2>/dev/null; then
+        printf "  ${GREEN}✓${NC} Self-uninstall completed successfully.\n\n"
+        exit 0
+    fi
+fi
+
 TARGET_BIN="$INSTALL_DIR/$BINARY_NAME"
 if [ -f "$TARGET_BIN" ]; then
     rm -f "$TARGET_BIN"

@@ -10,6 +10,7 @@ Master directory of architectural and execution plans.
 - [11-code-red-refactor-remediation.md](pending/11-code-red-refactor-remediation.md): Remediate Code Red enum, boolean, and query wrapper violations across the codebase.
 ## Completed Plans
 
+- [15-gitmap-installer-and-release-parity.md](completed/15-gitmap-installer-and-release-parity.md): Full installer and release process parity with GitMap (deploy-manifest.json, init.ps1/init.sh, run.sh, smoke-installer.py, CI/CD dryrun validation).
 - [14-improve-installer-and-release-process.md](completed/14-improve-installer-and-release-process.md): Overhaul binary installers, quick one-liners, uninstaller suite, and release workflow dry-run contract verification following GitMap.
 
 - [12-movie-cli-ui-trash-error-and-reset-overhaul.md](completed/12-movie-cli-ui-trash-error-and-reset-overhaul.md): Movie CLI UI, staged trash-bin deletion, AppFault error management, TMDB image handling, reset command, and colorful terminal help.

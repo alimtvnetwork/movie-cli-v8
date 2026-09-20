@@ -69,6 +69,29 @@ Write-Host "  Installing movie CLI to: $InstallDir" -ForegroundColor Green
 Write-Host "  Log file: $LogFile" -ForegroundColor DarkGray
 Write-Host ""
 
+$script:InstallErrors = New-Object System.Collections.Generic.List[string]
+
+function Invoke-Safe {
+    param(
+        [Parameter(Mandatory)][string]$Step,
+        [Parameter(Mandatory)][scriptblock]$Action,
+        [switch]$Fatal
+    )
+    Write-Log "BEGIN: $Step"
+    try {
+        $result = & $Action
+        Write-Log "OK:    $Step"
+        return $result
+    } catch {
+        $msg = "FAIL:  $Step :: $($_.Exception.Message)"
+        Write-Log $msg "ERROR"
+        $script:InstallErrors.Add("$Step -> $($_.Exception.Message)")
+        Write-Host "  [ERROR] $Step : $($_.Exception.Message)" -ForegroundColor Red
+        if ($Fatal) { throw }
+        return $null
+    }
+}
+
 # Check if local install.ps1 is available first (when running from repo)
 $localInstaller = Join-Path $PSScriptRoot "install.ps1"
 $scriptContent = $null
@@ -77,7 +100,7 @@ if (Test-Path $localInstaller) {
     $scriptContent = Get-Content $localInstaller -Raw -Encoding UTF8
 } else {
     Write-Log "Downloading canonical installer: $InstallerUrl"
-    $scriptContent = (Invoke-WebRequest -Uri $InstallerUrl -UseBasicParsing).Content
+    $scriptContent = Invoke-Safe "Download installer" { (Invoke-WebRequest -Uri $InstallerUrl -UseBasicParsing).Content } -Fatal
 }
 
 $block = [ScriptBlock]::Create($scriptContent)

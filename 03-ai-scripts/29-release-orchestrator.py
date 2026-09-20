@@ -298,6 +298,17 @@ def stage_and_commit_release(next_version, scope, dry_run=False):
         REPO_ROOT / "src" / "data" / "specTree.json",
         REPO_ROOT / "02-spec" / "19-main-worker-service" / "98-changelog.md",
         REPO_ROOT / "reports" / "spec-verification" / "coverage.md",
+        REPO_ROOT / "deploy-manifest.json",
+        REPO_ROOT / "init.ps1",
+        REPO_ROOT / "init.sh",
+        REPO_ROOT / "run.sh",
+        REPO_ROOT / "install.ps1",
+        REPO_ROOT / "install.sh",
+        REPO_ROOT / "install-quick.ps1",
+        REPO_ROOT / "install-quick.sh",
+        REPO_ROOT / "uninstall-quick.ps1",
+        REPO_ROOT / "uninstall-quick.sh",
+        REPO_ROOT / ".github" / "scripts" / "smoke-installer.py",
     ]
     for vf in release_candidates:
         if vf.exists():

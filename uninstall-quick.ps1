@@ -63,10 +63,41 @@ function Remove-PathEntry([string]$dir) {
     }
 }
 
+function Try-SelfUninstall {
+    $cmd = Get-Command movie -ErrorAction SilentlyContinue | Select-Object -First 1
+    if (-not $cmd) {
+        return $false
+    }
+    $activeBinary = [string]$cmd.Source
+    if ([string]::IsNullOrWhiteSpace($activeBinary)) {
+        return $false
+    }
+    Write-Step "Found active binary: $activeBinary"
+    Write-Step "Attempting self-uninstall via: $activeBinary uninstall -y"
+    try {
+        & $activeBinary uninstall -y
+        if ($LASTEXITCODE -eq 0) {
+            Write-Ok "Self-uninstall completed cleanly."
+            return $true
+        }
+        return $false
+    } catch {
+        return $false
+    }
+}
+
 Write-Host ""
 Write-Host "  movie CLI Quick Uninstaller" -ForegroundColor White
 Write-Host "  ===========================" -ForegroundColor DarkGray
 Write-Host ""
+
+if (-not $InstallDir) {
+    if (Try-SelfUninstall) {
+        Write-Host ""
+        Write-Ok "Uninstall complete."
+        exit 0
+    }
+}
 
 $target = Resolve-TargetDir
 Write-Step "Inspecting installation at: $target"

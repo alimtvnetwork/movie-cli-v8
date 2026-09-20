@@ -90,6 +90,18 @@ $InstallerVersion = "1.0.0"
 $script:AppSubdir = "movie-cli"
 $script:LegacyAppSubdirs = @("movie")
 
+function Load-DeployManifest {
+    $manifestPath = Join-Path $PSScriptRoot "deploy-manifest.json"
+    if (Test-Path $manifestPath) {
+        try {
+            $manifest = Get-Content $manifestPath -Raw | ConvertFrom-Json
+            if ($manifest.appSubdir) { $script:AppSubdir = [string]$manifest.appSubdir }
+            if ($manifest.legacyAppSubdirs) { $script:LegacyAppSubdirs = @($manifest.legacyAppSubdirs) }
+        } catch { }
+    }
+}
+Load-DeployManifest
+
 class InstallerFailure : System.Exception {
     [int]$ExitCode
     InstallerFailure([string]$message, [int]$exitCode) : base($message) {

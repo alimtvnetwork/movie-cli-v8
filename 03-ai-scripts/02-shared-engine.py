@@ -271,6 +271,7 @@ CI_JOBS_MATRIX: dict[str, list[str]] = {
     "Legacy Module Path Auditor": [BASH_CMD, "scripts/audit-legacy-paths.sh", "--strict"],
     "Go Unit & Package Tests": ["go", "test", "./...", "-v", "-count=1"],
     "Go Integration Tests (DB)": ["go", "test", "./db/...", "-v", "-count=1"],
+    "Installer Smoke Dry-Run": [sys.executable, ".github/scripts/smoke-installer.py", "dryrun"],
 }
 
 

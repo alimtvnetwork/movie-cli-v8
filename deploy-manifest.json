@@ -1,0 +1,13 @@
+{
+  "$comment": "Single source of truth for deploy-target folder names. Loaders: run.ps1, run.sh, install.ps1, install.sh. Do NOT hardcode 'movie-cli' or 'movie' elsewhere.",
+  "schemaVersion": 1,
+  "appSubdir": "movie-cli",
+  "legacyAppSubdirs": [
+    "movie"
+  ],
+  "binaryName": {
+    "windows": "movie.exe",
+    "unix": "movie"
+  },
+  "sourceRepoSubdir": "."
+}
