@@ -22,6 +22,9 @@ func TestNormalizeExistingThumb(t *testing.T) {
 		{"/thumbnails/red-eye-2005-11460.jpg", "thumbnails/red-eye-2005-11460.jpg"},
 		{"thumbnails/red-eye-2005-11460.jpg", "thumbnails/red-eye-2005-11460.jpg"},
 		{`C:\Users\AppData\Local\thumbnails\red-eye.jpg`, "thumbnails/red-eye.jpg"},
+		{"/home/user/.local/share/movie-cli/thumbnails/red-eye.jpg", "thumbnails/red-eye.jpg"},
+		{`C:\Users\AppData/Local\thumbnails/red-eye.jpg`, "thumbnails/red-eye.jpg"},
+		{"red-eye.jpg", "thumbnails/red-eye.jpg"},
 	}
 
 	for _, tc := range tests {

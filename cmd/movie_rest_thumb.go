@@ -34,16 +34,28 @@ func normalizeExistingThumb(path string) string {
 		return path
 	}
 
-	hasSlash := strings.HasPrefix(path, "/")
-	hasThumb := strings.HasPrefix(path, "/thumbnails/")
+	clean := strings.ReplaceAll(path, "\\", "/")
 
-	if hasSlash {
-		if !hasThumb {
-			return "https://image.tmdb.org/t/p/w342" + path
+	idx := strings.LastIndex(clean, "/")
+	base := clean
+	if idx != -1 {
+		base = clean[idx+1:]
+	}
+
+	hasThumbDir := strings.Contains(clean, "thumbnails/")
+	if hasThumbDir {
+		return "thumbnails/" + base
+	}
+
+	hasLeadingSlash := strings.HasPrefix(clean, "/")
+	if hasLeadingSlash {
+		hasSingleSlash := strings.Count(clean, "/") == 1
+		if hasSingleSlash {
+			return "https://image.tmdb.org/t/p/w342" + clean
 		}
 	}
 
-	return "thumbnails/" + filepath.Base(path)
+	return "thumbnails/" + base
 }
 
 func discoverMissingThumb(database *db.DB, m *db.Media) string {
