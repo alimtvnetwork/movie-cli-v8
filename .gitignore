@@ -44,4 +44,10 @@ coverage.txt
 __pycache__/
 *.py[cod]
 *$py.class
+
+# Temporary runner caches
+tmp/
+.ai-memory/temp/
+.ai-memory/cicd/
+
 

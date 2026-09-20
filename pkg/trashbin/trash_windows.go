@@ -24,12 +24,12 @@ const (
 type shFileOpStructW struct {
 	hwnd                  uintptr
 	wFunc                 uint32
-	pFrom                 *uint16
-	pTo                   *uint16
+	pFrom                 uintptr
+	pTo                   uintptr
 	fFlags                uint16
 	fAnyOperationsAborted int32
 	hNameMappings         uintptr
-	lpszProgressTitle     *uint16
+	lpszProgressTitle     uintptr
 }
 
 var (
@@ -43,7 +43,7 @@ func moveToTrashOS(absPath string) error {
 		fromWide = append(fromWide, 0)
 		op := shFileOpStructW{
 			wFunc:  foDelete,
-			pFrom:  &fromWide[0],
+			pFrom:  uintptr(unsafe.Pointer(&fromWide[0])),
 			fFlags: fofAllowUndo | fofNoConfirmation | fofSilent | fofNoErrorUI,
 		}
 

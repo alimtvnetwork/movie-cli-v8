@@ -30,6 +30,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import sys
 import threading
 import time
@@ -238,45 +239,40 @@ TEMP_ARTIFACT_FILENAMES: tuple[str, ...] = (
     ".DS_Store", "Thumbs.db", "desktop.ini", ".directory"
 )
 
-# Centralized 36 CI Quality Gate Job Definitions
+def _resolve_bash_command() -> str:
+    """Finds cross-platform bash executable."""
+    found = shutil.which("bash")
+    if found:
+        return found
+    git_bash = Path("C:/Program Files/Git/bin/bash.exe")
+    if git_bash.is_file():
+        return str(git_bash)
+    return "bash"
+
+BASH_CMD = _resolve_bash_command()
+
+# Centralized movie-cli-v8 CI Quality Gate Job Definitions
 CI_JOBS_MATRIX: dict[str, list[str]] = {
-    "Relative Path Check": [sys.executable, "linter-scripts/check-relative-paths.py"],
-    "Prompts Loaded Check": [sys.executable, "linter-scripts/check-prompts-loaded.py"],
-    "Readme Install Section Check": [sys.executable, "linter-scripts/check-readme-install-section.py"],
-    "Forbidden Strings Check": [sys.executable, "linter-scripts/check-forbidden-strings.py"],
-    "Newline Styling Check": [sys.executable, "linter-scripts/check-newline-styling.py"],
-    "Fast File Scanner Cache": [sys.executable, "03-ai-scripts/11-fast-file-scanner.py", "--check"],
-    "File Size Guard": [sys.executable, "03-ai-scripts/13-file-size-guard.py"],
+    "Go Vet (Host)": ["go", "vet", "./..."],
+    "Go Vet (Linux Target)": [sys.executable, "-c", "import os, subprocess, sys; env = dict(os.environ, GOOS='linux'); sys.exit(subprocess.run(['go', 'vet', './...'], env=env).returncode)"],
+    "Go Mod Tidy Check": [sys.executable, "-c", "import filecmp, os, shutil, subprocess, sys, tempfile; td = tempfile.mkdtemp(); b_mod, b_sum = os.path.join(td, 'go.mod'), os.path.join(td, 'go.sum'); shutil.copy2('go.mod', b_mod); shutil.copy2('go.sum', b_sum); subprocess.run(['go', 'mod', 'tidy'], check=True); is_same = filecmp.cmp('go.mod', b_mod, shallow=False) and filecmp.cmp('go.sum', b_sum, shallow=False); shutil.rmtree(td, ignore_errors=True); sys.exit(0 if is_same else 1)"],
+    "Golangci-Lint": [sys.executable, "-c", "import shutil, subprocess, sys; exe = shutil.which('golangci-lint'); sys.exit(subprocess.run([exe, 'run', '--timeout=5m']).returncode if exe else 0)"],
+    "Acronym Naming Check": [sys.executable, "scripts/check-acronym-naming.py"],
+    "Command Index Check": [sys.executable, "scripts/gen-command-index.py", "--check"],
+    "Command Index Unit Tests": [sys.executable, "-m", "unittest", "scripts/tests/test_gen_command_index.py"],
     "Version Sync Check": [sys.executable, "03-ai-scripts/14-version-sync-checker.py"],
-    "Bundle Installer Generation": ["node", "scripts/generate-bundle-installers.mjs"],
-    "Spec Tree Sync": ["node", "scripts/sync-spec-tree.mjs"],
-    "Codegen Determinism Check": [sys.executable, "linters-cicd/codegen/scripts/verify_codegen_determinism.py"],
-    "Spec Verification Coverage": ["node", "scripts/spec-verification/generate-coverage-report.mjs", "--strict", "--out", "reports/spec-verification/coverage.md"],
-    "Validate Version JSON": ["node", "scripts/validate-version-json.mjs"],
-    "Doc Links Check": ["node", "scripts/docs/check-doc-links.mjs", "readme.md"],
-    "Check File Sizes Baseline": [sys.executable, "linter-scripts/check-file-sizes.py", "--check"],
-    "Newline Styling MJS Check": ["node", "linter-scripts/check-newline-styling.mjs"],
-    "Spec Folder References Check": [sys.executable, "linter-scripts/check-spec-folder-refs.py"],
-    "Sequence Integrity Check": [sys.executable, "linter-scripts/check-sequence-integrity.py"],
-    "Prompt & Spec Path Integrity Check": [sys.executable, "linter-scripts/check-prompt-and-spec-paths.py"],
-    "Linters CI/CD Test Suite": [sys.executable, "linters-cicd/tests/run.py"],
-    "Interface Naming Check": [sys.executable, "linter-scripts/check-interface-naming.py"],
-    "Go Base Test Suite": ["go", "test", "-C", "04-code/golang", "./..."],
-    "Axios Version Security Check": [sys.executable, "linter-scripts/check-axios-version.py"],
-    "Forbidden Spec Paths Check": [sys.executable, "linter-scripts/check-forbidden-spec-paths.py"],
-    "Placeholder Comments Check": [sys.executable, "linter-scripts/check-placeholder-comments.py"],
-    "Tunable Constants Check": [sys.executable, "linter-scripts/check-tunable-constants.py"],
-    "Runner Dispatch Guard Check": [sys.executable, "linter-scripts/check-runner-dispatch-antipatterns.py"],
-    "Lint CI Drift Self-Test": ["node", "scripts/tests/check-lint-ci-drift.test.mjs"],
-    "Required Checks Self-Test": ["node", "scripts/tests/print-required-checks.test.mjs"],
-    "Sync Guidelines Self-Test": ["node", "scripts/tests/sync-guidelines.test.mjs"],
-    "File Sizes Baseline Self-Test": [sys.executable, "linter-scripts/tests/check-file-sizes.test.py"],
-    "Markdown Gap Check": [sys.executable, "03-ai-scripts/31-md-gap-fixer.py"],
-    "Sequence & Title Check": [sys.executable, "03-ai-scripts/15-sequence-and-title-auditor.py"],
-    "Sequence Integrity Check (AI Scripts)": [sys.executable, "03-ai-scripts/21-sequence-integrity-linter.py"],
-    "Misspell Check": [sys.executable, "03-ai-scripts/27-misspell-auditor.py"],
-    "Boolean Naming Check": [sys.executable, "03-ai-scripts/08-naming-autofixer.py"],
+    "File Size Guard": [sys.executable, "03-ai-scripts/13-file-size-guard.py"],
+    "Fast File Scanner Cache": [sys.executable, "03-ai-scripts/11-fast-file-scanner.py", "--check"],
+    "Binary Name Consistency": [BASH_CMD, "scripts/check-binary-name.sh"],
+    "Quickstart Wiring Check": [BASH_CMD, "scripts/check-quickstart.sh", "."],
+    "Forbidden Terms Guard": [BASH_CMD, "scripts/guard-forbidden-terms.sh"],
+    "LastInsertId Anti-Pattern Guard": [BASH_CMD, "scripts/check-lastinsertid-anti-pattern.sh", "db"],
+    "Boolean Naming Guard": [BASH_CMD, "scripts/check-boolean-naming.sh", "."],
+    "Legacy Module Path Auditor": [BASH_CMD, "scripts/audit-legacy-paths.sh", "--strict"],
+    "Go Unit & Package Tests": ["go", "test", "./...", "-v", "-count=1"],
+    "Go Integration Tests (DB)": ["go", "test", "./db/...", "-v", "-count=1"],
 }
+
 
 # --- Module-Level Directory & File Constants ---
 CACHE_BASE_DIR = Path("tmp/cache")

@@ -29,9 +29,7 @@ const (
 
 // StagedActionRecord models a row in the StagedAction table.
 type StagedActionRecord struct {
-	StagedActionId  int64            `json:"staged_action_id"`
 	ActionType      StagedActionType `json:"action_type"`
-	MediaId         sql.NullInt64    `json:"media_id"`
 	SourcePath      string           `json:"source_path"`
 	DestinationPath string           `json:"destination_path,omitempty"`
 	MediaSnapshot   string           `json:"media_snapshot,omitempty"`
@@ -41,6 +39,8 @@ type StagedActionRecord struct {
 	ErrorMessage    string           `json:"error_message,omitempty"`
 	CreatedAt       string           `json:"created_at"`
 	UpdatedAt       string           `json:"updated_at"`
+	StagedActionId  int64            `json:"staged_action_id"`
+	MediaId         sql.NullInt64    `json:"media_id"`
 }
 
 // InsertStagedAction inserts a new staged action into the queue.

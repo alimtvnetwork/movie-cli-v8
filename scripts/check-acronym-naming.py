@@ -20,6 +20,9 @@ import os
 import re
 import sys
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+
 ALLOWLIST = re.compile(
     r'\b(imdbID|tmdbID|imgURL|reqURL|posterURL|baseURL|apiURL|fullURL|'
     r'targetURL|rawURL|nextURL|prevURL|sourceURL|destURL|webhookURL|'

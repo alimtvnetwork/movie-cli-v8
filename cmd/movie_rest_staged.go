@@ -8,21 +8,19 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/alimtvnetwork/movie-cli-v8/db"
-	"github.com/alimtvnetwork/movie-cli-v8/errlog"
 	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 	"github.com/alimtvnetwork/movie-cli-v8/pkg/trashbin"
 )
 
 type stagedCreateRequest struct {
 	ActionType      string `json:"action_type"`
-	MediaID         int64  `json:"media_id"`
 	SourcePath      string `json:"source_path,omitempty"`
 	DestinationPath string `json:"destination_path,omitempty"`
+	MediaID         int64  `json:"media_id"`
 	DeleteFolder    bool   `json:"delete_folder,omitempty"`
 }
 
@@ -59,7 +57,7 @@ func handleStagedCreate(database *db.DB, w http.ResponseWriter, r *http.Request)
 
 	if req.MediaID > 0 {
 		nullMediaID = sql.NullInt64{Int64: req.MediaID, Valid: true}
-		media, fetchErr := database.MediaByID(req.MediaID)
+		media, fetchErr := database.GetMediaByID(req.MediaID)
 		if fetchErr == nil {
 			if media != nil {
 				sourcePath = media.CurrentFilePath
@@ -135,15 +133,16 @@ func handleStagedApplyAll(database *db.DB, w http.ResponseWriter) {
 	failedCount := 0
 	results := make([]map[string]interface{}, 0, len(records))
 
-	for _, rec := range records {
-		applyErr := applySingleStagedRecord(database, &rec, batchID)
+	for i := range records {
+		rec := &records[i]
+		applyErr := applySingleStagedRecord(database, rec, batchID)
 		if applyErr != nil {
 			failedCount++
 			_ = database.UpdateStagedStatus(rec.StagedActionId, db.StatusFailed, applyErr.Error())
 			results = append(results, map[string]interface{}{
-				"id":      rec.StagedActionId,
-				"status":  "failed",
-				"error":   applyErr.Error(),
+				"id":     rec.StagedActionId,
+				"status": "failed",
+				"error":  applyErr.Error(),
 			})
 		} else {
 			appliedCount++
@@ -179,8 +178,8 @@ func handleStagedApplySingle(database *db.DB, w http.ResponseWriter, id int64) {
 
 	_ = database.UpdateStagedStatus(id, db.StatusApplied, "")
 	writeRestJSON(w, http.StatusOK, map[string]interface{}{
-		"id":      id,
-		"status":  "applied",
+		"id":       id,
+		"status":   "applied",
 		"batch_id": batchID,
 	})
 }
@@ -200,7 +199,13 @@ func applySingleStagedRecord(database *db.DB, rec *db.StagedActionRecord, batchI
 			if softErr := database.SoftDeleteMedia(rec.MediaId.Int64); softErr != nil {
 				return appfault.Wrapf(softErr, "soft delete media #%d", rec.MediaId.Int64)
 			}
-			_ = database.InsertActionSimple(db.FileActionDelete, rec.MediaId.Int64, rec.MediaSnapshot, "moved to trash via staged apply", batchID)
+			_, _ = database.InsertActionSimple(db.ActionSimpleInput{
+				FileAction: db.FileActionDelete,
+				MediaID:    rec.MediaId.Int64,
+				Snapshot:   rec.MediaSnapshot,
+				Detail:     "moved to trash via staged apply",
+				BatchID:    batchID,
+			})
 		}
 
 		return nil
@@ -223,7 +228,14 @@ func applySingleStagedRecord(database *db.DB, rec *db.StagedActionRecord, batchI
 			if updErr := database.UpdateMediaPath(rec.MediaId.Int64, rec.DestinationPath); updErr != nil {
 				return appfault.Wrapf(updErr, "update media #%d path", rec.MediaId.Int64)
 			}
-			_ = database.InsertActionSimple(db.FileActionMove, rec.MediaId.Int64, rec.MediaSnapshot, fmt.Sprintf("moved to %s", rec.DestinationPath), batchID)
+
+			_, _ = database.InsertActionSimple(db.ActionSimpleInput{
+				FileAction: db.FileActionMove,
+				MediaID:    rec.MediaId.Int64,
+				Snapshot:   rec.MediaSnapshot,
+				Detail:     fmt.Sprintf("moved to %s", rec.DestinationPath),
+				BatchID:    batchID,
+			})
 		}
 
 		return nil

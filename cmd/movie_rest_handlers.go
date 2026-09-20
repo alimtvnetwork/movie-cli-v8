@@ -273,9 +273,9 @@ func handleSystemReset(w http.ResponseWriter, r *http.Request, database *db.DB) 
 	targets := discoverResetTargets(database, opts)
 	if opts.IsDryRun {
 		writeJSON(w, map[string]interface{}{
-			"status":   "dry_run",
-			"targets":  targets,
-			"message":  "Dry run preview generated. No data was deleted.",
+			"status":  "dry_run",
+			"targets": targets,
+			"message": "Dry run preview generated. No data was deleted.",
 		})
 		return
 	}

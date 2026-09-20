@@ -73,10 +73,10 @@ type TVDetails struct {
 // ImageItem holds a single image metadata item from TMDb /images.
 type ImageItem struct {
 	FilePath    string  `json:"file_path"`
-	Width       int     `json:"width"`
-	Height      int     `json:"height"`
 	Iso639_1    string  `json:"iso_639_1"`
 	VoteAverage float64 `json:"vote_average"`
+	Width       int     `json:"width"`
+	Height      int     `json:"height"`
 }
 
 // MediaImagesResponse holds backdrops, posters, and stills from TMDb /images.
