@@ -433,7 +433,8 @@ jobs:
           #!/usr/bin/env bash
           set -euo pipefail
 
-          PINNED_VERSION="VERSION_PLACEHOLDER"
+          VERSION_PINNED="VERSION_PLACEHOLDER"
+          PINNED_VERSION="$VERSION_PINNED"
           REPO="REPO_PLACEHOLDER"
           BINARY_NAME="movie"
           INSTALL_DIR=""
