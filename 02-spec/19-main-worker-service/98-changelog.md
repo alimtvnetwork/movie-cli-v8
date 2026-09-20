@@ -1,3 +1,9 @@
+## v2.336.0 — 2026-09-20 (movie detail page, thumbnail reuse in scan, and hybrid image resolution)
+
+**Scope:** Version bump. movie detail page, thumbnail reuse in scan, and hybrid image resolution.
+
+---
+
 ## v2.335.0 — 2026-09-20 (fix UI image thumbnail path resolution and TMDB fallback)
 
 **Scope:** Version bump. fix UI image thumbnail path resolution and TMDB fallback.

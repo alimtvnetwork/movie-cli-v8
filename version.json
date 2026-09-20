@@ -1,10 +1,10 @@
 {
-  "Version": "2.335.0",
-  "version": "2.335.0",
+  "Version": "2.336.0",
+  "version": "2.336.0",
   "Title": "Movie CLI",
   "RepoSlug": "movie-cli-v8",
   "RepoUrl": "https://github.com/alimtvnetwork/movie-cli-v8",
-  "LastCommitSha": "ee3647ed62abe562338308ddf75628dc68961de4",
+  "LastCommitSha": "cdd1717ab9407390481511649721ce4e61f7e6dd",
   "Description": "Personal movie & TV show library manager \u2014 from the terminal.",
   "releaseDate": "2026-09-20",
   "changelog": {
