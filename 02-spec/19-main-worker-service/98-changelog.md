@@ -4,6 +4,13 @@
 
 ---
 
+## v2.324.0 — 2026-09-20 (CI/CD fixes for Linux trash import, go.mod dependencies, and struct alignment)
+
+**Scope:** Version bump. CI/CD fixes for Linux trash import, go.mod dependencies, and struct alignment.
+
+---
+
+
 ## v2.323.0 — 2026-09-19 (Web UI, staged deletions, TMDB image fallback, reset command, and colorful help)
 
 **Scope:** Version bump. Web UI, staged deletions, TMDB image fallback, reset command, and colorful help.

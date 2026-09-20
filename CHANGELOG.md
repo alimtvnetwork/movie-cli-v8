@@ -1,5 +1,22 @@
 # Changelog
 
+## v2.324.0
+
+### Fixed
+- **CI/CD Go Module Tidy Verification**: Added `github.com/mattn/go-isatty` as direct requirement in `go.mod` and ran `go mod tidy` to satisfy pre-release migration audit assertions.
+- **Linux Trash Unused Import**: Removed unreferenced `"strings"` import from `pkg/trashbin/trash_linux.go` to restore clean cross-platform Linux compilation and `go vet` validation.
+- **Staged Actions REST API**: Fixed `GetMediaByID` receiver call and `ActionSimpleInput` struct parameter encapsulation in `cmd/movie_rest_staged.go`.
+- **Struct Field Alignment & gocritic**: Reordered struct fields in `stagedCreateRequest`, `StagedActionRecord`, `ImageItem`, and Win32 `shFileOpStructW` to optimize memory layout, eliminate pointer padding, and resolve `govet` and `gocritic` warnings.
+- **Local Runner Parity**: Updated `03-ai-scripts/02-shared-engine.py` to register all 18 real CI/CD quality gates of `movie-cli-v8`, enabling 100% local pass parity before remote publishing.
+
+### Install Movie CLI v2.324.0
+
+To pin your repository to this exact version, run the following one-liner:
+Unix/Bash: `curl -sL https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v8/v2.324.0/install.sh | bash -s -- ".ai-memory/prompts" "v2.324.0"`
+PowerShell: `Invoke-WebRequest -Uri https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v8/v2.324.0/install.ps1 -OutFile install.ps1; .\install.ps1 -TargetDir ".ai-memory/prompts" -Version "v2.324.0"`
+
+
+
 ## v2.323.0
 
 ### Added
