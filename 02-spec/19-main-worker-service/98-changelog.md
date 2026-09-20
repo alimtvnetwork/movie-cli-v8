@@ -1,3 +1,9 @@
+## v2.332.0 — 2026-09-20 (release synchronization and stability improvements)
+
+**Scope:** Version bump. release synchronization and stability improvements.
+
+---
+
 ## v2.331.0 — 2026-09-20 (fix movie update deployPath mismatch, doctor self-replace on missing binary, and tilde expansion)
 
 **Scope:** Version bump. fix movie update deployPath mismatch, doctor self-replace on missing binary, and tilde expansion.
