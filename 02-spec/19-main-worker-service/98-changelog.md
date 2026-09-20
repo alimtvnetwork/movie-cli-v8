@@ -1,3 +1,9 @@
+## v2.335.0 — 2026-09-20 (fix UI image thumbnail path resolution and TMDB fallback)
+
+**Scope:** Version bump. fix UI image thumbnail path resolution and TMDB fallback.
+
+---
+
 ## v2.334.0 — 2026-09-20 (enhance installer and update terminal UI to match GitMap standard)
 
 **Scope:** Version bump. enhance installer and update terminal UI to match GitMap standard.

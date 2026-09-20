@@ -242,7 +242,7 @@
            data-genre="{{.Genre}}" data-director="{{.Director}}" data-cast="{{.CastList}}">
         <div class="card-top">
           {{if .ThumbnailPath}}
-          <img class="card-thumb" src="{{.ThumbnailPath}}" alt="{{.Title}}" loading="lazy" />
+          <img class="card-thumb" src="{{.ThumbnailPath}}" alt="{{.Title}}" loading="lazy" onerror="handleThumbError(this)" />
           {{else}}
           <div class="card-thumb-placeholder">🎬</div>
           {{end}}
@@ -434,9 +434,36 @@ function renderDashboardCards(items) {
   grid.innerHTML = items.map(cardTemplate).join('');
 }
 
+function resolveThumbUrl(thumbPath) {
+  if (!thumbPath) return '';
+  if (thumbPath.startsWith('http://') || thumbPath.startsWith('https://')) {
+    return thumbPath;
+  }
+  if (thumbPath.startsWith('/') && !thumbPath.startsWith('/thumbnails/')) {
+    return 'https://image.tmdb.org/t/p/w342' + thumbPath;
+  }
+  var clean = thumbPath.replace(/\\/g, '/');
+  var idx = clean.indexOf('thumbnails/');
+  if (idx !== -1) {
+    clean = clean.substring(idx);
+  } else if (clean.startsWith('/')) {
+    clean = clean.substring(1);
+  }
+  return clean;
+}
+
+function handleThumbError(img) {
+  img.onerror = null;
+  var parent = img.parentElement;
+  if (parent) {
+    parent.innerHTML = '<div class="card-thumb-placeholder">🎬</div>';
+  }
+}
+
 function cardTemplate(c) {
-  const thumb = c.thumbnail_path
-    ? '<img class="card-thumb" src="' + escAttr(c.thumbnail_path) + '" alt="' + escAttr(c.title) + '" loading="lazy" />'
+  const thumbUrl = resolveThumbUrl(c.thumbnail_path);
+  const thumb = thumbUrl
+    ? '<img class="card-thumb" src="' + escAttr(thumbUrl) + '" alt="' + escAttr(c.title) + '" loading="lazy" onerror="handleThumbError(this)" />'
     : '<div class="card-thumb-placeholder">🎬</div>';
   const ratingTxt = c.tmdb_rating ? c.tmdb_rating.toFixed(1) : '0.0';
   const watchedClass = c.watched ? ' watched' : '';

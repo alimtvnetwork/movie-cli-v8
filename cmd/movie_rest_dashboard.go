@@ -165,12 +165,15 @@ func buildDashboardCards(database *db.DB, items []db.Media) []dashboardCard {
 
 func mediaToCard(database *db.DB, m *db.Media) dashboardCard {
 	tags, _ := database.GetTagsByMediaID(int(m.ID))
+
+	thumbPath := resolveMediaThumbnail(database, m)
+
 	return dashboardCard{
 		ID: m.ID, Title: m.Title, Year: m.Year, Type: m.Type, Runtime: m.Runtime,
 		TmdbID: m.TmdbID, TmdbRating: m.TmdbRating, Genre: m.Genre,
 		GenreList: splitGenres(m.Genre), Director: m.Director, CastList: m.CastList,
 		Description: m.Description, Tagline: m.Tagline,
-		ThumbnailPath: m.ThumbnailPath, Tags: tags, Watched: containsTag(tags, "watched"),
+		ThumbnailPath: thumbPath, Tags: tags, Watched: containsTag(tags, "watched"),
 	}
 }
 

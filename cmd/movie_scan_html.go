@@ -85,13 +85,14 @@ func buildHTMLReportItems(media []db.Media) []htmlReportItem {
 	items := make([]htmlReportItem, 0, len(media))
 	for i := range media {
 		m := &media[i]
+		thumb := normalizeExistingThumb(m.ThumbnailPath)
 		items = append(items, htmlReportItem{
 			ID: m.ID, Title: m.Title, Year: m.Year, Type: m.Type,
 			Genre: m.Genre, GenreList: splitGenreList(m.Genre),
 			Director: m.Director, CastList: m.CastList,
 			Description: m.Description, Tagline: m.Tagline,
 			TmdbRating: m.TmdbRating, ImdbRating: m.ImdbRating,
-			Runtime: m.Runtime, ThumbnailPath: m.ThumbnailPath,
+			Runtime: m.Runtime, ThumbnailPath: thumb,
 		})
 	}
 	return items

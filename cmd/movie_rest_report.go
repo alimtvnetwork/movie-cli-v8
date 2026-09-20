@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"html/template"
 	"net/http"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -120,14 +119,14 @@ func serveHTMLReport(w http.ResponseWriter, database *db.DB, port int) {
 		return
 	}
 
-	data := buildReportData(items, port)
+	data := buildReportData(database, items, port)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err := tmpl.Execute(w, data); err != nil {
 		errlog.Error("template render error: %v", err)
 	}
 }
 
-func buildReportData(items []db.Media, port int) htmlReportData {
+func buildReportData(database *db.DB, items []db.Media, port int) htmlReportData {
 	movies, tv := 0, 0
 	reportItems := make([]htmlReportItem, 0, len(items))
 	for i := range items {
@@ -138,7 +137,7 @@ func buildReportData(items []db.Media, port int) htmlReportData {
 		if m.Type != string(db.MediaTypeMovie) {
 			tv++
 		}
-		reportItems = append(reportItems, buildHTMLReportItem(*m))
+		reportItems = append(reportItems, buildHTMLReportItem(database, *m))
 	}
 
 	return htmlReportData{
@@ -152,15 +151,14 @@ func buildReportData(items []db.Media, port int) htmlReportData {
 	}
 }
 
-func buildHTMLReportItem(m db.Media) htmlReportItem {
+func buildHTMLReportItem(database *db.DB, m db.Media) htmlReportItem {
 	var genres []string
 	if m.Genre != "" {
 		genres = append(genres, splitGenres(m.Genre)...)
 	}
-	thumbSrc := ""
-	if m.ThumbnailPath != "" {
-		thumbSrc = "/thumbnails/" + filepath.Base(m.ThumbnailPath)
-	}
+
+	thumbSrc := resolveMediaThumbnail(database, &m)
+
 	return htmlReportItem{
 		ID:            m.ID,
 		Title:         m.Title,

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"os/exec"
-	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
@@ -102,17 +101,24 @@ func initRestLogger(database *db.DB) {
 func buildRESTMux(database *db.DB) *http.ServeMux {
 	mux := http.NewServeMux()
 
-	thumbDir := filepath.Join(database.BasePath, "thumbnails")
-	mux.Handle("/thumbnails/", http.StripPrefix("/thumbnails/", http.FileServer(http.Dir(thumbDir))))
+	mux.HandleFunc("/thumbnails/", corsWrap(func(w http.ResponseWriter, r *http.Request) {
+		handleThumbnails(w, r, database)
+	}))
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/" && !strings.HasPrefix(r.URL.Path, "/thumbnails/") {
-			http.NotFound(w, r)
+		if strings.Contains(r.URL.Path, "/thumbnails/") {
+			handleThumbnails(w, r, database)
+
 			return
 		}
-		if r.URL.Path == "/" {
+
+		if isReportPath(r.URL.Path) {
 			serveHTMLReport(w, database, restPort)
+
+			return
 		}
+
+		http.NotFound(w, r)
 	})
 
 	mux.HandleFunc("/api/tags", corsWrap(func(w http.ResponseWriter, r *http.Request) {
@@ -279,4 +285,20 @@ func writeJSON(w http.ResponseWriter, data interface{}) {
 	if err := json.NewEncoder(w).Encode(data); err != nil {
 		errlog.Error("JSON encode error: %v", err)
 	}
+}
+
+func isReportPath(path string) bool {
+	if path == "/" {
+		return true
+	}
+
+	if path == "/report" || path == "/report.html" {
+		return true
+	}
+
+	if path == "/dashboard" || path == "/ui" || path == "/index.html" {
+		return true
+	}
+
+	return false
 }
