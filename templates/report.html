@@ -22,7 +22,7 @@
   .app { display: flex; flex-direction: column; min-height: 100vh; }
   .toolbar { position: sticky; top: 0; z-index: 20; background: rgba(9,9,11,0.85); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); padding: 0.75rem 1.5rem; }
   .toolbar-inner { max-width: 1400px; margin: 0 auto; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
-  .toolbar-brand { font-size: 1.1rem; font-weight: 700; white-space: nowrap; display: flex; align-items: center; gap: 0.5rem; }
+  .toolbar-brand { font-size: 1.1rem; font-weight: 700; white-space: nowrap; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; }
   .toolbar-brand span { color: var(--accent); }
   .main { max-width: 1400px; margin: 0 auto; padding: 1.5rem; width: 100%; }
 
@@ -58,8 +58,8 @@
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 1rem; }
 
   /* Card */
-  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; transition: all 0.2s ease; }
-  .card:hover { background: var(--card-hover); border-color: var(--border-hover); transform: translateY(-1px); box-shadow: var(--shadow); }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; transition: all 0.2s ease; cursor: pointer; }
+  .card:hover { background: var(--card-hover); border-color: var(--border-hover); transform: translateY(-2px); box-shadow: var(--shadow); }
   .card.watched { border-left: 3px solid var(--success); }
   .card.removed { opacity: 0.2; pointer-events: none; transform: scale(0.98); }
   .card-top { display: flex; gap: 0.85rem; padding: 1rem; }
@@ -79,20 +79,77 @@
   .card-tags .tag:hover .tag-x { opacity: 1; }
   .card-desc { font-size: 0.75rem; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.5; }
   .card-tagline { font-size: 0.72rem; color: var(--text-secondary); font-style: italic; }
-  .card-middle { padding: 0 1rem 0.5rem; }
+  .card-middle { padding: 0 1rem 0.5rem; cursor: default; }
   .tag-add { display: inline-flex; gap: 0.25rem; }
   .tag-add input { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.65rem; width: 80px; }
   .tag-add input:focus { outline: none; border-color: var(--accent); }
   .tag-add button { background: var(--accent); border: none; color: #fff; width: 20px; height: 20px; border-radius: 4px; font-size: 0.7rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
   .card-bottom { padding: 0.6rem 1rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
   .card-credits { font-size: 0.7rem; color: var(--muted); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .card-actions { display: flex; gap: 0.3rem; flex-shrink: 0; }
+  .card-actions { display: flex; gap: 0.3rem; flex-shrink: 0; cursor: default; }
   .action-btn { background: none; border: 1px solid transparent; color: var(--muted); width: 30px; height: 30px; border-radius: var(--radius-xs); cursor: pointer; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
   .action-btn:hover { background: var(--bg-elevated); border-color: var(--border); color: var(--text); }
   .action-btn.delete:hover { color: var(--danger); border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.1); }
   .action-btn.watched-btn:hover { color: var(--success); border-color: rgba(34,197,94,0.3); background: rgba(34,197,94,0.1); }
   .action-btn.similar-btn:hover { color: var(--warn); border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.1); }
   .action-btn.is-watched { color: var(--success); background: rgba(34,197,94,0.1); border-color: rgba(34,197,94,0.3); }
+
+  /* Detail Page View */
+  .detail-page { display: flex; flex-direction: column; gap: 1.5rem; animation: fadeIn 0.2s ease-out; }
+  .detail-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-bottom: 0.5rem; }
+  .back-btn { display: inline-flex; align-items: center; gap: 0.5rem; background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text); padding: 0.5rem 1rem; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+  .back-btn:hover { background: var(--accent); border-color: var(--accent); color: #fff; transform: translateX(-2px); }
+  .detail-breadcrumbs { font-size: 0.85rem; color: var(--muted); display: flex; align-items: center; gap: 0.4rem; }
+  .crumb-link { color: var(--accent); cursor: pointer; text-decoration: underline; }
+  .crumb-sep { color: var(--border-hover); }
+  .crumb-current { color: var(--text-secondary); max-width: 320px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* Hero Section */
+  .detail-hero { position: relative; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); background-size: cover; background-position: center; min-height: 380px; display: flex; align-items: flex-end; }
+  .detail-backdrop-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(9,9,11,0.4) 0%, rgba(9,9,11,0.92) 80%, rgba(9,9,11,1) 100%); }
+  .detail-hero-content { position: relative; z-index: 2; padding: 2rem; display: flex; gap: 2rem; align-items: flex-end; width: 100%; flex-wrap: wrap; }
+  .detail-poster-wrap { flex-shrink: 0; box-shadow: var(--shadow-lg); border-radius: var(--radius-sm); overflow: hidden; border: 2px solid rgba(255,255,255,0.1); background: var(--card); }
+  .detail-poster { width: 180px; height: 270px; object-fit: cover; display: block; }
+  .detail-hero-info { flex: 1; min-width: 280px; display: flex; flex-direction: column; gap: 0.6rem; }
+  .detail-badges { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+  .badge-type { background: var(--accent); color: #fff; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; padding: 0.2rem 0.55rem; border-radius: 4px; letter-spacing: 0.04em; }
+  .badge-year, .badge-runtime { background: rgba(255,255,255,0.1); color: var(--text-secondary); font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.55rem; border-radius: 4px; }
+  .badge-rating { background: rgba(245,158,11,0.2); color: var(--warn); border: 1px solid rgba(245,158,11,0.4); font-size: 0.75rem; font-weight: 700; padding: 0.2rem 0.55rem; border-radius: 4px; }
+  .badge-watched { background: rgba(34,197,94,0.2); color: var(--success); border: 1px solid rgba(34,197,94,0.4); font-size: 0.75rem; font-weight: 700; padding: 0.2rem 0.55rem; border-radius: 4px; }
+  .detail-title { font-size: 2.2rem; font-weight: 800; line-height: 1.2; color: #fff; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+  .detail-tagline { font-size: 1rem; color: #cbd5e1; font-style: italic; }
+  .detail-actions-bar { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.8rem; }
+  .detail-btn { display: inline-flex; align-items: center; gap: 0.4rem; background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text); padding: 0.45rem 0.9rem; border-radius: var(--radius-sm); font-size: 0.82rem; font-weight: 600; cursor: pointer; text-decoration: none; transition: all 0.15s; }
+  .detail-btn:hover { background: var(--border-hover); color: #fff; transform: translateY(-1px); }
+  .detail-btn.watched-btn:hover, .detail-btn.watched-btn.is-watched { background: rgba(34,197,94,0.15); border-color: rgba(34,197,94,0.4); color: var(--success); }
+  .detail-btn.similar-btn:hover { background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.4); color: var(--warn); }
+  .detail-btn.delete-btn:hover { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.4); color: var(--danger); }
+  .detail-btn.imdb-btn:hover { background: rgba(234,179,8,0.15); border-color: rgba(234,179,8,0.4); color: #eab308; }
+  .detail-btn.trailer-btn:hover { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.4); color: #f87171; }
+
+  /* Body Layout */
+  .detail-body { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; }
+  .detail-main-col { display: flex; flex-direction: column; gap: 1.5rem; }
+  .detail-side-col { display: flex; flex-direction: column; gap: 1rem; }
+  .detail-section { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; }
+  .section-title { font-size: 1rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--text); border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+  .detail-overview { font-size: 0.92rem; color: #d4d4d8; line-height: 1.7; }
+  .detail-genre-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .detail-genre-tags span { background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text-secondary); padding: 0.25rem 0.65rem; border-radius: 6px; font-size: 0.8rem; font-weight: 500; }
+  .detail-credits-grid { display: grid; grid-template-columns: 1fr; gap: 0.75rem; }
+  .credit-group { display: flex; flex-direction: column; gap: 0.2rem; }
+  .credit-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); font-weight: 600; }
+  .credit-value { font-size: 0.88rem; color: var(--text); font-weight: 500; }
+
+  /* Side cards */
+  .detail-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; }
+  .card-header { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--text); border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; }
+  .info-row { display: flex; flex-direction: column; gap: 0.2rem; margin-bottom: 0.65rem; }
+  .info-label { font-size: 0.7rem; text-transform: uppercase; color: var(--muted); letter-spacing: 0.04em; font-weight: 600; }
+  .info-val { font-size: 0.82rem; color: var(--text); word-break: break-all; }
+  .info-code { font-family: 'JetBrains Mono', monospace; background: var(--bg); padding: 0.2rem 0.4rem; border-radius: 4px; border: 1px solid var(--border); }
+  .info-path { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--accent-hover); cursor: pointer; text-decoration: underline dotted; }
+  .info-path:hover { color: #fff; }
 
   /* Banner */
   .rest-banner { background: var(--bg-elevated); border: 1px solid rgba(99,102,241,0.3); border-radius: var(--radius-sm); padding: 0.6rem 1rem; font-size: 0.78rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; }
@@ -127,19 +184,6 @@
   .empty-state .icon { font-size: 3rem; margin-bottom: 1rem; }
   .empty-state p { font-size: 0.9rem; }
 
-  /* Responsive */
-  @media (max-width: 768px) {
-    .toolbar-inner { flex-direction: column; align-items: stretch; gap: 0.5rem; }
-    .search-wrap { max-width: none; }
-    .stats-strip { margin-left: 0; justify-content: center; }
-    .grid { grid-template-columns: 1fr; }
-    .filter-bar { justify-content: center; }
-  }
-  @media (max-width: 480px) {
-    .card-top { flex-direction: column; align-items: center; text-align: center; }
-    .card-genre, .card-tags { justify-content: center; }
-  }
-
   /* Staged operations floating bar */
   .staged-bar {
     position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
@@ -165,6 +209,26 @@
     padding: 0.2rem 0.5rem; border-radius: 4px; pointer-events: none;
   }
   @keyframes slideUp { from { transform: translate(-50%, 20px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .detail-body { grid-template-columns: 1fr; }
+    .detail-hero-content { flex-direction: column; align-items: center; text-align: center; }
+    .detail-badges, .detail-actions-bar { justify-content: center; }
+  }
+  @media (max-width: 768px) {
+    .toolbar-inner { flex-direction: column; align-items: stretch; gap: 0.5rem; }
+    .search-wrap { max-width: none; }
+    .stats-strip { margin-left: 0; justify-content: center; }
+    .grid { grid-template-columns: 1fr; }
+    .filter-bar { justify-content: center; }
+  }
+  @media (max-width: 480px) {
+    .card-top { flex-direction: column; align-items: center; text-align: center; }
+    .card-genre, .card-tags { justify-content: center; }
+    .detail-title { font-size: 1.6rem; }
+  }
 </style>
 </head>
 <body>
@@ -172,7 +236,7 @@
   <!-- Sticky toolbar -->
   <div class="toolbar">
     <div class="toolbar-inner">
-      <div class="toolbar-brand">🎬 <span>Movie CLI</span></div>
+      <div class="toolbar-brand" onclick="navigateToCatalog()">🎬 <span>Movie CLI</span></div>
       <div class="search-wrap">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
         <input class="search-input" type="text" id="searchInput" placeholder="Search titles, directors, cast... (/ to focus)" />
@@ -186,110 +250,244 @@
   </div>
 
   <div class="main">
-    <div class="rest-banner" id="restBanner">
-      <span class="dot"></span>
-      Run <code>movie rest</code> to enable interactive features (port <strong>{{.Port}}</strong>)
-    </div>
+    <!-- Catalog Grid View -->
+    <div id="catalogView">
+      <div class="rest-banner" id="restBanner">
+        <span class="dot"></span>
+        Run <code>movie rest</code> or <code>movie ui</code> to enable interactive features (port <strong>{{.Port}}</strong>)
+      </div>
 
-    <!-- Filters -->
-    <div class="filter-bar">
-      <div class="filter-group">
-        <span class="filter-label">Type</span>
-        <button class="filter-pill active" onclick="setFilter('type','all',this)">All</button>
-        <button class="filter-pill" onclick="setFilter('type','movie',this)">Movies</button>
-        <button class="filter-pill" onclick="setFilter('type','tv',this)">TV Shows</button>
-        <button class="filter-pill" onclick="setFilter('type','watched',this)">✅ Watched</button>
+      <!-- Filters -->
+      <div class="filter-bar">
+        <div class="filter-group">
+          <span class="filter-label">Type</span>
+          <button class="filter-pill active" onclick="setFilter('type','all',this)">All</button>
+          <button class="filter-pill" onclick="setFilter('type','movie',this)">Movies</button>
+          <button class="filter-pill" onclick="setFilter('type','tv',this)">TV Shows</button>
+          <button class="filter-pill" onclick="setFilter('type','watched',this)">✅ Watched</button>
+        </div>
+        <div class="filter-divider"></div>
+        <div class="filter-group">
+          <span class="filter-label">Genre</span>
+          <select class="filter-select" id="genreFilter" onchange="applyFilters()">
+            <option value="">All Genres</option>
+          </select>
+        </div>
+        <div class="filter-divider"></div>
+        <div class="filter-group">
+          <span class="filter-label">Rating</span>
+          <select class="filter-select" id="ratingFilter" onchange="applyFilters()">
+            <option value="">Any Rating</option>
+            <option value="9">9+ ★★★★★</option>
+            <option value="8">8+ ★★★★</option>
+            <option value="7">7+ ★★★</option>
+            <option value="6">6+ ★★</option>
+            <option value="5">5+ ★</option>
+          </select>
+        </div>
+        <div class="filter-divider"></div>
+        <div class="filter-group">
+          <span class="filter-label">Sort</span>
+          <select class="filter-select" id="sortSelect" onchange="applySort()">
+            <option value="title-asc">Title A→Z</option>
+            <option value="title-desc">Title Z→A</option>
+            <option value="rating-desc">Rating ↓</option>
+            <option value="rating-asc">Rating ↑</option>
+            <option value="year-desc">Year ↓</option>
+            <option value="year-asc">Year ↑</option>
+          </select>
+        </div>
       </div>
-      <div class="filter-divider"></div>
-      <div class="filter-group">
-        <span class="filter-label">Genre</span>
-        <select class="filter-select" id="genreFilter" onchange="applyFilters()">
-          <option value="">All Genres</option>
-        </select>
-      </div>
-      <div class="filter-divider"></div>
-      <div class="filter-group">
-        <span class="filter-label">Rating</span>
-        <select class="filter-select" id="ratingFilter" onchange="applyFilters()">
-          <option value="">Any Rating</option>
-          <option value="9">9+ ★★★★★</option>
-          <option value="8">8+ ★★★★</option>
-          <option value="7">7+ ★★★</option>
-          <option value="6">6+ ★★</option>
-          <option value="5">5+ ★</option>
-        </select>
-      </div>
-      <div class="filter-divider"></div>
-      <div class="filter-group">
-        <span class="filter-label">Sort</span>
-        <select class="filter-select" id="sortSelect" onchange="applySort()">
-          <option value="title-asc">Title A→Z</option>
-          <option value="title-desc">Title Z→A</option>
-          <option value="rating-desc">Rating ↓</option>
-          <option value="rating-asc">Rating ↑</option>
-          <option value="year-desc">Year ↓</option>
-          <option value="year-asc">Year ↑</option>
-        </select>
-      </div>
-    </div>
 
-    <div class="results-info" id="resultsInfo"></div>
+      <div class="results-info" id="resultsInfo"></div>
 
-    <div class="grid" id="grid">
-      {{range .Items}}
-      <div class="card" data-type="{{.Type}}" data-title="{{.Title}}" data-id="{{.ID}}"
-           data-rating="{{printf "%.1f" .TmdbRating}}" data-year="{{.Year}}"
-           data-genre="{{.Genre}}" data-director="{{.Director}}" data-cast="{{.CastList}}">
-        <div class="card-top">
-          {{if .ThumbnailPath}}
-          <img class="card-thumb" src="{{.ThumbnailPath}}" alt="{{.Title}}" loading="lazy" onerror="handleThumbError(this)" />
-          {{else}}
-          <div class="card-thumb-placeholder">🎬</div>
-          {{end}}
-          <div class="card-info">
-            <div class="card-title">{{.Title}}</div>
-            <div class="card-meta">
-              {{if .Year}}<span>{{.Year}}</span><span class="sep">·</span>{{end}}
-              <span>{{.Type}}</span>
-              {{if .Runtime}}<span class="sep">·</span><span>{{.Runtime}} min</span>{{end}}
-              {{if .TmdbRating}}<span class="sep">·</span><span class="card-rating">⭐ {{printf "%.1f" .TmdbRating}}</span>{{end}}
-            </div>
-            {{if .Genre}}
-            <div class="card-genre">
-              {{range .GenreList}}<span>{{.}}</span>{{end}}
-            </div>
+      <div class="grid" id="grid">
+        {{range .Items}}
+        <div class="card" data-type="{{.Type}}" data-title="{{.Title}}" data-id="{{.ID}}"
+             data-rating="{{printf "%.1f" .TmdbRating}}" data-year="{{.Year}}"
+             data-genre="{{.Genre}}" data-director="{{.Director}}" data-cast="{{.CastList}}"
+             data-thumb="{{.ThumbnailPath}}" data-backdrop="{{.BackdropPath}}"
+             data-runtime="{{.Runtime}}" data-imdb="{{.ImdbID}}" data-trailer="{{.TrailerURL}}"
+             data-filepath="{{.FilePath}}" data-filesize="{{printf "%.1f" .FileSizeMb}}"
+             data-filename="{{.FileName}}" data-tmdbid="{{.TmdbID}}" data-tagline="{{.Tagline}}"
+             data-desc="{{.Description}}"
+             onclick="handleCardClick(event, {{.ID}})">
+          <div class="card-top">
+            {{if .ThumbnailPath}}
+            <img class="card-thumb" src="{{.ThumbnailPath}}" alt="{{.Title}}" loading="lazy" onerror="handleThumbError(this)" />
+            {{else}}
+            <div class="card-thumb-placeholder">🎬</div>
             {{end}}
-            {{if .Tagline}}<div class="card-tagline">"{{.Tagline}}"</div>{{end}}
-            {{if .Description}}<div class="card-desc">{{.Description}}</div>{{end}}
+            <div class="card-info">
+              <div class="card-title">{{.Title}}</div>
+              <div class="card-meta">
+                {{if .Year}}<span>{{.Year}}</span><span class="sep">·</span>{{end}}
+                <span>{{.Type}}</span>
+                {{if .Runtime}}<span class="sep">·</span><span>{{.Runtime}} min</span>{{end}}
+                {{if .TmdbRating}}<span class="sep">·</span><span class="card-rating">⭐ {{printf "%.1f" .TmdbRating}}</span>{{end}}
+              </div>
+              {{if .Genre}}
+              <div class="card-genre">
+                {{range .GenreList}}<span>{{.}}</span>{{end}}
+              </div>
+              {{end}}
+              {{if .Tagline}}<div class="card-tagline">"{{.Tagline}}"</div>{{end}}
+              {{if .Description}}<div class="card-desc">{{.Description}}</div>{{end}}
+            </div>
+          </div>
+          <div class="card-middle">
+            <div class="card-tags" id="tags-{{.ID}}"></div>
+            <div class="tag-add">
+              <input type="text" id="tag-input-{{.ID}}" placeholder="Add tag..." onkeydown="if(event.key==='Enter')addTag({{.ID}})" />
+              <button onclick="addTag({{.ID}})">+</button>
+            </div>
+          </div>
+          <div class="card-bottom">
+            <div class="card-credits">
+              {{if .Director}}🎬 {{.Director}}{{end}}
+              {{if .CastList}} · 🎭 {{.CastList}}{{end}}
+            </div>
+            <div class="card-actions">
+              <button onclick="markWatched({{.ID}}, this)" class="action-btn watched-btn" title="Mark as watched">👁</button>
+              <button onclick="showSimilar({{.ID}}, '{{.Title}}')" class="action-btn similar-btn" title="Find similar">🔍</button>
+              <button onclick="undoStagedAction({{.ID}}, this)" class="action-btn undo-btn" title="Undo / Unstage">↩</button>
+              <button onclick="deleteFolder({{.ID}}, this)" class="action-btn delete-folder-btn" title="Delete Folder (Move to Trash)">📁🗑</button>
+              <button onclick="deleteMedia({{.ID}}, this)" class="action-btn delete" title="Remove File">🗑</button>
+            </div>
           </div>
         </div>
-        <div class="card-middle">
-          <div class="card-tags" id="tags-{{.ID}}"></div>
-          <div class="tag-add">
-            <input type="text" id="tag-input-{{.ID}}" placeholder="Add tag..." onkeydown="if(event.key==='Enter')addTag({{.ID}})" />
-            <button onclick="addTag({{.ID}})">+</button>
-          </div>
+        {{end}}
+      </div>
+
+      <div class="empty-state" id="emptyState" style="display:none">
+        <div class="icon">🔍</div>
+        <p>No items match your filters</p>
+      </div>
+    </div>
+
+    <!-- Dedicated Detail View / Page -->
+    <div id="detailView" class="detail-page" style="display:none">
+      <div class="detail-header">
+        <button class="back-btn" onclick="navigateToCatalog()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          Back to Library
+        </button>
+        <div class="detail-breadcrumbs">
+          <span class="crumb-link" onclick="navigateToCatalog()">Library</span>
+          <span class="crumb-sep">/</span>
+          <span class="crumb-current" id="detailBreadcrumbTitle">Movie</span>
         </div>
-        <div class="card-bottom">
-          <div class="card-credits">
-            {{if .Director}}🎬 {{.Director}}{{end}}
-            {{if .CastList}} · 🎭 {{.CastList}}{{end}}
+      </div>
+
+      <div class="detail-hero" id="detailHero">
+        <div class="detail-backdrop-overlay"></div>
+        <div class="detail-hero-content">
+          <div class="detail-poster-wrap">
+            <img id="detailPoster" class="detail-poster" src="" alt="" onerror="handleDetailPosterError(this)" />
           </div>
-          <div class="card-actions">
-            <button onclick="markWatched({{.ID}}, this)" class="action-btn watched-btn" title="Mark as watched">👁</button>
-            <button onclick="showSimilar({{.ID}}, '{{.Title}}')" class="action-btn similar-btn" title="Find similar">🔍</button>
-            <button onclick="undoStagedAction({{.ID}}, this)" class="action-btn undo-btn" title="Undo / Unstage">↩</button>
-            <button onclick="deleteFolder({{.ID}}, this)" class="action-btn delete-folder-btn" title="Delete Folder (Move to Trash)">📁🗑</button>
-            <button onclick="deleteMedia({{.ID}}, this)" class="action-btn delete" title="Remove File">🗑</button>
+          <div class="detail-hero-info">
+            <div class="detail-badges">
+              <span id="detailTypeBadge" class="badge-type">Movie</span>
+              <span id="detailYearBadge" class="badge-year">2024</span>
+              <span id="detailRuntimeBadge" class="badge-runtime">120 min</span>
+              <span id="detailRatingBadge" class="badge-rating">⭐ 8.0</span>
+              <span id="detailWatchedBadge" class="badge-watched" style="display:none">✅ Watched</span>
+            </div>
+            <h1 id="detailTitle" class="detail-title">Movie Title</h1>
+            <div id="detailTagline" class="detail-tagline">"Tagline"</div>
+
+            <div class="detail-actions-bar">
+              <button id="detailWatchedBtn" class="detail-btn watched-btn" onclick="toggleDetailWatched()">
+                <span>👁</span> <span id="detailWatchedBtnText">Mark Watched</span>
+              </button>
+              <button id="detailSimilarBtn" class="detail-btn similar-btn" onclick="openSimilarFromDetail()">
+                <span>🔍</span> Find Similar
+              </button>
+              <a id="detailImdbLink" class="detail-btn imdb-btn" href="#" target="_blank" rel="noopener" style="display:none">
+                <span>🔗</span> IMDb
+              </a>
+              <a id="detailTrailerLink" class="detail-btn trailer-btn" href="#" target="_blank" rel="noopener" style="display:none">
+                <span>▶</span> Trailer
+              </a>
+              <button id="detailDeleteFolderBtn" class="detail-btn delete-btn" onclick="deleteFolderFromDetail()">
+                <span>📁🗑</span> Trash Folder
+              </button>
+              <button id="detailDeleteBtn" class="detail-btn delete-btn" onclick="deleteFromDetail()">
+                <span>🗑</span> Trash File
+              </button>
+            </div>
           </div>
         </div>
       </div>
-      {{end}}
-    </div>
 
-    <div class="empty-state" id="emptyState" style="display:none">
-      <div class="icon">🔍</div>
-      <p>No items match your filters</p>
+      <div class="detail-body">
+        <div class="detail-main-col">
+          <div class="detail-section">
+            <h3 class="section-title">Overview</h3>
+            <p id="detailOverview" class="detail-overview">Movie overview text...</p>
+          </div>
+
+          <div class="detail-section">
+            <h3 class="section-title">Genres</h3>
+            <div id="detailGenres" class="detail-genre-tags"></div>
+          </div>
+
+          <div class="detail-section">
+            <h3 class="section-title">Cast & Crew</h3>
+            <div class="detail-credits-grid">
+              <div class="credit-group">
+                <span class="credit-label">Director</span>
+                <span id="detailDirector" class="credit-value">—</span>
+              </div>
+              <div class="credit-group">
+                <span class="credit-label">Starring</span>
+                <span id="detailCast" class="credit-value">—</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="detail-section">
+            <h3 class="section-title">Tags</h3>
+            <div class="detail-tags-manager">
+              <div id="detailTagsList" class="card-tags"></div>
+              <div class="tag-add" style="margin-top:0.75rem">
+                <input type="text" id="detailTagInput" placeholder="Add custom tag..." onkeydown="if(event.key==='Enter')addTagFromDetail()" />
+                <button onclick="addTagFromDetail()">+</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-side-col">
+          <div class="detail-card">
+            <h4 class="card-header">File Details</h4>
+            <div class="info-row">
+              <span class="info-label">Filename</span>
+              <span id="detailFileName" class="info-val info-code">—</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">File Size</span>
+              <span id="detailFileSize" class="info-val">—</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Full Path</span>
+              <span id="detailFilePath" class="info-val info-path" title="Click to copy path" onclick="copyPathToClipboard(this)">—</span>
+            </div>
+          </div>
+
+          <div class="detail-card" id="detailTmdbCard">
+            <h4 class="card-header">Metadata Source</h4>
+            <div class="info-row">
+              <span class="info-label">TMDb ID</span>
+              <span id="detailTmdbID" class="info-val">—</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Database ID</span>
+              <span id="detailMediaID" class="info-val">—</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -313,17 +511,51 @@
 
 <script>
 const API_PORT = {{.Port}};
-const API_BASE = 'http://localhost:' + API_PORT;
+const API_BASE = window.location.protocol.startsWith('http') ? window.location.origin : ('http://localhost:' + API_PORT);
 let restAvailable = false;
 let activeTypeFilter = 'all';
-let dashboardMode = false; // becomes true once /api/dashboard/list responds OK
+let dashboardMode = false;
 let dashboardFiltersData = null;
+let currentDetailItem = null;
+const MEDIA_STORE = {};
 
 // --- Init ---
 function init() {
+  initMediaStore();
   buildGenreFilter();
   updateResultsInfo();
   checkRest();
+  handleRoute();
+}
+
+function initMediaStore() {
+  document.querySelectorAll('.card').forEach(function(card) {
+    var id = parseInt(card.dataset.id, 10);
+    if (!id) return;
+    MEDIA_STORE[id] = {
+      id: id,
+      title: card.dataset.title || '',
+      type: card.dataset.type || '',
+      year: parseInt(card.dataset.year, 10) || 0,
+      runtime: parseInt(card.dataset.runtime, 10) || 0,
+      tmdb_rating: parseFloat(card.dataset.rating) || 0,
+      genre: card.dataset.genre || '',
+      director: card.dataset.director || '',
+      cast_list: card.dataset.cast || '',
+      thumbnail_path: card.dataset.thumb || '',
+      backdrop_path: card.dataset.backdrop || '',
+      description: card.dataset.desc || '',
+      tagline: card.dataset.tagline || '',
+      imdb_id: card.dataset.imdb || '',
+      trailer_url: card.dataset.trailer || '',
+      file_path: card.dataset.filepath || '',
+      file_size_mb: card.dataset.filesize || '',
+      file_name: card.dataset.filename || '',
+      tmdb_id: parseInt(card.dataset.tmdbid, 10) || 0,
+      watched: card.classList.contains('watched'),
+      tags: []
+    };
+  });
 }
 
 function buildGenreFilter() {
@@ -353,7 +585,7 @@ function showToast(msg, isError) {
 
 function restRequired() {
   if (!restAvailable) {
-    showToast('REST server not running. Start with: movie rest', true);
+    showToast('REST server not running. Start with: movie rest or movie ui', true);
     return true;
   }
   return false;
@@ -372,12 +604,10 @@ async function checkRest() {
     loadAllTags();
     enableDashboardMode();
     loadStagedActions();
-  } catch(e) {
-    // REST not running — banner stays visible
-  }
+  } catch(e) {}
 }
 
-// --- Dashboard mode (server-driven filters/list) ---
+// --- Dashboard mode ---
 async function enableDashboardMode() {
   try {
     const fr = await fetch(API_BASE + '/api/dashboard/filters');
@@ -393,7 +623,6 @@ async function enableDashboardMode() {
 
 function populateGenreFilterFromAPI(genres) {
   const sel = document.getElementById('genreFilter');
-  // Keep the first "All Genres" option, replace the rest from the API.
   while (sel.options.length > 1) sel.remove(1);
   genres.forEach(function(g) {
     const opt = document.createElement('option');
@@ -432,32 +661,102 @@ async function refreshDashboardList() {
 function renderDashboardCards(items) {
   const grid = document.getElementById('grid');
   grid.innerHTML = items.map(cardTemplate).join('');
+  items.forEach(function(item) {
+    MEDIA_STORE[item.id] = {
+      id: item.id,
+      title: item.title,
+      type: item.type,
+      year: item.year,
+      runtime: item.runtime,
+      tmdb_rating: item.tmdb_rating,
+      genre: item.genre,
+      genre_list: item.genre_list,
+      director: item.director,
+      cast_list: item.cast_list,
+      thumbnail_path: item.thumbnail_path,
+      backdrop_path: item.backdrop_path,
+      description: item.description,
+      tagline: item.tagline,
+      imdb_id: item.imdb_id,
+      trailer_url: item.trailer_url,
+      file_path: item.current_file_path || item.original_file_path || '',
+      file_size_mb: item.file_size ? (item.file_size / (1024 * 1024)).toFixed(1) : '',
+      file_name: item.original_file_name || '',
+      tmdb_id: item.tmdb_id,
+      watched: item.watched,
+      tags: item.tags || []
+    };
+  });
 }
 
+// --- Image URL Resolution & Fallbacks ---
 function resolveThumbUrl(thumbPath) {
   if (!thumbPath) return '';
   if (thumbPath.startsWith('http://') || thumbPath.startsWith('https://')) {
     return thumbPath;
   }
-  if (thumbPath.startsWith('/') && !thumbPath.startsWith('/thumbnails/')) {
-    return 'https://image.tmdb.org/t/p/w342' + thumbPath;
-  }
   var clean = thumbPath.replace(/\\/g, '/');
   var idx = clean.indexOf('thumbnails/');
+  var fileName = clean;
   if (idx !== -1) {
-    clean = clean.substring(idx);
+    fileName = clean.substring(idx + 11);
   } else if (clean.startsWith('/')) {
-    clean = clean.substring(1);
+    if ((clean.match(/\//g) || []).length === 1) {
+      return 'https://image.tmdb.org/t/p/w342' + clean;
+    }
+    fileName = clean.substring(clean.lastIndexOf('/') + 1);
+  } else if (clean.lastIndexOf('/') !== -1) {
+    fileName = clean.substring(clean.lastIndexOf('/') + 1);
   }
-  return clean;
+
+  if (window.location.protocol.startsWith('http')) {
+    return '/thumbnails/' + fileName;
+  }
+  return 'thumbnails/' + fileName;
 }
 
 function handleThumbError(img) {
+  var rawSrc = img.getAttribute('src') || '';
+  var fileName = rawSrc.split('/').pop().split('\\').pop();
+
+  if (!img.dataset.triedRest && restAvailable && fileName) {
+    img.dataset.triedRest = '1';
+    img.src = API_BASE + '/thumbnails/' + fileName;
+    return;
+  }
+
+  var card = img.closest('.card') || document.getElementById('detailHero');
+  var backdrop = card ? card.dataset.backdrop : null;
+  if (!img.dataset.triedTmdb && backdrop && backdrop.startsWith('/')) {
+    img.dataset.triedTmdb = '1';
+    img.src = 'https://image.tmdb.org/t/p/w342' + backdrop;
+    return;
+  }
+
   img.onerror = null;
   var parent = img.parentElement;
   if (parent) {
     parent.innerHTML = '<div class="card-thumb-placeholder">🎬</div>';
   }
+}
+
+function handleDetailPosterError(img) {
+  var rawSrc = img.getAttribute('src') || '';
+  var fileName = rawSrc.split('/').pop().split('\\').pop();
+
+  if (!img.dataset.triedRest && restAvailable && fileName) {
+    img.dataset.triedRest = '1';
+    img.src = API_BASE + '/thumbnails/' + fileName;
+    return;
+  }
+
+  if (!img.dataset.triedTmdb && currentDetailItem && currentDetailItem.backdrop_path && currentDetailItem.backdrop_path.startsWith('/')) {
+    img.dataset.triedTmdb = '1';
+    img.src = 'https://image.tmdb.org/t/p/w500' + currentDetailItem.backdrop_path;
+    return;
+  }
+
+  img.style.display = 'none';
 }
 
 function cardTemplate(c) {
@@ -468,9 +767,17 @@ function cardTemplate(c) {
   const ratingTxt = c.tmdb_rating ? c.tmdb_rating.toFixed(1) : '0.0';
   const watchedClass = c.watched ? ' watched' : '';
   const watchedBtn = c.watched ? ' is-watched' : '';
+  const fileSizeMb = c.file_size ? (c.file_size / (1024 * 1024)).toFixed(1) : (c.file_size_mb ? c.file_size_mb : '0.0');
+
   return '<div class="card' + watchedClass + '" data-type="' + escAttr(c.type) + '" data-title="' + escAttr(c.title) + '" data-id="' + c.id +
     '" data-rating="' + ratingTxt + '" data-year="' + (c.year || 0) + '" data-genre="' + escAttr(c.genre || '') +
-    '" data-director="' + escAttr(c.director || '') + '" data-cast="' + escAttr(c.cast_list || '') + '">' +
+    '" data-director="' + escAttr(c.director || '') + '" data-cast="' + escAttr(c.cast_list || '') +
+    '" data-thumb="' + escAttr(c.thumbnail_path || '') + '" data-backdrop="' + escAttr(c.backdrop_path || '') +
+    '" data-runtime="' + (c.runtime || 0) + '" data-imdb="' + escAttr(c.imdb_id || '') + '" data-trailer="' + escAttr(c.trailer_url || '') +
+    '" data-filepath="' + escAttr(c.current_file_path || c.original_file_path || '') + '" data-filesize="' + fileSizeMb +
+    '" data-filename="' + escAttr(c.original_file_name || '') + '" data-tmdbid="' + (c.tmdb_id || 0) +
+    '" data-tagline="' + escAttr(c.tagline || '') + '" data-desc="' + escAttr(c.description || '') +
+    '" onclick="handleCardClick(event, ' + c.id + ')">' +
     '<div class="card-top">' + thumb +
       '<div class="card-info">' +
         '<div class="card-title">' + esc(c.title) + '</div>' +
@@ -502,6 +809,8 @@ function cardTemplate(c) {
       '<div class="card-actions">' +
         '<button onclick="markWatched(' + c.id + ', this)" class="action-btn watched-btn' + watchedBtn + '" title="Mark as watched">👁</button>' +
         '<button onclick="showSimilar(' + c.id + ', \'' + esc(c.title) + '\')" class="action-btn similar-btn" title="Find similar">🔍</button>' +
+        '<button onclick="undoStagedAction(' + c.id + ', this)" class="action-btn undo-btn" title="Undo / Unstage">↩</button>' +
+        '<button onclick="deleteFolder(' + c.id + ', this)" class="action-btn delete-folder-btn" title="Delete Folder (Move to Trash)">📁🗑</button>' +
         '<button onclick="deleteMedia(' + c.id + ', this)" class="action-btn delete" title="Remove">🗑</button>' +
       '</div>' +
     '</div>' +
@@ -515,7 +824,269 @@ function esc(s) {
 }
 function escAttr(s) { return esc(s).replace(/\n/g, ' '); }
 
-// --- Filters ---
+// --- Routing & Detail View ---
+function handleCardClick(event, id) {
+  if (event.target.closest('.card-actions, .card-middle, button, input, .tag, a')) {
+    return;
+  }
+  navigateToMedia(id);
+}
+
+function navigateToMedia(id) {
+  window.location.hash = '#/media/' + id;
+}
+
+function navigateToCatalog() {
+  window.location.hash = '#/';
+}
+
+function handleRoute() {
+  var hash = window.location.hash || '';
+  if (hash.startsWith('#/media/')) {
+    var idStr = hash.replace('#/media/', '').split('?')[0];
+    var id = parseInt(idStr, 10);
+    if (!isNaN(id) && id > 0) {
+      showDetailView(id);
+      return;
+    }
+  }
+  showCatalogView();
+}
+
+window.addEventListener('hashchange', handleRoute);
+window.addEventListener('popstate', handleRoute);
+
+async function showDetailView(id) {
+  var item = MEDIA_STORE[id];
+
+  if (restAvailable) {
+    try {
+      var res = await fetch(API_BASE + '/api/media/' + id + '/details');
+      if (res.ok) {
+        var payload = await res.json();
+        if (payload.media) {
+          var m = payload.media;
+          item = {
+            id: m.id,
+            title: m.title,
+            type: m.type,
+            year: m.year,
+            runtime: m.runtime,
+            tmdb_rating: m.tmdb_rating,
+            imdb_rating: m.imdb_rating,
+            genre: m.genre,
+            director: m.director,
+            cast_list: m.cast_list,
+            thumbnail_path: m.thumbnail_path,
+            backdrop_path: m.backdrop_path,
+            description: m.description,
+            tagline: m.tagline,
+            imdb_id: m.imdb_id,
+            trailer_url: m.trailer_url,
+            file_path: m.current_file_path || m.original_file_path,
+            file_size_mb: m.file_size ? (m.file_size / (1024 * 1024)).toFixed(1) : '',
+            file_name: m.original_file_name,
+            tmdb_id: m.tmdb_id,
+            watched: m.watched,
+            tags: payload.tags || []
+          };
+          MEDIA_STORE[id] = item;
+        }
+      }
+    } catch(e) {}
+  }
+
+  if (!item) {
+    navigateToCatalog();
+    return;
+  }
+
+  currentDetailItem = item;
+
+  document.getElementById('catalogView').style.display = 'none';
+  document.getElementById('detailView').style.display = 'flex';
+  document.title = item.title + (item.year ? ' (' + item.year + ')' : '') + ' — Movie CLI';
+
+  document.getElementById('detailBreadcrumbTitle').textContent = item.title;
+  document.getElementById('detailTitle').textContent = item.title;
+  document.getElementById('detailTagline').textContent = item.tagline ? ('"' + item.tagline + '"') : '';
+  document.getElementById('detailTypeBadge').textContent = item.type || 'Movie';
+  document.getElementById('detailYearBadge').textContent = item.year ? item.year : '—';
+  document.getElementById('detailRuntimeBadge').textContent = item.runtime ? (item.runtime + ' min') : '';
+  document.getElementById('detailRuntimeBadge').style.display = item.runtime ? 'inline-block' : 'none';
+
+  var ratingTxt = item.tmdb_rating ? ('⭐ ' + item.tmdb_rating.toFixed(1)) : (item.imdb_rating ? ('⭐ ' + item.imdb_rating.toFixed(1)) : 'No rating');
+  document.getElementById('detailRatingBadge').textContent = ratingTxt;
+
+  updateDetailWatchedUI(item.watched);
+
+  var thumbUrl = resolveThumbUrl(item.thumbnail_path);
+  var posterImg = document.getElementById('detailPoster');
+  posterImg.style.display = 'block';
+  posterImg.dataset.triedRest = '';
+  posterImg.dataset.triedTmdb = '';
+  posterImg.src = thumbUrl;
+  posterImg.alt = item.title;
+
+  var heroElem = document.getElementById('detailHero');
+  var backdropUrl = '';
+  if (item.backdrop_path && item.backdrop_path.startsWith('/')) {
+    backdropUrl = 'https://image.tmdb.org/t/p/w1280' + item.backdrop_path;
+  } else if (thumbUrl) {
+    backdropUrl = thumbUrl;
+  }
+  if (backdropUrl) {
+    heroElem.style.backgroundImage = 'radial-gradient(circle at 70% 30%, rgba(9,9,11,0.6) 0%, rgba(9,9,11,0.95) 100%), url(' + JSON.stringify(backdropUrl) + ')';
+  } else {
+    heroElem.style.backgroundImage = 'none';
+  }
+
+  document.getElementById('detailOverview').textContent = item.description || 'No overview available.';
+
+  var genresContainer = document.getElementById('detailGenres');
+  genresContainer.innerHTML = '';
+  if (item.genre) {
+    item.genre.split(',').forEach(function(g) {
+      var trimmed = g.trim();
+      if (trimmed) {
+        var span = document.createElement('span');
+        span.textContent = trimmed;
+        genresContainer.appendChild(span);
+      }
+    });
+  } else {
+    genresContainer.innerHTML = '<span style="color:var(--muted)">None specified</span>';
+  }
+
+  document.getElementById('detailDirector').textContent = item.director || '—';
+  document.getElementById('detailCast').textContent = item.cast_list || '—';
+
+  document.getElementById('detailFileName').textContent = item.file_name || '—';
+  document.getElementById('detailFileSize').textContent = item.file_size_mb ? (item.file_size_mb + ' MB') : '—';
+  var pathElem = document.getElementById('detailFilePath');
+  pathElem.textContent = item.file_path || '—';
+  pathElem.dataset.fullPath = item.file_path || '';
+
+  document.getElementById('detailTmdbID').textContent = item.tmdb_id ? ('#' + item.tmdb_id) : '—';
+  document.getElementById('detailMediaID').textContent = '#' + item.id;
+
+  var imdbLink = document.getElementById('detailImdbLink');
+  if (item.imdb_id) {
+    imdbLink.href = 'https://www.imdb.com/title/' + item.imdb_id;
+    imdbLink.style.display = 'inline-flex';
+  } else {
+    imdbLink.style.display = 'none';
+  }
+
+  var trailerLink = document.getElementById('detailTrailerLink');
+  if (item.trailer_url) {
+    trailerLink.href = item.trailer_url;
+    trailerLink.style.display = 'inline-flex';
+  } else {
+    trailerLink.style.display = 'none';
+  }
+
+  renderDetailTags(item.id);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function showCatalogView() {
+  document.getElementById('detailView').style.display = 'none';
+  document.getElementById('catalogView').style.display = 'block';
+  document.title = 'Movie CLI — Library';
+  currentDetailItem = null;
+}
+
+function updateDetailWatchedUI(isWatched) {
+  var badge = document.getElementById('detailWatchedBadge');
+  var btn = document.getElementById('detailWatchedBtn');
+  var btnText = document.getElementById('detailWatchedBtnText');
+  if (isWatched) {
+    badge.style.display = 'inline-block';
+    btn.classList.add('is-watched');
+    btnText.textContent = 'Watched';
+  } else {
+    badge.style.display = 'none';
+    btn.classList.remove('is-watched');
+    btnText.textContent = 'Mark Watched';
+  }
+}
+
+function renderDetailTags(id) {
+  var container = document.getElementById('detailTagsList');
+  if (!container) return;
+  var item = MEDIA_STORE[id];
+  var tags = (item && item.tags) ? item.tags : [];
+  if (tags.length === 0) {
+    container.innerHTML = '<span style="color:var(--muted);font-size:0.75rem">No custom tags yet</span>';
+    return;
+  }
+  container.innerHTML = tags.map(function(t) {
+    return '<span class="tag" onclick="removeTagFromDetail(\'' + esc(t) + '\')">' + esc(t) + '<span class="tag-x">✕</span></span>';
+  }).join('');
+}
+
+async function addTagFromDetail() {
+  if (!currentDetailItem) return;
+  var input = document.getElementById('detailTagInput');
+  var tag = input.value.trim().toLowerCase();
+  if (!tag) return;
+  await addTag(currentDetailItem.id);
+  if (currentDetailItem.tags.indexOf(tag) === -1) {
+    currentDetailItem.tags.push(tag);
+  }
+  input.value = '';
+  renderDetailTags(currentDetailItem.id);
+}
+
+async function removeTagFromDetail(tag) {
+  if (!currentDetailItem) return;
+  await removeTag(currentDetailItem.id, tag);
+  var idx = currentDetailItem.tags.indexOf(tag);
+  if (idx !== -1) {
+    currentDetailItem.tags.splice(idx, 1);
+  }
+  renderDetailTags(currentDetailItem.id);
+}
+
+function copyPathToClipboard(elem) {
+  var path = elem.dataset.fullPath || elem.textContent;
+  if (path && path !== '—') {
+    navigator.clipboard.writeText(path).then(function() {
+      showToast('Copied file path to clipboard!');
+    }).catch(function() {
+      showToast('Path: ' + path);
+    });
+  }
+}
+
+async function toggleDetailWatched() {
+  if (!currentDetailItem) return;
+  var btn = document.getElementById('detailWatchedBtn');
+  var cardBtn = document.querySelector('.card[data-id="' + currentDetailItem.id + '"] .watched-btn');
+  await markWatched(currentDetailItem.id, cardBtn || btn);
+  currentDetailItem.watched = true;
+  updateDetailWatchedUI(true);
+}
+
+function openSimilarFromDetail() {
+  if (!currentDetailItem) return;
+  showSimilar(currentDetailItem.id, currentDetailItem.title);
+}
+
+async function deleteFromDetail() {
+  if (!currentDetailItem) return;
+  var cardBtn = document.querySelector('.card[data-id="' + currentDetailItem.id + '"] .delete');
+  await deleteMedia(currentDetailItem.id, cardBtn || document.getElementById('detailDeleteBtn'));
+}
+
+async function deleteFolderFromDetail() {
+  if (!currentDetailItem) return;
+  var cardBtn = document.querySelector('.card[data-id="' + currentDetailItem.id + '"] .delete-folder-btn');
+  await deleteFolder(currentDetailItem.id, cardBtn || document.getElementById('detailDeleteFolderBtn'));
+}
+
+// --- Filters & Sort ---
 function setFilter(group, value, btn) {
   if (group === 'type') {
     btn.parentElement.querySelectorAll('.filter-pill').forEach(function(b) { b.classList.remove('active'); });
@@ -535,26 +1106,22 @@ function applyFilters() {
   document.querySelectorAll('.card').forEach(function(c) {
     var show = true;
 
-    // Type filter
     if (activeTypeFilter === 'watched') {
       if (!c.classList.contains('watched')) show = false;
     } else if (activeTypeFilter !== 'all') {
       if (c.dataset.type !== activeTypeFilter) show = false;
     }
 
-    // Genre filter
     if (show && genre) {
       var cardGenre = (c.dataset.genre || '').toLowerCase();
       if (cardGenre.indexOf(genre.toLowerCase()) === -1) show = false;
     }
 
-    // Rating filter
     if (show && minRating > 0) {
       var rating = parseFloat(c.dataset.rating) || 0;
       if (rating < minRating) show = false;
     }
 
-    // Search (title, director, cast)
     if (show && query) {
       var searchable = (c.dataset.title + ' ' + (c.dataset.director || '') + ' ' + (c.dataset.cast || '')).toLowerCase();
       if (searchable.indexOf(query) === -1) show = false;
@@ -606,15 +1173,12 @@ async function loadAllTags() {
     var id = cards[i].dataset.id;
     try {
       var r = await fetch(API_BASE + '/api/tags?media_id=' + id);
-      if (!r.ok) {
-        console.error('Failed to load tags for media ' + id + ': ' + r.status);
-        continue;
-      }
+      if (!r.ok) continue;
       var data = await r.json();
-      renderTags(id, data.tags || []);
-    } catch(e) {
-      console.error('Error loading tags for media ' + id + ':', e.message);
-    }
+      var tags = data.tags || [];
+      renderTags(id, tags);
+      if (MEDIA_STORE[id]) MEDIA_STORE[id].tags = tags;
+    } catch(e) {}
   }
 }
 
@@ -622,10 +1186,10 @@ function renderTags(mediaId, tags) {
   var container = document.getElementById('tags-' + mediaId);
   if (!container) return;
   container.innerHTML = tags.map(function(t) {
-    return '<span class="tag" onclick="removeTag(' + mediaId + ', \'' + t + '\')">' + t + '<span class="tag-x">✕</span></span>';
+    return '<span class="tag" onclick="removeTag(' + mediaId + ', \'' + esc(t) + '\')">' + esc(t) + '<span class="tag-x">✕</span></span>';
   }).join('');
   var card = container.closest('.card');
-  if (tags.includes('watched')) {
+  if (card && tags.includes('watched')) {
     card.classList.add('watched');
     var btn = card.querySelector('.watched-btn');
     if (btn) btn.classList.add('is-watched');
@@ -635,7 +1199,7 @@ function renderTags(mediaId, tags) {
 async function addTag(mediaId) {
   if (restRequired()) return;
   var input = document.getElementById('tag-input-' + mediaId);
-  var tag = input.value.trim().toLowerCase();
+  var tag = input ? input.value.trim().toLowerCase() : '';
   if (!tag) return;
   try {
     var r = await fetch(API_BASE + '/api/tags', {
@@ -644,12 +1208,18 @@ async function addTag(mediaId) {
       body: JSON.stringify({ media_id: mediaId, tag: tag })
     });
     if (r.ok) {
-      input.value = '';
+      if (input) input.value = '';
       showToast('Tag "' + tag + '" added');
       var tr = await fetch(API_BASE + '/api/tags?media_id=' + mediaId);
-      if (!tr.ok) { showToast('Failed to refresh tags', true); return; }
-      var d = await tr.json();
-      renderTags(mediaId, d.tags || []);
+      if (tr.ok) {
+        var d = await tr.json();
+        var tags = d.tags || [];
+        renderTags(mediaId, tags);
+        if (MEDIA_STORE[mediaId]) MEDIA_STORE[mediaId].tags = tags;
+        if (currentDetailItem && currentDetailItem.id === mediaId) {
+          renderDetailTags(mediaId);
+        }
+      }
     } else {
       var errText = await r.text();
       showToast('Could not add tag: ' + errText, true);
@@ -674,9 +1244,15 @@ async function removeTag(mediaId, tag) {
     }
     showToast('Tag "' + tag + '" removed');
     var tr = await fetch(API_BASE + '/api/tags?media_id=' + mediaId);
-    if (!tr.ok) { showToast('Failed to refresh tags', true); return; }
-    var d = await tr.json();
-    renderTags(mediaId, d.tags || []);
+    if (tr.ok) {
+      var d = await tr.json();
+      var tags = d.tags || [];
+      renderTags(mediaId, tags);
+      if (MEDIA_STORE[mediaId]) MEDIA_STORE[mediaId].tags = tags;
+      if (currentDetailItem && currentDetailItem.id === mediaId) {
+        renderDetailTags(mediaId);
+      }
+    }
   } catch(e) {
     showToast('Network error removing tag: ' + e.message, true);
   }
@@ -692,8 +1268,18 @@ async function markWatched(id, btn) {
       showToast('Could not mark watched: ' + errText, true);
       return;
     }
-    btn.classList.add('is-watched');
-    btn.closest('.card').classList.add('watched');
+    if (btn) btn.classList.add('is-watched');
+    var card = document.querySelector('.card[data-id="' + id + '"]');
+    if (card) {
+      card.classList.add('watched');
+      var cardWatchedBtn = card.querySelector('.watched-btn');
+      if (cardWatchedBtn) cardWatchedBtn.classList.add('is-watched');
+    }
+    if (MEDIA_STORE[id]) MEDIA_STORE[id].watched = true;
+    if (currentDetailItem && currentDetailItem.id === id) {
+      currentDetailItem.watched = true;
+      updateDetailWatchedUI(true);
+    }
     showToast('Marked as watched');
     var tr = await fetch(API_BASE + '/api/tags?media_id=' + id);
     if (tr.ok) {
@@ -705,7 +1291,7 @@ async function markWatched(id, btn) {
   }
 }
 
-// --- Similar ---
+// --- Similar Modal ---
 async function showSimilar(id, title) {
   if (restRequired()) return;
   var modal = document.getElementById('similarModal');
@@ -715,7 +1301,6 @@ async function showSimilar(id, title) {
   modal.classList.add('show');
 
   try {
-    // Prefer the consolidated details endpoint (single round-trip with media + tags + similar).
     var r = await fetch(API_BASE + '/api/media/' + id + '/details');
     if (!r.ok) {
       content.innerHTML = '<div class="similar-empty">Could not fetch recommendations (HTTP ' + r.status + ')</div>';
@@ -732,11 +1317,11 @@ async function showSimilar(id, title) {
       var year = (s.release_date || s.first_air_date || '').substring(0, 4);
       var rating = s.vote_average ? '⭐ ' + s.vote_average.toFixed(1) : '';
       return '<div class="similar-item">' +
-        (poster ? '<img src="' + poster + '" alt="' + (s.title || s.name) + '" />' : '') +
+        (poster ? '<img src="' + poster + '" alt="' + escAttr(s.title || s.name) + '" />' : '') +
         '<div class="similar-item-info">' +
-          '<div class="similar-item-title">' + (s.title || s.name || 'Unknown') + '</div>' +
+          '<div class="similar-item-title">' + esc(s.title || s.name || 'Unknown') + '</div>' +
           '<div class="similar-item-meta">' + year + ' ' + rating + '</div>' +
-          (s.overview ? '<div class="similar-item-desc">' + s.overview + '</div>' : '') +
+          (s.overview ? '<div class="similar-item-desc">' + esc(s.overview) + '</div>' : '') +
         '</div></div>';
     }).join('');
   } catch(e) {
@@ -792,7 +1377,7 @@ async function deleteMedia(id, btn) {
       showToast('Action failed: ' + errText, true);
       return;
     }
-    var card = btn.closest('.card');
+    var card = btn ? btn.closest('.card') : document.querySelector('.card[data-id="' + id + '"]');
     if (card) {
       card.classList.add('staged-delete');
     }
@@ -821,7 +1406,7 @@ async function deleteFolder(id, btn) {
       showToast('Action failed: ' + errText, true);
       return;
     }
-    var card = btn.closest('.card');
+    var card = btn ? btn.closest('.card') : document.querySelector('.card[data-id="' + id + '"]');
     if (card) {
       card.classList.add('staged-delete');
     }
@@ -880,7 +1465,9 @@ async function acceptAllStaged() {
     showToast('Applied ' + res.applied + ' changes (moved to trash)!');
     stagedActions = [];
     renderStagedBar();
-    if (typeof loadAllMedia === 'function') loadAllMedia();
+    if (typeof refreshDashboardList === 'function' && dashboardMode) {
+      refreshDashboardList();
+    }
   } catch(e) {
     showToast('Failed to apply: ' + e.message, true);
   }
@@ -888,7 +1475,16 @@ async function acceptAllStaged() {
 
 // --- Keyboard shortcuts ---
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') closeSimilar();
+  if (e.key === 'Escape') {
+    var modal = document.getElementById('similarModal');
+    if (modal && modal.classList.contains('show')) {
+      closeSimilar();
+      return;
+    }
+    if (window.location.hash && window.location.hash.startsWith('#/media/')) {
+      navigateToCatalog();
+    }
+  }
   if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
     e.preventDefault();
     document.getElementById('searchInput').focus();

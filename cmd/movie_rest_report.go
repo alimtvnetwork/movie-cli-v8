@@ -158,10 +158,16 @@ func buildHTMLReportItem(database *db.DB, m db.Media) htmlReportItem {
 	}
 
 	thumbSrc := resolveMediaThumbnail(database, &m)
+	filePath := m.CurrentFilePath
+	if filePath == "" {
+		filePath = m.OriginalFilePath
+	}
 
 	return htmlReportItem{
 		ID:            m.ID,
+		TmdbID:        m.TmdbID,
 		Title:         m.Title,
+		CleanTitle:    m.CleanTitle,
 		Year:          m.Year,
 		Type:          m.Type,
 		Genre:         m.Genre,
@@ -174,6 +180,12 @@ func buildHTMLReportItem(database *db.DB, m db.Media) htmlReportItem {
 		ImdbRating:    m.ImdbRating,
 		Runtime:       m.Runtime,
 		ThumbnailPath: thumbSrc,
+		BackdropPath:  m.BackdropPath,
+		FilePath:      filePath,
+		FileName:      m.OriginalFileName,
+		FileSizeMb:    m.FileSizeMb,
+		TrailerURL:    m.TrailerURL,
+		ImdbID:        m.ImdbID,
 	}
 }
 

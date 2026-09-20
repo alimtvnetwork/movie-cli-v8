@@ -134,6 +134,8 @@ func processExistingMedia(ctx *ScanContext, input ProcessExistingInput) {
 		handleSkippedMedia(ctx, input.EM, input.Opts)
 	}
 
+	ensureThumbnailInOutputDir(ctx.OutputDir, input.Database.BasePath, input.EM.ThumbnailPath)
+
 	ctx.ScannedItems = append(ctx.ScannedItems, *input.EM)
 	if input.EM.Type == string(db.MediaTypeMovie) {
 		ctx.MovieCount++

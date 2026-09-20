@@ -33,6 +33,7 @@ func isAlreadyScanned(ctx *ScanContext, vf videoFile, result cleaner.Result) boo
 		if existing[i].OriginalFilePath != vf.FullPath {
 			continue
 		}
+
 		if ctx.IsTableOutput {
 			printScanTableRow(buildMediaTableRow(ctx.TotalFiles, &db.Media{
 				OriginalFileName: vf.Name,
@@ -41,13 +42,19 @@ func isAlreadyScanned(ctx *ScanContext, vf videoFile, result cleaner.Result) boo
 				Type:             result.Type,
 			}, "skipped"))
 		}
+
 		if !ctx.IsTableOutput {
 			fmt.Println("     ⏩ Already in database, skipping")
 		}
+
 		ctx.Skipped++
 		incrementTypeCount(ctx, result.Type)
+		ensureThumbnailInOutputDir(ctx.OutputDir, ctx.Database.BasePath, existing[i].ThumbnailPath)
+		ctx.ScannedItems = append(ctx.ScannedItems, existing[i])
+
 		return true
 	}
+
 	return false
 }
 
@@ -140,6 +147,10 @@ func downloadThumbnail(input ThumbnailInput) {
 	}
 
 	thumbPath := filepath.Join(thumbDir, thumbFileName)
+	if tryReuseExistingThumbnail(input, thumbPath, thumbFileName) {
+		return
+	}
+
 	if dlErr := input.Client.DownloadPoster(posterPath, thumbPath); dlErr != nil {
 		logPosterDownloadError(input.Media.CleanTitle, dlErr)
 		return

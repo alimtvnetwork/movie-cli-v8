@@ -30,6 +30,7 @@ type htmlReportData struct {
 // htmlReportItem represents a single media item in the HTML report.
 type htmlReportItem struct {
 	Title         string
+	CleanTitle    string
 	Type          string
 	Genre         string
 	Director      string
@@ -37,11 +38,18 @@ type htmlReportItem struct {
 	Description   string
 	Tagline       string
 	ThumbnailPath string
+	BackdropPath  string
+	FilePath      string
+	FileName      string
+	TrailerURL    string
+	ImdbID        string
 	GenreList     []string
 	ID            int64
 	TmdbRating    float64
 	ImdbRating    float64
+	FileSizeMb    float64
 	Year          int
+	TmdbID        int
 	Runtime       int
 }
 
@@ -84,18 +92,42 @@ func writeHTMLReport(stats ScanStats) error {
 func buildHTMLReportItems(media []db.Media) []htmlReportItem {
 	items := make([]htmlReportItem, 0, len(media))
 	for i := range media {
-		m := &media[i]
-		thumb := normalizeExistingThumb(m.ThumbnailPath)
-		items = append(items, htmlReportItem{
-			ID: m.ID, Title: m.Title, Year: m.Year, Type: m.Type,
-			Genre: m.Genre, GenreList: splitGenreList(m.Genre),
-			Director: m.Director, CastList: m.CastList,
-			Description: m.Description, Tagline: m.Tagline,
-			TmdbRating: m.TmdbRating, ImdbRating: m.ImdbRating,
-			Runtime: m.Runtime, ThumbnailPath: thumb,
-		})
+		items = append(items, toHTMLReportItem(&media[i]))
 	}
+
 	return items
+}
+
+func toHTMLReportItem(m *db.Media) htmlReportItem {
+	filePath := m.CurrentFilePath
+	if filePath == "" {
+		filePath = m.OriginalFilePath
+	}
+
+	return htmlReportItem{
+		ID:            m.ID,
+		TmdbID:        m.TmdbID,
+		Title:         m.Title,
+		CleanTitle:    m.CleanTitle,
+		Year:          m.Year,
+		Type:          m.Type,
+		Genre:         m.Genre,
+		GenreList:     splitGenreList(m.Genre),
+		Director:      m.Director,
+		CastList:      m.CastList,
+		Description:   m.Description,
+		Tagline:       m.Tagline,
+		TmdbRating:    m.TmdbRating,
+		ImdbRating:    m.ImdbRating,
+		Runtime:       m.Runtime,
+		ThumbnailPath: normalizeExistingThumb(m.ThumbnailPath),
+		BackdropPath:  m.BackdropPath,
+		FilePath:      filePath,
+		FileName:      m.OriginalFileName,
+		FileSizeMb:    m.FileSizeMb,
+		TrailerURL:    m.TrailerURL,
+		ImdbID:        m.ImdbID,
+	}
 }
 
 func splitGenreList(genre string) []string {
