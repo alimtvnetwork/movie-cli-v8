@@ -489,11 +489,10 @@ function Test-SourceFiles {
         "db",
         "tmdb",
         "cleaner",
-        "apperror",
+        "doctor",
         "errlog",
         "updater",
-        "version",
-        "templates"
+        "version"
     )
 
     $missing = @()
@@ -696,14 +695,22 @@ function Deploy-Binary {
     }
 
     $destFile = Join-Path $deployPath $binaryName
-    $backupFile = "$destFile.bak"
+    $backupExt = if ($Update) { "$binaryName.old" } else { "$binaryName.bak" }
+    $backupFile = Join-Path $deployPath $backupExt
 
     # Safe deploy: rename existing binary first (rollback on failure)
     $hadExisting = Test-Path $destFile
     if ($hadExisting) {
+        if ($Update -and (Test-Path $backupFile)) {
+            try {
+                Remove-Item -Path $backupFile -Force -ErrorAction Stop
+            } catch {
+                $backupFile = Join-Path $deployPath "$binaryName.old.$([System.Guid]::NewGuid().ToString('N').Substring(0,8))"
+            }
+        }
         try {
-            Rename-Item -Path $destFile -NewName "$binaryName.bak" -Force
-            Write-Info "Backed up existing binary"
+            Rename-Item -Path $destFile -NewName (Split-Path $backupFile -Leaf) -Force
+            Write-Info "Backed up existing binary via rename-first"
         } catch {
             Write-ErrorAndExit "Could not back up existing binary: $_ -- cannot guarantee rollback safety"
         }
@@ -749,8 +756,8 @@ function Deploy-Binary {
         Write-Warn "CHANGELOG.md not found in repo root"
     }
 
-    # Clean up backup on success
-    if (Test-Path $backupFile) {
+    # Clean up backup on success (non-update mode only; update mode leaves .old for update-cleanup)
+    if (-not $Update -and (Test-Path $backupFile)) {
         try {
             Remove-Item -Path $backupFile -Force
             Write-Info "Cleaned up backup"
@@ -942,49 +949,38 @@ if (-not $NoDeploy) {
     $deployedBinary = $builtBinary
 }
 
-# PATH sync -- never do this during update mode because the active PATH binary is
-# exactly the binary that launched the handoff and may still be winding down.
-# Update mode already deploys to the authoritative target path above.
-# In update mode we ALWAYS skip the post-deploy PATH-sync loop -- whether or not
-# -TargetBinaryPath was provided, because Resolve-DeployTarget now falls back to
-# the active PATH binary when run under -Update, so the deploy already replaced
-# the right file. The old retry/copy loop only ever caused "Access is denied"
-# warnings against a still-running parent.
-$skipPathSync = [bool]$Update
-if ($skipPathSync) {
-    Write-Info "Skipping PATH sync in update mode; deployed target already matches the handed-off binary"
-}
-
-# PATH sync -- if deployed binary differs from PATH binary, sync it (like gitmap-v2)
+# PATH sync -- if deployed binary differs from PATH binary, sync it using rename-first
 $activeCmd = Get-Command movie -ErrorAction SilentlyContinue
-if (-not $skipPathSync -and $activeCmd -and $activeCmd.Source -and (Test-Path $activeCmd.Source) -and $deployedBinary -and (Test-Path $deployedBinary)) {
+if ($activeCmd -and $activeCmd.Source -and (Test-Path $activeCmd.Source) -and $deployedBinary -and (Test-Path $deployedBinary)) {
     $activePath = (Resolve-Path $activeCmd.Source).Path
     $deployedPath = (Resolve-Path $deployedBinary).Path
     if ($activePath -ne $deployedPath) {
-        $maxSyncAttempts = 5
         $syncSuccess = $false
 
-        if ($Update) {
-            # Rename-first strategy: Windows allows renaming a running binary
-            $activeBackup = "$($activeCmd.Source).old"
-            try {
-                if (Test-Path $activeBackup) {
-                    Remove-Item $activeBackup -Force -ErrorAction SilentlyContinue
+        # Rename-first strategy: Windows allows renaming a running binary
+        $activeBackup = "$($activeCmd.Source).old"
+        try {
+            if (Test-Path $activeBackup) {
+                try {
+                    Remove-Item $activeBackup -Force -ErrorAction Stop
+                } catch {
+                    $activeBackup = "$($activeCmd.Source).old.$([System.Guid]::NewGuid().ToString('N').Substring(0,8))"
                 }
-                Rename-Item $activeCmd.Source $activeBackup -Force -ErrorAction Stop
-                Copy-Item $deployedBinary $activeCmd.Source -Force -ErrorAction Stop
-                $syncedVersion = & $activeCmd.Source version 2>&1
-                Write-Success "Synced active PATH binary via rename-first -> $syncedVersion"
-                $syncSuccess = $true
-            } catch {
-                if ((Test-Path $activeBackup) -and (-not (Test-Path $activeCmd.Source))) {
-                    try { Copy-Item $activeBackup $activeCmd.Source -Force -ErrorAction Stop } catch {}
-                }
-                Write-Warn "Rename-first sync failed; retrying with copy loop"
             }
+            Rename-Item $activeCmd.Source $activeBackup -Force -ErrorAction Stop
+            Copy-Item $deployedBinary $activeCmd.Source -Force -ErrorAction Stop
+            $syncedVersion = & $activeCmd.Source version 2>&1
+            Write-Success "Synced active PATH binary via rename-first -> $syncedVersion"
+            $syncSuccess = $true
+        } catch {
+            if ((Test-Path $activeBackup) -and (-not (Test-Path $activeCmd.Source))) {
+                try { Copy-Item $activeBackup $activeCmd.Source -Force -ErrorAction Stop } catch {}
+            }
+            Write-Warn "Rename-first sync to active PATH binary failed: $_; retrying with copy loop"
         }
 
         if (-not $syncSuccess) {
+            $maxSyncAttempts = 5
             for ($syncAttempt = 1; $syncAttempt -le $maxSyncAttempts; $syncAttempt++) {
                 try {
                     Copy-Item $deployedBinary $activeCmd.Source -Force -ErrorAction Stop

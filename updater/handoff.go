@@ -18,6 +18,7 @@ func createHandoffCopy(selfPath string) (string, error) {
 
 	if copyFile(selfPath, copyPath) == nil {
 		makeExecutable(copyPath)
+
 		return copyPath, nil
 	}
 
@@ -26,18 +27,15 @@ func createHandoffCopy(selfPath string) (string, error) {
 	if err := copyFile(selfPath, copyPath); err != nil {
 		return "", appfault.Wrap("cannot create handoff copy", err)
 	}
+
 	makeExecutable(copyPath)
+
 	return copyPath, nil
 }
 
-// launchHandoff starts the worker DETACHED with its own console and returns
-// immediately so the parent process can exit. Exiting the parent releases the
-// OS file lock on the original binary, which is the entire reason the
-// copy-and-handoff dance exists in the first place.
-//
-// See spec/13-self-update-app-update/03-copy-and-handoff.md and
-// HANDOFF-LESSONS.md before changing this. Do NOT switch back to a blocking
-// cmd.Run() — that re-introduces the Windows file-lock bug.
+// launchHandoff executes the handoff copy synchronously in the foreground with cmd.Run().
+// Following the GitMap Self-Update Gold Standard, stdout, stderr, and stdin are inherited
+// so the terminal stays attached and the user sees all progress output.
 func launchHandoff(copyPath, repoPath, targetBinary string) error {
 	args := []string{
 		"update-runner",
@@ -45,18 +43,24 @@ func launchHandoff(copyPath, repoPath, targetBinary string) error {
 		"--target-binary", targetBinary,
 	}
 
-	fmt.Printf("  🚀 Update handed off to %s\n", copyPath)
-	fmt.Println("  ↪  Worker is taking over in a new window; this terminal is free.")
+	fmt.Printf("==> Handing off update to %s\n", copyPath)
 
 	cmd := exec.Command(copyPath, args...)
-	configureDetached(cmd)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
 
-	if err := cmd.Start(); err != nil {
-		return appfault.Wrap("cannot start update worker", err)
+	err := cmd.Run()
+	if err != nil {
+		return appfault.Wrap("update worker failed", err)
 	}
-	if cmd.Process != nil {
-		_ = cmd.Process.Release()
-	}
+
+	// Clean up handoff copy now that worker has finished
+	_ = os.Remove(copyPath)
+
+	// Clean up any remaining .old/.bak artifacts
+	_, _ = Cleanup("")
+
 	return nil
 }
 
@@ -65,6 +69,7 @@ func handoffName() string {
 	if runtime.GOOS == "windows" {
 		return fmt.Sprintf("movie-update-%d.exe", os.Getpid())
 	}
+
 	return fmt.Sprintf("movie-update-%d", os.Getpid())
 }
 
@@ -73,6 +78,7 @@ func makeExecutable(path string) {
 	if runtime.GOOS == "windows" {
 		return
 	}
+
 	_ = os.Chmod(path, 0o755)
 }
 
@@ -82,14 +88,17 @@ func copyFile(src, dst string) error {
 	if err != nil {
 		return err
 	}
+
 	defer in.Close()
 
 	out, err := os.Create(dst)
 	if err != nil {
 		return err
 	}
+
 	defer out.Close()
 
 	_, err = io.Copy(out, in)
+
 	return err
 }

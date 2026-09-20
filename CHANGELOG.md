@@ -1,5 +1,26 @@
 # Changelog
 
+## v2.333.0
+
+### Added / Changed
+- **adopt GitMap self-update gold standard with remote installer and blocking handoff**
+- **Binary Release Installers (`install.ps1`, `install.sh`)**: Modeled after GitMap, transitioned from legacy source compilation to official binary release downloads with SHA-256 verification against `checksums.txt`, persistent user PATH updates, and smart upgrade detection.
+- **Quick Installers & Clean Uninstallers**: Added `install-quick.ps1`, `install-quick.sh`, `uninstall-quick.ps1`, and `uninstall-quick.sh` supporting fast interactive installation and complete uninstallation.
+- **Release Workflow Contract Verification (`.github/workflows/release.yml`)**: Automated dry-run validation (`dist/install.sh --dry-run`, `dist/install.ps1 -DryRun`), release asset staging for quick scripts, and enhanced release notes.
+
+### Quick Install Movie CLI v2.333.0
+
+**Windows (PowerShell):**
+```powershell
+irm https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.333.0/install.ps1 | iex
+```
+
+**Linux / macOS (Bash):**
+```bash
+curl -fsSL https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.333.0/install.sh | bash
+```
+
+
 ## v2.332.0
 
 ### Added / Changed

@@ -1,82 +1,48 @@
-# Self-Update Handoff — Lessons Learned
+# Self-Update Architecture — GitMap Gold Standard
 
-> A short, AI-shareable document that captures **why the obvious fix is
-> wrong** for self-updating CLIs on Windows.
-> Read this before changing `updater/` in this repo or implementing a
-> similar updater anywhere else.
+> Canonical reference for self-updating movie-cli based on the GitMap Gold Standard
+> ([`02-spec/13-generic-cli/22-self-update-gold-standard.md`](02-spec/13-generic-cli/22-self-update-gold-standard.md)).
 
 ---
 
-## The problem in one sentence
+## 1. Primary Flow: Canonical Remote Installer (Default)
 
-A running `.exe` on Windows holds a file lock on itself, so it cannot
-overwrite its own binary, and it cannot be deleted while running.
+Most users install `movie-cli` via prebuilt release binaries from GitHub and do not have a local
+source checkout or Go toolchain.
 
-## The pattern that works (do this)
-
-1. **Process A** (the running `movie.exe`) copies itself to
-   `movie-update-<pid>.exe` next to the original.
-2. Process A starts **Process B** from that copy **detached with its own
-   console** (`CREATE_NEW_CONSOLE` on Windows, `setsid` on Unix).
-3. **Process A exits immediately with code 0.** The OS releases the lock
-   on `movie.exe`.
-4. Process B runs the build/deploy script (`run.ps1`) which freely
-   overwrites `movie.exe`.
-5. The script ends by spawning a tiny **detached self-deleter**
-   (`cmd /c ping 127.0.0.1 -n 3 & del movie-update-<pid>.exe`).
-   Process B exits; ~2 s later the deleter removes the now-idle copy.
-
-A separate `update-cleanup` command exists as a belt-and-braces sweeper
-for copies left over from crashes / Ctrl-C; it must `--skip-path` the
-worker that is currently running.
-
-## The pattern that looks right but is wrong (do not do this)
-
-> "I'll make the parent block on the worker with `cmd.Run()` so the user
-> keeps seeing output in the same terminal."
-
-This re-introduces the exact bug the handoff exists to avoid:
-
-- Process A is still alive → still holds the lock on `movie.exe`.
-- The deploy step in `run.ps1` cannot overwrite the active-PATH binary
-  → "Active PATH binary is in use; retrying (1/5..5/5)" → "Could not
-  sync active PATH binary after retries."
-- The cleanup step at the end tries to delete the worker file, but
-  the worker file IS Process B currently executing it →
-  "Could not remove movie-update-<pid>.exe: Access is denied."
-- Net result: deploy *appears* to succeed (because of the rename-first
-  trick on the *other* deploy dir) but the binary on `PATH` is never
-  updated and the temp worker accumulates forever.
-
-If your motivation is "the user loses console output when the parent
-detaches", solve that **inside the new worker console** (use
-`CREATE_NEW_CONSOLE`, format `Write-Host` nicely, write a log file).
-Do **not** solve it by keeping the parent alive.
-
-## Hard rules
-
-| Rule | Why |
-|------|-----|
-| Parent exits 0 immediately after spawning the worker | Releases the file lock. |
-| Worker runs in its own console window (Windows) | Keeps progress visible. |
-| Worker self-deletes via a detached `cmd /c del` after exit | Avoids "Access is denied" on cleanup. |
-| `update-cleanup` always honours `--skip-path` for the live worker | Idempotent re-runs are safe. |
-| Never use `cmd.Run()` (blocking) for the handoff launch | This is the bug, not the fix. |
-
-## Apology / regression history
-
-In `iteration 3` (16-Apr-2026) we "fixed" a perceived console-detachment
-issue by switching the handoff to **synchronous `cmd.Run()`**. That was
-wrong and broke real users with the symptoms above. Iteration 4
-(17-Apr-2026) reverts to the detached pattern documented here and adds
-the worker self-deleter so cleanup never races against the running
-worker.
-
-If you are an AI/contributor reading this: **do not "improve" the
-handoff back into a blocking call**. The trade-off has been measured on
-real Windows machines and the detached pattern is the only one that
-works.
+1. `movie update` runs `RunRemoteUpdate()` by default:
+   - Fetches official `install.ps1` (Windows) or `install.sh` (Unix).
+   - Executes the installer directly with `-InstallDir <dir>`, inheriting stdin/stdout/stderr.
+   - The installer verifies SHA256, applies rename-first deploy, and refreshes the binary in seconds.
+2. If offline or if `--source-rebuild` is supplied, falls back to the source-rebuild handoff flow.
 
 ---
 
-*Maintained alongside `spec/13-self-update-app-update/03-copy-and-handoff.md`.*
+## 2. Secondary Flow: Two-Phase Handoff for Source Rebuilds (`--source-rebuild`)
+
+When rebuilding from source via `run.ps1`:
+
+1. **Phase 1 — Handoff from active binary:**
+   - Active binary copies itself to `movie-update-<pid>.exe`.
+   - Launches `movie-update-<pid>.exe update-runner` using **`cmd.Run()` (foreground/blocking)**.
+   - Parent stays attached, stdout/stderr/stdin are inherited.
+
+2. **Phase 2 — Build and rename-first deploy:**
+   - The handoff copy executes `run.ps1 -Update -TargetBinaryPath <path>`.
+   - `run.ps1` builds `./bin/movie.exe`.
+   - Windows allows renaming a running executable: `movie.exe` is renamed to `movie.exe.old`.
+   - The newly built binary is copied directly into place.
+   - The worker verifies the deployed binary and completes.
+
+3. **Phase 3 — Synchronous cleanup:**
+   - Because `cmd.Run()` blocked until the worker finished, the worker process is now dead.
+   - The parent unblocks, immediately deletes `movie-update-<pid>.exe`, and runs `update-cleanup`.
+   - The terminal session remains stable and uninterrupted.
+
+---
+
+## 3. Hard Prohibitions
+
+- Never use `cmd.Start()` + detached console for update handoff.
+- Never directly overwrite a running binary without rename-first.
+- Never disable CI/CD quality gates.

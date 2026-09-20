@@ -1,3 +1,9 @@
+## v2.333.0 — 2026-09-20 (adopt GitMap self-update gold standard with remote installer and blocking handoff)
+
+**Scope:** Version bump. adopt GitMap self-update gold standard with remote installer and blocking handoff.
+
+---
+
 ## v2.332.0 — 2026-09-20 (release synchronization and stability improvements)
 
 **Scope:** Version bump. release synchronization and stability improvements.

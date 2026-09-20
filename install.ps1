@@ -306,10 +306,19 @@ function Install-Binary([string]$zipPath, [string]$targetDir) {
 
     if (Test-Path $targetExe) {
         $oldExe = "$targetExe.old"
-        if (Test-Path $oldExe) { Remove-Item $oldExe -Force -ErrorAction SilentlyContinue }
+        if (Test-Path $oldExe) {
+            try {
+                Remove-Item $oldExe -Force -ErrorAction Stop
+            } catch {
+                $oldExe = "$targetExe.old.$([System.Guid]::NewGuid().ToString('N').Substring(0,8))"
+            }
+        }
         try {
             Rename-Item $targetExe $oldExe -Force
-        } catch { }
+        } catch {
+            Write-Err "Could not rename existing $BinaryName : $_"
+            exit 1
+        }
     }
 
     $extractDir = Join-Path $targetDir ".install-extract"
@@ -330,8 +339,9 @@ function Install-Binary([string]$zipPath, [string]$targetDir) {
     Move-Item $foundExe.FullName $targetExe -Force
     Remove-Item $extractDir -Recurse -Force -ErrorAction SilentlyContinue
 
-    $oldExe = "$targetExe.old"
-    if (Test-Path $oldExe) { Remove-Item $oldExe -Force -ErrorAction SilentlyContinue }
+    # Best-effort cleanup of .old files
+    Get-ChildItem -Path $targetDir -Filter "$BinaryName.old*" -File -ErrorAction SilentlyContinue |
+        ForEach-Object { Remove-Item $_.FullName -Force -ErrorAction SilentlyContinue }
 
     Write-OK "Installed $BinaryName to $targetDir"
 }

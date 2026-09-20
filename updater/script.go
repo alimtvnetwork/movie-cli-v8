@@ -124,15 +124,6 @@ function Resolve-VersionBinary {
     return $null
 }
 
-function Schedule-WorkerSelfDelete {
-    if (-not $workerBinary) { return }
-    if (-not (Test-Path $workerBinary)) { return }
-    # Spawn a hidden cmd.exe that waits ~2 s, then deletes the worker copy.
-    # ping is the most portable "sleep" on a bare Windows shell.
-    $cmdLine = 'ping 127.0.0.1 -n 3 > nul & del /f /q "' + $workerBinary + '"'
-    Start-Process -FilePath "cmd.exe" -ArgumentList "/c", $cmdLine -WindowStyle Hidden | Out-Null
-}
-
 # Capture current version
 $versionBinary = Resolve-VersionBinary
 $oldVersion = "unknown"
@@ -140,10 +131,6 @@ if ($versionBinary -and (Test-Path $versionBinary)) {
     $oldVersion = (& $versionBinary version 2>&1) -join " "
 }
 Say "Version before: $oldVersion"
-
-# Wait for the parent process to fully exit and release its file lock on
-# $targetBinary before we ask run.ps1 to overwrite it.
-Start-Sleep -Seconds 1.2
 
 # Build and deploy from repo root via run.ps1
 $runScript = Join-Path $repoPath "run.ps1"
@@ -165,7 +152,6 @@ if ($targetBinary) {
 
 if ($runExit -ne 0) {
     SayErr "run.ps1 exited with code $runExit"
-    Schedule-WorkerSelfDelete
     exit $runExit
 }
 
@@ -191,29 +177,12 @@ if ($versionBinary -and (Test-Path $versionBinary)) {
     foreach ($cl in $clOutput) { Write-Host ($P + "  " + (To-ConsoleSafe "$cl")) }
 }
 
-# Belt-and-braces sweeper for any older worker copies. The current worker
-# is preserved via --skip-path; the detached self-deleter below handles it.
-if ($versionBinary -and (Test-Path $versionBinary)) {
-    $cleanupArgs = @("update-cleanup")
-    if ($workerBinary) { $cleanupArgs += @("--skip-path", $workerBinary) }
-    $prevPref = $ErrorActionPreference
-    $ErrorActionPreference = "Continue"
-    $null = & $versionBinary @cleanupArgs *> $null
-    $ErrorActionPreference = $prevPref
-}
-
 # Top-and-tail banner
 Write-Host ""
 Write-Host ($P + "+======================================+") -ForegroundColor Cyan
 Write-Host ($P + "|  [OK] Update complete               |") -ForegroundColor Cyan
 Write-Host ($P + "+======================================+") -ForegroundColor Cyan
 Write-Host ""
-
-
-Schedule-WorkerSelfDelete
-
-# Give the user a beat to see the result before the new console window closes.
-Start-Sleep -Seconds 2
 `, repoPath, targetBinary, workerBinary)
 }
 
