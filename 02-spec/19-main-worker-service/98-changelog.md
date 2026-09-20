@@ -1,3 +1,9 @@
+## v2.331.0 — 2026-09-20 (fix movie update deployPath mismatch, doctor self-replace on missing binary, and tilde expansion)
+
+**Scope:** Version bump. fix movie update deployPath mismatch, doctor self-replace on missing binary, and tilde expansion.
+
+---
+
 ## v2.330.0 — 2026-09-20 (re-prompt loop for invalid TMDb API key and error spam suppression)
 
 **Scope:** Version bump. re-prompt loop for invalid TMDb API key and error spam suppression.

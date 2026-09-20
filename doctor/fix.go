@@ -9,6 +9,7 @@ package doctor
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 	"github.com/alimtvnetwork/movie-cli-v8/updater"
@@ -44,11 +45,36 @@ func applyFix(r *Report, f Finding) bool {
 }
 
 func runSelfReplace(r *Report) bool {
+	if !hasSourceBinary(r.Source) {
+		return syncDeployPathToActive(r)
+	}
+
 	fmt.Printf("  [FIX ] self-replace %s -> %s\n", r.Source, r.Target)
 	if err := updater.SelfReplace(r.Source, r.Target); err != nil {
 		fmt.Printf("  [ERR ] self-replace failed: %v\n", appfault.Wrap("self-replace", err))
+
 		return false
 	}
+
+	return true
+}
+
+func syncDeployPathToActive(r *Report) bool {
+	if r.Target == "" {
+		fmt.Printf("  [ERR ] source binary does not exist and no active binary found: %s\n", r.Source)
+
+		return false
+	}
+
+	targetDir := filepath.Dir(r.Target)
+	fmt.Printf("  [FIX ] syncing powershell.json deployPath -> %s\n", targetDir)
+
+	if err := SaveDeployPath(targetDir); err != nil {
+		fmt.Printf("  [ERR ] failed to update powershell.json: %v\n", err)
+
+		return false
+	}
+
 	return true
 }
 

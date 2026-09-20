@@ -52,19 +52,24 @@ func checkSourceFolder() Finding {
 			SeverityWarn, "ScanDir is not configured",
 			"Run `movie config set scan_dir <PATH>`", false)
 	}
-	info, statErr := os.Stat(dir)
+
+	expandedDir := expandScanPath(dir)
+
+	info, statErr := os.Stat(expandedDir)
 	if statErr != nil {
 		return finding(idSourceFolder, "Source folder (ScanDir)",
 			SeverityErr, fmt.Sprintf("%s: %v", dir, statErr),
 			"Create the folder or update scan_dir", false)
 	}
+
 	if !info.IsDir() {
 		return finding(idSourceFolder, "Source folder (ScanDir)",
 			SeverityErr, fmt.Sprintf("%s is not a directory", dir),
 			"Point scan_dir at a directory", false)
 	}
+
 	return finding(idSourceFolder, "Source folder exists",
-		SeverityOK, dir, "", false)
+		SeverityOK, expandedDir, "", false)
 }
 
 func checkRestPort() Finding {

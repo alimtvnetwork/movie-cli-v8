@@ -17,6 +17,12 @@ var (
 
 func initVirtualTerminal() bool {
 	vtOnce.Do(func() {
+		kernel32 := windows.NewLazySystemDLL("kernel32.dll")
+		setConsoleOutputCP := kernel32.NewProc("SetConsoleOutputCP")
+		_, _, _ = setConsoleOutputCP.Call(uintptr(65001))
+		setConsoleCP := kernel32.NewProc("SetConsoleCP")
+		_, _, _ = setConsoleCP.Call(uintptr(65001))
+
 		if os.Getenv("WT_SESSION") != "" {
 			isVtSupported = true
 

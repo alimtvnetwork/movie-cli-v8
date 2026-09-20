@@ -24,11 +24,18 @@ func resolveDeploySource() (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	name := cfg.BinaryName
 	if name == "" {
 		name = defaultBinaryName()
 	}
-	return absPath(filepath.Join(cfg.DeployPath, name))
+
+	deployDir := cfg.DeployPath
+	if deployDir == "" {
+		deployDir = defaultDeployDir()
+	}
+
+	return absPath(filepath.Join(deployDir, name))
 }
 
 func resolveActiveBinary() (string, error) {

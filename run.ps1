@@ -186,8 +186,13 @@ function Load-Config {
         return Get-Content $configPath | ConvertFrom-Json
     }
     Write-Warn "No powershell.json found, using defaults"
+    $defaultDeploy = if (($PSVersionTable.PSEdition -eq "Desktop") -or ($IsWindows -eq $true)) {
+        if ($env:LOCALAPPDATA) { Join-Path $env:LOCALAPPDATA "movie-cli" } else { "C:\movie-cli" }
+    } else {
+        if ($env:HOME) { Join-Path $env:HOME ".local/bin" } else { "/usr/local/bin" }
+    }
     return @{
-        deployPath  = "E:\bin-run"
+        deployPath  = $defaultDeploy
         buildOutput = "./bin"
         binaryName  = "movie.exe"
         copyData    = $false
@@ -666,9 +671,9 @@ function Deploy-Binary {
     }
     if (-not $deployPath) {
         $deployPath = if (($PSVersionTable.PSEdition -eq "Desktop") -or ($IsWindows -eq $true)) {
-            "E:\bin-run"
+            if ($env:LOCALAPPDATA) { Join-Path $env:LOCALAPPDATA "movie-cli" } else { "C:\movie-cli" }
         } else {
-            "/usr/local/bin"
+            if ($env:HOME) { Join-Path $env:HOME ".local/bin" } else { "/usr/local/bin" }
         }
     }
 

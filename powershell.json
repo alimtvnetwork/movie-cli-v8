@@ -1,5 +1,5 @@
 {
-  "deployPath": "D:\\bin-run",
+  "deployPath": "",
   "buildOutput": "./bin",
   "binaryName": "movie.exe",
   "copyData": false
