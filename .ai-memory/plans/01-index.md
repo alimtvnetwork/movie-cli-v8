@@ -8,8 +8,9 @@ Master directory of architectural and execution plans.
 - [04-guideline-prompt-and-installer-upgrade.md](pending/04-guideline-prompt-and-installer-upgrade.md): Guideline prompt and installer enhancements.
 - [09-update-prompts-and-release.md](pending/09-update-prompts-and-release.md): Update prompts and release lifecycle (deferred under WOR policy).
 - [11-code-red-refactor-remediation.md](pending/11-code-red-refactor-remediation.md): Remediate Code Red enum, boolean, and query wrapper violations across the codebase.
-
 ## Completed Plans
+
+- [14-improve-installer-and-release-process.md](completed/14-improve-installer-and-release-process.md): Overhaul binary installers, quick one-liners, uninstaller suite, and release workflow dry-run contract verification following GitMap.
 
 - [12-movie-cli-ui-trash-error-and-reset-overhaul.md](completed/12-movie-cli-ui-trash-error-and-reset-overhaul.md): Movie CLI UI, staged trash-bin deletion, AppFault error management, TMDB image handling, reset command, and colorful terminal help.
 - [02-multi-repo-folder-structure-and-gitmap-fixes.md](completed/02-multi-repo-folder-structure-and-gitmap-fixes.md): Multi-repo folder structure migration and gitmap AGY pipeline fixes.

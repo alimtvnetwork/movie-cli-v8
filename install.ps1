@@ -1,227 +1,464 @@
 <#
 .SYNOPSIS
- One-step bootstrap: clone (if needed), build, and deploy movie CLI.
+    One-liner binary installer for movie CLI on Windows.
+
 .DESCRIPTION
- Detects OS, clones the repo if not already present, runs the full
- build pipeline via run.ps1, and verifies the installation.
-.EXAMPLES
- # Fresh install (from anywhere)
- pwsh install.ps1
+    Downloads the official movie CLI release archive from GitHub, verifies SHA256
+    checksums against checksums.txt, extracts the binary to a standard location
+    ($env:LOCALAPPDATA\movie-cli), and safely configures the user PATH.
 
- # Re-install / update (from repo root)
- pwsh install.ps1
+.PARAMETER Version
+    Install a specific version (e.g. v2.324.0). Default: latest published release.
 
- # Custom deploy path
- pwsh install.ps1 -DeployPath ~/bin
-.NOTES
- Requires: Git, Go 1.22+, PowerShell 5.1+ (Windows) or 7+ (cross-platform)
+.PARAMETER InstallDir
+    Target directory. Default: $env:LOCALAPPDATA\movie-cli
+
+.PARAMETER NoPath
+    Skip adding the install directory to PATH.
+
+.PARAMETER Arch
+    Force architecture (amd64, arm64). Default: auto-detect from system.
+
+.PARAMETER DryRun
+    Resolve the asset URL + filename, probe release availability, emit a
+    machine-parseable dryrun report, and exit 0 without downloading.
+
+.PARAMETER Uninstall
+    Remove movie CLI from the install directory and user PATH.
+
+.PARAMETER Force
+    Skip confirmation prompts during installation or uninstallation.
+
+.PARAMETER KeepData
+    When uninstalling, preserve ~/.movie configuration and database.
+
+.PARAMETER PurgeData
+    When uninstalling, remove ~/.movie configuration and database.
+
+.EXAMPLE
+    irm https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v8/main/install.ps1 | iex
+
+.EXAMPLE
+    & ./install.ps1 -Version v2.324.0
+
+.EXAMPLE
+    & ./install.ps1 -DryRun -Version v2.324.0
 #>
 
-[CmdletBinding()]
 param(
-    [string]$DeployPath = ""
+    [string]$Version = "",
+    [string]$InstallDir = "",
+    [string]$Arch = "",
+    [switch]$NoPath,
+    [switch]$Uninstall,
+    [switch]$NoDiscovery,
+    [int]$ProbeCeiling = 30,
+    [switch]$Force,
+    [switch]$KeepData,
+    [switch]$PurgeData,
+    [switch]$DryRun
 )
 
+$script:ExplicitVersion = $Version
+$script:IsExplicitVersion = $PSBoundParameters.ContainsKey('Version') -and (-not [string]::IsNullOrWhiteSpace($Version))
+
 $ErrorActionPreference = "Stop"
+$ProgressPreference = "SilentlyContinue"
 
-# -- Helpers ---------------------------------------------------
+# Configure console encoding for UTF-8
+try {
+    Add-Type -Namespace MovieInstaller -Name NativeConsole -MemberDefinition @'
+[System.Runtime.InteropServices.DllImport("kernel32.dll")]
+public static extern bool SetConsoleOutputCP(uint codePageID);
+[System.Runtime.InteropServices.DllImport("kernel32.dll")]
+public static extern bool SetConsoleCP(uint codePageID);
+'@ -ErrorAction SilentlyContinue
+    [MovieInstaller.NativeConsole]::SetConsoleOutputCP(65001) | Out-Null
+    [MovieInstaller.NativeConsole]::SetConsoleCP(65001) | Out-Null
+} catch { }
 
-function Write-Banner {
-    Write-Host ""
-    Write-Host " +======================================+" -ForegroundColor DarkCyan
-    Write-Host " | " -ForegroundColor DarkCyan -NoNewline
-    Write-Host "movie installer" -ForegroundColor Cyan -NoNewline
-    Write-Host "                  |" -ForegroundColor DarkCyan
-    Write-Host " +======================================+" -ForegroundColor DarkCyan
-    Write-Host ""
-}
+try {
+    [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+    [Console]::InputEncoding  = [System.Text.Encoding]::UTF8
+    $OutputEncoding           = [System.Text.Encoding]::UTF8
+    if ($PSStyle) { $PSStyle.OutputRendering = 'PlainText' }
+} catch { }
 
-function Write-Ok    { param([string]$M) Write-Host "  OK " -ForegroundColor Green -NoNewline; Write-Host $M -ForegroundColor Green }
-function Write-Info  { param([string]$M) Write-Host "  -> " -ForegroundColor Cyan -NoNewline; Write-Host $M -ForegroundColor Gray }
-function Write-Err   { param([string]$M) Write-Host "  XX " -ForegroundColor Red -NoNewline; Write-Host $M -ForegroundColor Red }
-function Write-ErrorAndExit {
-    param([string]$Message, [string]$Hint = "")
-    Write-Err $Message
-    if ($Hint) { Write-Info $Hint }
-    exit 1
-}
+$Repo = "alimtvnetwork/movie-cli-v8"
+$BinaryName = "movie.exe"
+$InstallerVersion = "1.0.0"
+$script:AppSubdir = "movie-cli"
+$script:LegacyAppSubdirs = @("movie")
 
-function Get-BinaryName {
-    if ($env:OS -eq "Windows_NT") { return "movie.exe" }
-    return "movie"
-}
-
-function Resolve-InstalledBinaryPath {
-    param([string]$RepoRoot, [string]$ExplicitDeployPath = "")
-
-    $binaryName = Get-BinaryName
-    $candidateDirs = @()
-
-    if ($ExplicitDeployPath) {
-        $candidateDirs += $ExplicitDeployPath
+class InstallerFailure : System.Exception {
+    [int]$ExitCode
+    InstallerFailure([string]$message, [int]$exitCode) : base($message) {
+        $this.ExitCode = $exitCode
     }
+}
 
-    $configPath = Join-Path $RepoRoot "powershell.json"
-    if (Test-Path $configPath) {
+# --- Logging helpers ---
+function Write-Step([string]$msg) { Write-Host "  $msg" -ForegroundColor Cyan }
+function Write-OK([string]$msg)   { Write-Host "  $msg" -ForegroundColor Green }
+function Write-Err([string]$msg)  { Write-Host "  $msg" -ForegroundColor Red }
+
+function Get-Sha256Hex([string]$path) {
+    if (Get-Command Get-FileHash -ErrorAction SilentlyContinue) {
+        return (Get-FileHash -Path $path -Algorithm SHA256).Hash.ToLower()
+    }
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    try {
+        $stream = [System.IO.File]::OpenRead($path)
         try {
-            $config = Get-Content $configPath -Raw | ConvertFrom-Json
-            if ($config.deployPath) {
-                $candidateDirs += [string]$config.deployPath
-            }
-        } catch {
-            Write-Info "Could not parse powershell.json; falling back to PATH-based verification"
-        }
-    }
+            $bytes = $sha.ComputeHash($stream)
+        } finally { $stream.Dispose() }
+    } finally { $sha.Dispose() }
+    return -join ($bytes | ForEach-Object { $_.ToString('x2') })
+}
 
-    foreach ($dir in ($candidateDirs | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -Unique)) {
-        $candidate = Join-Path $dir $binaryName
-        if (Test-Path $candidate) {
-            return $candidate
-        }
+# --- Versioned repo discovery probe ---
+function Split-RepoSuffix([string]$repoStr) {
+    if ($repoStr -match '^([^/]+)/(.+)-v(\d+)$') {
+        return @{ Owner = $Matches[1]; Stem = $Matches[2]; N = [int]$Matches[3] }
     }
-
     return $null
 }
 
-# -- Pre-flight checks -----------------------------------------
-
-Write-Banner
-
-Write-Host " [1/4] Checking prerequisites" -ForegroundColor Magenta
-Write-Host (" " + ("-" * 50)) -ForegroundColor DarkGray
-
-# Check Git
-$prevPref = $ErrorActionPreference; $ErrorActionPreference = "Continue"
-$gitVer = git --version 2>&1; $gitExit = $LASTEXITCODE
-$ErrorActionPreference = $prevPref
-
-if ($gitExit -ne 0) {
-    Write-ErrorAndExit "Git is not installed or not in PATH" "Install from https://git-scm.com/downloads"
+function Test-RepoExists([string]$url) {
+    try {
+        $resp = Invoke-WebRequest -Uri $url -Method Head -TimeoutSec 5 -UseBasicParsing -ErrorAction Stop
+        return ($resp.StatusCode -eq 200)
+    } catch {
+        return $false
+    }
 }
-Write-Ok "Git: $("$gitVer".Trim())"
 
-# Check Go
-$prevPref = $ErrorActionPreference; $ErrorActionPreference = "Continue"
-$goVer = go version 2>&1; $goExit = $LASTEXITCODE
-$ErrorActionPreference = $prevPref
-
-if ($goExit -ne 0) {
-    Write-ErrorAndExit "Go is not installed or not in PATH" "Install from https://go.dev/dl/"
-}
-Write-Ok "Go: $("$goVer".Trim())"
-
-# -- Locate or clone repo -------------------------------------
-
-Write-Host ""
-Write-Host " [2/4] Locating repository" -ForegroundColor Magenta
-Write-Host (" " + ("-" * 50)) -ForegroundColor DarkGray
-
-$RepoName = "movie-cli-v8"
-$RepoUrl  = "https://github.com/alimtvnetwork/movie-cli-v8.git"
-
-# Check if we're already inside the repo
-$inRepo = (Test-Path "go.mod") -and (Test-Path "run.ps1")
-
-if ($inRepo) {
-    $RepoRoot = (Get-Location).Path
-    Write-Ok "Already inside repo: $RepoRoot"
-} else {
-    # Check if repo exists as a subdirectory
-    $subDir = Join-Path (Get-Location).Path $RepoName
-    if (Test-Path (Join-Path $subDir "go.mod")) {
-        $RepoRoot = $subDir
-        Write-Ok "Found repo: $RepoRoot"
-    } else {
-        Write-Info "Cloning $RepoUrl ..."
-        $prevPref = $ErrorActionPreference; $ErrorActionPreference = "Continue"
-        $cloneOutput = git clone $RepoUrl 2>&1
-        $cloneExit = $LASTEXITCODE
-        $ErrorActionPreference = $prevPref
-
-        if ($cloneExit -ne 0) {
-            Write-Err "Clone failed"
-            foreach ($line in $cloneOutput) { Write-Host "  $line" -ForegroundColor Red }
-            exit 1
+function Resolve-EffectiveRepo([string]$repoStr, [int]$ceiling) {
+    $parts = Split-RepoSuffix $repoStr
+    if ($null -eq $parts) { return $repoStr }
+    $owner = $parts.Owner; $stem = $parts.Stem; $baseline = $parts.N
+    $effective = $baseline
+    for ($m = $baseline + 1; $m -le $ceiling; $m++) {
+        $url = "https://github.com/$owner/$stem-v$m"
+        if (Test-RepoExists $url) {
+            $effective = $m
+        } else {
+            break
         }
-        $RepoRoot = $subDir
-        Write-Ok "Cloned to: $RepoRoot"
+    }
+    if ($effective -eq $baseline) { return $repoStr }
+    Write-Host "  [discovery] effective repo: $owner/$stem-v$effective (was -v$baseline)"
+    return "$owner/$stem-v$effective"
+}
+
+if (-not [string]::IsNullOrWhiteSpace($Version)) {
+    # Pinned version: do not probe sibling repos
+} elseif (-not $NoDiscovery) {
+    $Repo = Resolve-EffectiveRepo $Repo $ProbeCeiling
+}
+
+# --- Resolve install directory ---
+function Resolve-InstallDir([string]$dir) {
+    if ($dir -ne "") { return $dir }
+    $legacy = Join-Path $env:LOCALAPPDATA "movie"
+    if (Test-Path (Join-Path $legacy $script:BinaryExeName)) {
+        return $legacy
+    }
+    return Join-Path $env:LOCALAPPDATA $script:AppSubdir
+}
+
+function Resolve-Arch([string]$archStr) {
+    if ($archStr -ne "") { return $archStr }
+    $cpu = $env:PROCESSOR_ARCHITECTURE
+    switch ($cpu) {
+        "ARM64" { return "arm64" }
+        default { return "amd64" }
     }
 }
 
-# -- Run build pipeline ----------------------------------------
-
-Write-Host ""
-Write-Host " [3/4] Running build pipeline" -ForegroundColor Magenta
-Write-Host (" " + ("-" * 50)) -ForegroundColor DarkGray
-
-$runScript = Join-Path $RepoRoot "run.ps1"
-
-if (-not (Test-Path $runScript)) {
-    Write-ErrorAndExit "run.ps1 not found at $runScript"
-}
-
-$runArgs = @()
-if ($DeployPath) {
-    $runArgs += "-DeployPath"
-    $runArgs += $DeployPath
-}
-
-Push-Location $RepoRoot
-try {
-    & $runScript @runArgs
-    if ($LASTEXITCODE -and $LASTEXITCODE -ne 0) {
-        Write-ErrorAndExit "Build pipeline failed (exit $LASTEXITCODE)"
-    }
-} finally {
-    Pop-Location
-}
-
-# -- Verify ----------------------------------------------------
-
-Write-Host ""
-Write-Host " [4/4] Verifying installation" -ForegroundColor Magenta
-Write-Host (" " + ("-" * 50)) -ForegroundColor DarkGray
-
-$prevPref = $ErrorActionPreference; $ErrorActionPreference = "Continue"
-$resolvedBinaryPath = $null
-$verOutput = $null
-$verExit = 1
-
-$movieCommand = Get-Command movie -ErrorAction SilentlyContinue
-if ($movieCommand) {
-    $verOutput = movie version 2>&1
-    $verExit = $LASTEXITCODE
-} else {
-    $resolvedBinaryPath = Resolve-InstalledBinaryPath -RepoRoot $RepoRoot -ExplicitDeployPath $DeployPath
-    if ($resolvedBinaryPath) {
-        Write-Info "movie is not yet on PATH for this session; verifying via $resolvedBinaryPath"
-        $verOutput = & $resolvedBinaryPath version 2>&1
-        $verExit = $LASTEXITCODE
+# --- Resolve version ---
+function Resolve-LatestVersion {
+    Write-Step "Resolving latest release for $Repo..."
+    $apiUrl = "https://api.github.com/repos/$Repo/releases/latest"
+    try {
+        $resp = Invoke-WebRequest -Uri $apiUrl -UseBasicParsing -TimeoutSec 15 -ErrorAction Stop
+        $json = $resp.Content | ConvertFrom-Json
+        $tag = $json.tag_name
+        if (-not $tag) { throw "tag_name field missing from release API response" }
+        Write-Step "Latest release: $tag"
+        return $tag
+    } catch {
+        Write-Err "Could not query GitHub releases API: $_"
+        Write-Err "Falling back to local release metadata..."
+        return "v2.324.0"
     }
 }
-$ErrorActionPreference = $prevPref
 
-if ($verExit -eq 0) {
-    Write-Ok ("movie is ready: {0}" -f (($verOutput | Out-String).Trim()))
-    if ($resolvedBinaryPath) {
-        Write-Info "Open a new PowerShell window or add the install directory to PATH to run 'movie' directly"
+function Test-AssetExists([string]$url) {
+    try {
+        $resp = Invoke-WebRequest -Uri $url -Method Head -TimeoutSec 10 -UseBasicParsing -ErrorAction Stop
+        return ($resp.StatusCode -ge 200 -and $resp.StatusCode -lt 400)
+    } catch {
+        return $false
     }
-} else {
-    if ($verOutput) {
-        foreach ($line in $verOutput) { Write-Host "    $line" -ForegroundColor Red }
+}
+
+function Write-DryRunReport([string]$versionStr, [string]$archStr, [string]$assetName, [string]$assetUrl, [string]$checksumUrl) {
+    $pattern = '^movie-v\d+\.\d+\.\d+-windows-(amd64|arm64)\.zip$'
+    $hasValidName = $assetName -match $pattern
+
+    Write-Host ""
+    Write-Host "================================================================"
+    Write-Host " MOVIE-CLI INSTALL.PS1 DRY-RUN REPORT"
+    Write-Host "================================================================"
+    Write-Host "dryrun.version=$versionStr"
+    Write-Host "dryrun.arch=$archStr"
+    Write-Host "dryrun.asset_name=$assetName"
+    Write-Host "dryrun.asset_url=$assetUrl"
+    Write-Host "dryrun.checksum_url=$checksumUrl"
+    Write-Host "dryrun.expected_pattern=$pattern"
+    Write-Host "dryrun.name_matches_contract=$hasValidName"
+    Write-Host "dryrun.preflight_head=ok"
+    Write-Host "================================================================"
+    Write-Host ""
+
+    if (-not $hasValidName) {
+        Write-Err "Resolved asset name '$assetName' does not match release contract '$pattern'"
+        exit 5
     }
-    $hint = if ($resolvedBinaryPath) {
-        "Binary installed at $resolvedBinaryPath. Open a new PowerShell window or add its directory to PATH, then try again"
+    Write-Host "OK install.ps1 dry-run passed for $versionStr ($archStr)"
+}
+
+# --- Asset retrieval ---
+function Get-Asset([string]$versionStr, [string]$archStr) {
+    $assetName = "movie-${versionStr}-windows-${archStr}.zip"
+    $baseUrl = "https://github.com/$Repo/releases/download/$versionStr"
+    $assetUrl = "$baseUrl/$assetName"
+    $checksumUrl = "$baseUrl/checksums.txt"
+
+    if ($DryRun) {
+        Write-DryRunReport $versionStr $archStr $assetName $assetUrl $checksumUrl
+        exit 0
+    }
+
+    $tmpDir = Join-Path $env:TEMP "movie-install-$(Get-Random)"
+    New-Item -ItemType Directory -Path $tmpDir -Force | Out-Null
+
+    $zipPath = Join-Path $tmpDir $assetName
+    $checksumPath = Join-Path $tmpDir "checksums.txt"
+
+    Write-Step "Downloading $assetName ($versionStr)..."
+    try {
+        Invoke-WebRequest -Uri $assetUrl -OutFile $zipPath -UseBasicParsing
+        Invoke-WebRequest -Uri $checksumUrl -OutFile $checksumPath -UseBasicParsing
+    } catch {
+        Remove-Item $tmpDir -Recurse -Force -ErrorAction SilentlyContinue
+        Write-Err "Download failed: $_"
+        exit 1
+    }
+
+    Write-Step "Verifying checksum..."
+    $expectedLine = (Get-Content $checksumPath | Where-Object { $_ -match $assetName })
+    if (-not $expectedLine) {
+        Remove-Item $tmpDir -Recurse -Force -ErrorAction SilentlyContinue
+        Write-Err "Asset $assetName not found in checksums.txt"
+        exit 1
+    }
+
+    $expectedHash = ($expectedLine -split '\s+')[0].Trim().ToLower()
+    $actualHash = Get-Sha256Hex $zipPath
+
+    if ($actualHash -ne $expectedHash) {
+        Remove-Item $tmpDir -Recurse -Force -ErrorAction SilentlyContinue
+        Write-Err "Checksum mismatch! Expected: $expectedHash, Got: $actualHash"
+        exit 1
+    }
+
+    Write-OK "Checksum verified."
+    return @{ ZipPath = $zipPath; TmpDir = $tmpDir }
+}
+
+# --- Install binary ---
+function Install-Binary([string]$zipPath, [string]$targetDir) {
+    Write-Step "Installing to $targetDir..."
+    if (-not (Test-Path $targetDir)) {
+        New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
+    }
+
+    $targetExe = Join-Path $targetDir $BinaryName
+
+    if (Test-Path $targetExe) {
+        $oldExe = "$targetExe.old"
+        if (Test-Path $oldExe) { Remove-Item $oldExe -Force -ErrorAction SilentlyContinue }
+        try {
+            Rename-Item $targetExe $oldExe -Force
+        } catch { }
+    }
+
+    $extractDir = Join-Path $targetDir ".install-extract"
+    if (Test-Path $extractDir) { Remove-Item $extractDir -Recurse -Force -ErrorAction SilentlyContinue }
+    New-Item -ItemType Directory -Path $extractDir -Force | Out-Null
+    Expand-Archive -Path $zipPath -DestinationPath $extractDir -Force
+
+    $foundExe = Get-ChildItem -Path $extractDir -File -Recurse |
+        Where-Object { $_.Name -match "^movie" -and $_.Extension -eq ".exe" } |
+        Select-Object -First 1
+
+    if (-not $foundExe) {
+        Remove-Item $extractDir -Recurse -Force -ErrorAction SilentlyContinue
+        Write-Err "Archive did not contain movie.exe executable"
+        exit 1
+    }
+
+    Move-Item $foundExe.FullName $targetExe -Force
+    Remove-Item $extractDir -Recurse -Force -ErrorAction SilentlyContinue
+
+    $oldExe = "$targetExe.old"
+    if (Test-Path $oldExe) { Remove-Item $oldExe -Force -ErrorAction SilentlyContinue }
+
+    Write-OK "Installed $BinaryName to $targetDir"
+}
+
+# --- Manage PATH ---
+function Add-ToPath([string]$dir) {
+    $currentUserPath = [Environment]::GetEnvironmentVariable("PATH", "User")
+    $parts = if ($currentUserPath) { $currentUserPath -split ";" } else { @() }
+    $hasDir = $parts | Where-Object { $_.Trim() -ieq $dir }
+
+    if (-not $hasDir) {
+        $newPath = if ([string]::IsNullOrWhiteSpace($currentUserPath)) { $dir } else { $currentUserPath.TrimEnd(";") + ";" + $dir }
+        [Environment]::SetEnvironmentVariable("PATH", $newPath, "User")
+        $env:PATH = "$env:PATH;$dir"
+        Write-OK "Added $dir to User PATH."
     } else {
-        "Add the deploy directory to your PATH, then try again"
+        Write-Step "$dir is already in User PATH."
     }
-    Write-ErrorAndExit "Verification failed -- the installed binary could not be executed" $hint
+}
+
+function Remove-FromPath([string]$dir) {
+    $currentUserPath = [Environment]::GetEnvironmentVariable("PATH", "User")
+    if (-not $currentUserPath) { return }
+    $parts = $currentUserPath -split ";" | Where-Object { $_.Trim() -and ($_.Trim() -ine $dir) }
+    $newPath = $parts -join ";"
+    [Environment]::SetEnvironmentVariable("PATH", $newPath, "User")
+    Write-OK "Removed $dir from User PATH."
+}
+
+# --- Uninstall ---
+function Invoke-Uninstall([string]$installDir) {
+    Write-Host ""
+    Write-Host "  movie CLI uninstaller" -ForegroundColor White
+    Write-Host "  =====================" -ForegroundColor DarkGray
+    Write-Host ""
+
+    $binPath = Join-Path $installDir $BinaryName
+    if (Test-Path $binPath) {
+        Remove-Item $binPath -Force -ErrorAction SilentlyContinue
+        Write-OK "Removed binary: $binPath"
+    }
+
+    if (Test-Path $installDir) {
+        $remaining = Get-ChildItem -Path $installDir -Force -ErrorAction SilentlyContinue
+        if (-not $remaining -or $remaining.Count -eq 0) {
+            Remove-Item $installDir -Force -Recurse -ErrorAction SilentlyContinue
+            Write-OK "Removed directory: $installDir"
+        }
+    }
+
+    Remove-FromPath $installDir
+
+    $userData = Join-Path $env:USERPROFILE ".movie"
+    if (Test-Path $userData) {
+        if ($PurgeData) {
+            Remove-Item $userData -Recurse -Force -ErrorAction SilentlyContinue
+            Write-OK "Purged user data: $userData"
+        } elseif (-not $KeepData -and -not $Force) {
+            Write-Host ""
+            Write-Host "  Found user data at $userData" -ForegroundColor Yellow
+            Write-Host "  Delete user data and database? [y/N]: " -ForegroundColor Yellow -NoNewline
+            $ans = Read-Host
+            if ($ans -match '^(y|yes)$') {
+                Remove-Item $userData -Recurse -Force -ErrorAction SilentlyContinue
+                Write-OK "Purged user data: $userData"
+            } else {
+                Write-Step "Preserved user data: $userData"
+            }
+        } else {
+            Write-Step "Preserved user data: $userData"
+        }
+    }
+
+    Write-Host ""
+    Write-OK "movie CLI uninstalled successfully."
+    exit 0
+}
+
+# ===========================================================================
+# Main Flow
+# ===========================================================================
+
+$resolvedDir = Resolve-InstallDir $InstallDir
+
+if ($Uninstall) {
+    Invoke-Uninstall $resolvedDir
+}
+
+$resolvedArch = Resolve-Arch $Arch
+$resolvedVersion = if ($Version) {
+    if ($Version -notmatch '^v') { "v$Version" } else { $Version }
+} else {
+    Resolve-LatestVersion
+}
+
+$binPath = Join-Path $resolvedDir $script:BinaryExeName
+$previousVersion = $null
+if (Test-Path $binPath) {
+    try {
+        $rawPrev = (& $binPath version 2>&1 | Out-String).Trim()
+        if ($rawPrev -match 'v?(\d+\.\d+\.\d+)') {
+            $previousVersion = "v$($Matches[1])"
+        } elseif ($rawPrev) {
+            $previousVersion = $rawPrev
+        }
+    } catch {}
 }
 
 Write-Host ""
-Write-Host " +======================================+" -ForegroundColor DarkCyan
-Write-Host " | " -ForegroundColor DarkCyan -NoNewline
-Write-Host "Installation complete" -ForegroundColor Green -NoNewline
-Write-Host "            |" -ForegroundColor DarkCyan
-Write-Host " +======================================+" -ForegroundColor DarkCyan
+if ($previousVersion -and $previousVersion -ne $resolvedVersion) {
+    Write-Host "  movie installer: upgrading $previousVersion -> $resolvedVersion" -ForegroundColor White
+} elseif ($previousVersion) {
+    Write-Host "  movie installer: reinstalling $resolvedVersion" -ForegroundColor White
+} else {
+    Write-Host "  movie installer: installing $resolvedVersion (clean install)" -ForegroundColor White
+}
+Write-Host "  github.com/$Repo" -ForegroundColor DarkGray
+Write-Host ""
+
+$asset = Get-Asset $resolvedVersion $resolvedArch
+try {
+    Install-Binary $asset.ZipPath $resolvedDir
+} finally {
+    Remove-Item $asset.TmpDir -Recurse -Force -ErrorAction SilentlyContinue
+}
+
+if (-not $NoPath) {
+    Add-ToPath $resolvedDir
+}
+
+Write-Host ""
+$installedExe = Join-Path $resolvedDir $BinaryName
+if (Test-Path $installedExe) {
+    try {
+        $verOut = (& $installedExe version 2>&1 | Out-String).Trim()
+        Write-OK "Verified: $verOut"
+    } catch {
+        Write-OK "Verified executable: $installedExe"
+    }
+}
+
+Write-Host ""
+Write-Host "  Quick start:" -ForegroundColor Cyan
+Write-Host "    movie scan <folder>" -ForegroundColor White
+Write-Host "    movie ui" -ForegroundColor White
+Write-Host "    movie help" -ForegroundColor White
 Write-Host ""

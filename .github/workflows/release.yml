@@ -190,6 +190,14 @@ jobs:
           # movie CLI installer — compatible with: irm ... | iex
           # Usage: irm https://github.com/REPO_PLACEHOLDER/releases/download/VERSION_PLACEHOLDER/install.ps1 | iex
 
+          param(
+              [string]$InstallDir = "",
+              [string]$Arch = "",
+              [switch]$NoPath,
+              [switch]$DryRun,
+              [switch]$Force
+          )
+
           $ErrorActionPreference = "Stop"
           $PinnedVersion = "VERSION_PLACEHOLDER"
           $Repo = "REPO_PLACEHOLDER"
@@ -199,11 +207,17 @@ jobs:
           function Write-OK([string]$msg)   { Write-Host "  $msg" -ForegroundColor Green }
           function Write-Err([string]$msg)  { Write-Host "  $msg" -ForegroundColor Red }
 
-          function Resolve-InstallDir {
-              return Join-Path $env:LOCALAPPDATA "movie"
+          function Resolve-InstallDir([string]$dir) {
+              if ($dir -ne "") { return $dir }
+              $legacy = Join-Path $env:LOCALAPPDATA "movie"
+              if (Test-Path (Join-Path $legacy $BinaryName)) {
+                  return $legacy
+              }
+              return Join-Path $env:LOCALAPPDATA "movie-cli"
           }
 
-          function Resolve-Arch {
+          function Resolve-Arch([string]$archStr) {
+              if ($archStr -ne "") { return $archStr }
               $cpu = $env:PROCESSOR_ARCHITECTURE
               switch ($cpu) {
                   "AMD64" { return "amd64" }
@@ -324,11 +338,6 @@ jobs:
                   Write-Step "Already in user PATH (persistent)."
               }
 
-              # Also refresh the CURRENT session so 'movie' works immediately
-              # without opening a new terminal. PowerShell snapshots $env:PATH
-              # at shell startup; SetEnvironmentVariable only affects FUTURE
-              # sessions, which is why users see "command not found" right
-              # after install even though PATH was updated correctly.
               $sessionParts = if ($env:PATH) { $env:PATH -split ";" } else { @() }
               $hasSessionDir = $sessionParts | Where-Object { $_.Trim() -ieq $dir }
               if (-not $hasSessionDir) {
@@ -339,21 +348,55 @@ jobs:
 
           # --- Main ---
 
+          $resolvedArch = Resolve-Arch $Arch
+          $resolvedDir  = Resolve-InstallDir $InstallDir
+          $binPath      = Join-Path $resolvedDir $BinaryName
+
+          if ($DryRun) {
+              $assetName = "movie-${PinnedVersion}-windows-${resolvedArch}.zip"
+              $baseUrl = "https://github.com/$Repo/releases/download/$PinnedVersion"
+              $assetUrl = "$baseUrl/$assetName"
+              $checksumUrl = "$baseUrl/checksums.txt"
+
+              Write-Host "dryrun.status=ok"
+              Write-Host "dryrun.version=$PinnedVersion"
+              Write-Host "dryrun.arch=$resolvedArch"
+              Write-Host "dryrun.asset=$assetName"
+              Write-Host "dryrun.url=$assetUrl"
+              Write-Host "dryrun.installdir=$resolvedDir"
+              Write-OK "Dry-run validation successful. No changes made."
+              return
+          }
+
+          $previousVersion = $null
+          if (Test-Path $binPath) {
+              try {
+                  $rawPrev = (& $binPath version 2>&1 | Out-String).Trim()
+                  if ($rawPrev -match 'v?(\d+\.\d+\.\d+)') {
+                      $previousVersion = "v$($Matches[1])"
+                  } elseif ($rawPrev) {
+                      $previousVersion = $rawPrev
+                  }
+              } catch {}
+          }
+
           Write-Host ""
-          Write-Host "  movie installer ($PinnedVersion)" -ForegroundColor White
+          if ($previousVersion -and $previousVersion -ne $PinnedVersion) {
+              Write-Host "  movie installer: upgrading $previousVersion -> $PinnedVersion" -ForegroundColor White
+          } elseif ($previousVersion) {
+              Write-Host "  movie installer: reinstalling $PinnedVersion" -ForegroundColor White
+          } else {
+              Write-Host "  movie installer: installing $PinnedVersion (clean install)" -ForegroundColor White
+          }
           Write-Host "  github.com/$Repo" -ForegroundColor DarkGray
           Write-Host ""
-
-          $resolvedArch = Resolve-Arch
-          $resolvedDir  = Resolve-InstallDir
 
           $result = Get-Asset $PinnedVersion $resolvedArch
           try { Install-Binary $result.ZipPath $resolvedDir }
           finally { Remove-Item $result.TmpDir -Recurse -Force -ErrorAction SilentlyContinue }
 
-          Add-ToPath $resolvedDir
+          if (-not $NoPath) { Add-ToPath $resolvedDir }
 
-          $binPath = Join-Path $resolvedDir $BinaryName
           if (Test-Path $binPath) {
               Write-Host ""
               try {
@@ -387,26 +430,26 @@ jobs:
           INSTALL_DIR=""
           ARCH=""
           NO_PATH=false
+          DRY_RUN=false
 
-          # Script-scope so the EXIT trap can see it even after main() returns.
-          # Declared empty up here; main() assigns it. Guarded with ${tmp_dir:-}
-          # in the trap so `set -u` never trips if we exit before mktemp runs.
           tmp_dir=""
           trap 'if [[ -n "${tmp_dir:-}" && -d "${tmp_dir}" ]]; then rm -rf "$tmp_dir"; fi' EXIT
 
           usage() {
-              echo "Usage: install.sh [--version VERSION] [--dir DIR] [--arch ARCH] [--no-path]"
+              echo "Usage: install.sh [--version VERSION] [--dir DIR] [--arch ARCH] [--no-path] [--dry-run] [--force]"
               exit 0
           }
 
           while [[ $# -gt 0 ]]; do
               case "$1" in
-                  --version) PINNED_VERSION="$2"; shift 2 ;;
-                  --dir)     INSTALL_DIR="$2"; shift 2 ;;
-                  --arch)    ARCH="$2"; shift 2 ;;
-                  --no-path) NO_PATH=true; shift ;;
-                  --help|-h) usage ;;
-                  *)         echo "Unknown flag: $1"; usage ;;
+                  --version)    PINNED_VERSION="$2"; shift 2 ;;
+                  --dir)        INSTALL_DIR="$2"; shift 2 ;;
+                  --arch)       ARCH="$2"; shift 2 ;;
+                  --no-path)    NO_PATH=true; shift ;;
+                  --dry-run|-n) DRY_RUN=true; shift ;;
+                  --force|-f)   shift ;;
+                  --help|-h)    usage ;;
+                  *)            echo "Unknown flag: $1"; usage ;;
               esac
           done
 
@@ -416,6 +459,7 @@ jobs:
               case "$os" in
                   linux)  echo "linux" ;;
                   darwin) echo "darwin" ;;
+                  msys*|mingw*|cygwin*) echo "linux" ;;
                   *)      echo "❌ Unsupported OS: $os. Use install.ps1 for Windows." >&2; exit 1 ;;
               esac
           }
@@ -464,14 +508,6 @@ jobs:
               local dir="$1"
               if [[ "$NO_PATH" == "true" ]]; then return; fi
 
-              # Always export for THIS script's process tree so the
-              # post-install verification step (`movie version`) works.
-              # When the script is invoked via `curl … | bash`, this
-              # export dies with the subshell — it CANNOT reach the
-              # user's interactive parent shell. That's a Unix
-              # process-isolation rule, not a bug. We print a
-              # copy-paste one-liner at the end so the user can
-              # refresh their current shell in one step.
               export PATH="$dir:$PATH"
 
               local shell_name rc_file export_line
@@ -496,9 +532,6 @@ jobs:
                   echo "  ✅ Added to $rc_file (new shells will pick it up)."
               fi
 
-              # Stash for the final-message hint — the parent shell
-              # needs this one-liner to see the new PATH without
-              # opening a fresh terminal.
               REFRESH_HINT="$export_line"
               REFRESH_RC="$rc_file"
           }
@@ -510,15 +543,39 @@ jobs:
               version="$PINNED_VERSION"
               install_dir="${INSTALL_DIR:-$HOME/.local/bin}"
 
+              local base_url="https://github.com/$REPO/releases/download/$version"
+              local asset_name="${BINARY_NAME}-${version}-${os}-${arch}.tar.gz"
+
+              if [[ "$DRY_RUN" == "true" ]]; then
+                  echo "dryrun.status=ok"
+                  echo "dryrun.version=$version"
+                  echo "dryrun.os=$os"
+                  echo "dryrun.arch=$arch"
+                  echo "dryrun.asset=$asset_name"
+                  echo "dryrun.url=$base_url/$asset_name"
+                  echo "dryrun.installdir=$install_dir"
+                  echo "  ✅ Dry-run validation successful. No changes made."
+                  return 0
+              fi
+
+              local target="$install_dir/$BINARY_NAME"
+              local prev_version=""
+              if [[ -x "$target" ]]; then
+                  prev_version="$("$target" version 2>/dev/null | grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+' | head -1 || true)"
+                  [[ -n "$prev_version" && "$prev_version" != v* ]] && prev_version="v$prev_version"
+              fi
+
               echo ""
-              echo "  movie installer ($version)"
+              if [[ -n "$prev_version" && "$prev_version" != "$version" ]]; then
+                  echo "  movie installer: upgrading $prev_version -> $version"
+              elif [[ -n "$prev_version" ]]; then
+                  echo "  movie installer: reinstalling $version"
+              else
+                  echo "  movie installer: installing $version (clean install)"
+              fi
               echo "  github.com/$REPO"
               echo ""
 
-              local base_url="https://github.com/$REPO/releases/download/$version"
-              local asset_name="${BINARY_NAME}-${version}-${os}-${arch}.tar.gz"
-              # tmp_dir is declared at script scope so the EXIT trap can clean
-              # it up safely; assigning here (no `local`) keeps that visibility.
               tmp_dir="$(mktemp -d)"
 
               echo "  Downloading $asset_name..."
@@ -538,7 +595,6 @@ jobs:
                   echo "❌ Binary not found in archive" >&2; exit 1
               fi
 
-              local target="$install_dir/$BINARY_NAME"
               if [[ -f "$target" ]]; then
                   mv "$target" "$target.old"
               fi
@@ -558,11 +614,6 @@ jobs:
               echo "  Done! Run 'movie --help' to get started."
               echo ""
 
-              # If we modified an rc file, the parent (interactive)
-              # shell still has the old PATH because a child process
-              # cannot mutate its parent's environment. Give the user
-              # a one-liner to refresh the current shell instead of
-              # forcing them to open a new terminal.
               if [[ -n "${REFRESH_HINT:-}" ]]; then
                   echo "  ⚡ To use 'movie' in THIS shell right now, run:"
                   echo ""
@@ -579,6 +630,10 @@ jobs:
           sed -i "s|VERSION_PLACEHOLDER|$VERSION|g" dist/install.sh
           sed -i "s|REPO_PLACEHOLDER|$REPO|g" dist/install.sh
           chmod +x dist/install.sh
+
+      - name: Stage quick installers and uninstallers
+        run: |
+          cp install-quick.ps1 install-quick.sh uninstall-quick.ps1 uninstall-quick.sh dist/
 
       - name: Enforce version-pinning contract on install scripts
         ## Hard gate per spec/12-ci-cd-pipeline/06-version-pinned-install-scripts.md.
@@ -632,6 +687,28 @@ jobs:
             exit 1
           fi
           echo "OK — install scripts are version-pinned to $VERSION and contain no forbidden strings."
+
+      - name: Validate generated install scripts contract via dry-run
+        shell: bash
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          echo "Validating dist/install.sh --dry-run..."
+          bash dist/install.sh --dry-run
+
+          echo "Validating dist/install.ps1 -DryRun..."
+          pwsh -ExecutionPolicy Bypass -File dist/install.ps1 -DryRun
+
+          echo "Validating root install.sh --dry-run..."
+          bash install.sh --dry-run --version "$VERSION"
+
+          echo "Validating root install.ps1 -DryRun..."
+          pwsh -ExecutionPolicy Bypass -File install.ps1 -DryRun -Version "$VERSION"
+
+          echo "Validating quick installers syntax..."
+          bash -n dist/install-quick.sh dist/uninstall-quick.sh
+          pwsh -NoProfile -Command "Get-Command -Syntax dist/install-quick.ps1, dist/uninstall-quick.ps1 | Out-Null"
+
+          echo "OK — all installer dry-run contract validations passed!"
 
       - name: Extract changelog entry
         id: changelog
@@ -692,6 +769,40 @@ jobs:
 
           \`\`\`bash
           curl -fsSL https://github.com/$REPO/releases/download/$VERSION/install.sh | bash
+          \`\`\`
+
+          ### Interactive Quick Install
+
+          \`\`\`powershell
+          irm https://raw.githubusercontent.com/$REPO/main/install-quick.ps1 | iex
+          \`\`\`
+
+          \`\`\`bash
+          curl -fsSL https://raw.githubusercontent.com/$REPO/main/install-quick.sh | bash
+          \`\`\`
+
+          ### Generic & Version-Pinned Install (from main)
+
+          \`\`\`powershell
+          irm https://raw.githubusercontent.com/$REPO/main/install.ps1 | iex
+          # Or pin this release version explicitly:
+          & { \$Version = "$VERSION"; irm https://raw.githubusercontent.com/$REPO/main/install.ps1 | iex }
+          \`\`\`
+
+          \`\`\`bash
+          curl -fsSL https://raw.githubusercontent.com/$REPO/main/install.sh | bash
+          # Or pin this release version explicitly:
+          curl -fsSL https://raw.githubusercontent.com/$REPO/main/install.sh | bash -s -- --version $VERSION
+          \`\`\`
+
+          ### Clean Uninstall
+
+          \`\`\`powershell
+          irm https://raw.githubusercontent.com/$REPO/main/uninstall-quick.ps1 | iex
+          \`\`\`
+
+          \`\`\`bash
+          curl -fsSL https://raw.githubusercontent.com/$REPO/main/uninstall-quick.sh | bash
           \`\`\`
 
           ### Manual download
