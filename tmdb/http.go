@@ -15,14 +15,22 @@ func (c *Client) buildURL(path string, params url.Values) string {
 	if params == nil {
 		params = url.Values{}
 	}
+
 	if c.AccessToken == "" && c.ApiKey != "" {
 		params.Set("api_key", c.ApiKey)
 	}
+
+	base := baseURL
+	if c.BaseURL != "" {
+		base = c.BaseURL
+	}
+
 	encoded := params.Encode()
 	if encoded == "" {
-		return baseURL + path
+		return base + path
 	}
-	return baseURL + path + "?" + encoded
+
+	return base + path + "?" + encoded
 }
 
 // MaxRetries is the number of retry attempts for rate-limited requests.

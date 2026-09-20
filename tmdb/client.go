@@ -54,6 +54,7 @@ type Client struct {
 	ImdbCache   ImdbCache // optional; persisted lookup cache to skip the web
 	ApiKey      string
 	AccessToken string
+	BaseURL     string
 }
 
 // SetImdbCache attaches a persistent cache for DuckDuckGo→IMDb lookups.
@@ -87,6 +88,18 @@ func NewClientWithToken(apiKey, accessToken string) *Client {
 // HasAuth returns true if the client has either an API key or access token.
 func (c *Client) HasAuth() bool {
 	return c.ApiKey != "" || c.AccessToken != ""
+}
+
+// VerifyAuth checks whether the client's API key or access token is valid by querying TMDb /configuration.
+// Returns nil on success, ErrAuthMissing if no credentials configured, or ErrAuthInvalid if unauthorized (401).
+func (c *Client) VerifyAuth() error {
+	if !c.HasAuth() {
+		return ErrAuthMissing
+	}
+
+	var resp struct{}
+
+	return c.get(c.buildURL("/configuration", nil), &resp)
 }
 
 // SearchMulti searches for movies and TV shows.

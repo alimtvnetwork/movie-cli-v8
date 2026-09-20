@@ -63,19 +63,15 @@ func initSuggestDeps() (*db.DB, *tmdb.Client) {
 		return nil, nil
 	}
 
-	apiKey, err := database.GetConfig("TmdbApiKey")
-	if err != nil && err.Error() != "sql: no rows in result set" {
-		errlog.Warn("Config read error: %v", err)
-	}
-	if apiKey == "" {
-		apiKey = os.Getenv("TMDB_API_KEY")
-	}
-	if apiKey == "" {
+	client := ensureValidTmdbClient(database)
+	if client == nil {
 		errlog.Error("TMDb API key required for suggestions. Set with: movie config set tmdb_api_key YOUR_KEY")
 		database.Close()
+
 		return nil, nil
 	}
-	return database, tmdb.NewClient(apiKey)
+
+	return database, client
 }
 
 func promptSuggestCategory() string {

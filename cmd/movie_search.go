@@ -4,7 +4,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -70,18 +69,14 @@ func runMovieSearch(cmd *cobra.Command, args []string) {
 }
 
 func resolveSearchTmdbClient(database *db.DB) *tmdb.Client {
-	apiKey, cfgErr := database.GetConfig("TmdbApiKey")
-	if cfgErr != nil && cfgErr.Error() != "sql: no rows in result set" {
-		errlog.Warn("Config read error: %v", cfgErr)
-	}
-	if apiKey == "" {
-		apiKey = os.Getenv("TMDB_API_KEY")
-	}
-	if apiKey == "" {
-		errlog.Error("No TMDb API key configured. Set it with: movie config set tmdb_api_key YOUR_KEY")
+	client := ensureValidTmdbClient(database)
+	if client == nil {
+		errlog.Error("No valid TMDb API key configured. Set it with: movie config set tmdb_api_key YOUR_KEY")
+
 		return nil
 	}
-	return tmdb.NewClient(apiKey)
+
+	return client
 }
 
 func executeSearch(client *tmdb.Client, query string) []tmdb.SearchResult {

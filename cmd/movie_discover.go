@@ -107,18 +107,14 @@ func fetchAndPrintDiscover(client *tmdb.Client, genreName string, genreID int) {
 
 // initTmdbClient creates a TMDb client from config or env.
 func initTmdbClient(database *db.DB) *tmdb.Client {
-	apiKey, cfgErr := database.GetConfig("TmdbApiKey")
-	if cfgErr != nil && cfgErr.Error() != "sql: no rows in result set" {
-		errlog.Warn("Config read error: %v", cfgErr)
-	}
-	if apiKey == "" {
-		apiKey = os.Getenv("TMDB_API_KEY")
-	}
-	if apiKey == "" {
+	client := ensureValidTmdbClient(database)
+	if client == nil {
 		errlog.Error("TMDb API key required. Set with: movie config set tmdb_api_key YOUR_KEY")
+
 		return nil
 	}
-	return tmdb.NewClient(apiKey)
+
+	return client
 }
 
 // promptGenre shows an interactive genre picker.

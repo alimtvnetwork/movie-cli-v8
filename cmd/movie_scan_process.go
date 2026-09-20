@@ -7,11 +7,13 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/alimtvnetwork/movie-cli-v8/cleaner"
 	"github.com/alimtvnetwork/movie-cli-v8/db"
 	"github.com/alimtvnetwork/movie-cli-v8/errlog"
 	"github.com/alimtvnetwork/movie-cli-v8/tmdb"
+	"github.com/mattn/go-isatty"
 )
 
 // ScanContext holds shared state for a scan session.
@@ -25,8 +27,10 @@ type ScanContext struct {
 	MovieCount    int
 	TVCount       int
 	Skipped       int
+	authMutex     sync.Mutex
 	HasTMDb       bool
 	IsTableOutput bool
+	HasAuthFailed bool
 }
 
 // processVideoFile handles a single video file: clean, check DB, fetch TMDb, insert, write JSON.
@@ -134,17 +138,73 @@ func writeScanJSON(ctx *ScanContext, m *db.Media) {
 
 // enrichFromTMDb fetches metadata, details, and thumbnail from TMDb.
 func enrichFromTMDb(ctx *ScanContext, m *db.Media, result cleaner.Result) {
-	tmdbResults, tmdbErr := ctx.Client.SearchWithFallback(result.CleanTitle, result.Year)
-	if tmdbErr != nil {
-		logTMDbSearchError(buildTMDbSearchQuery(result), tmdbErr)
+	if !ctx.HasTMDb {
 		return
 	}
+
+	tmdbResults, tmdbErr := ctx.Client.SearchWithFallback(result.CleanTitle, result.Year)
+	if tmdbErr != nil {
+		if errors.Is(tmdbErr, tmdb.ErrAuthInvalid) {
+			if ctx.handleAuthFailure() {
+				tmdbResults, tmdbErr = ctx.Client.SearchWithFallback(result.CleanTitle, result.Year)
+			}
+		}
+
+		if tmdbErr != nil {
+			logTMDbSearchError(buildTMDbSearchQuery(result), tmdbErr)
+
+			return
+		}
+	}
+
 	if len(tmdbResults) == 0 {
 		errlog.Warn("no TMDb match for '%s' (year %d) after fallback chain — inserted with local data only", result.CleanTitle, result.Year)
+
 		return
 	}
 
 	applyTMDbResult(ctx, m, tmdbResults[0])
+}
+
+func (ctx *ScanContext) handleAuthFailure() bool {
+	ctx.authMutex.Lock()
+	defer ctx.authMutex.Unlock()
+
+	if !ctx.HasTMDb {
+		return false
+	}
+
+	if ctx.Client.VerifyAuth() == nil {
+		return true
+	}
+
+	isStdinInteractive := isatty.IsTerminal(os.Stdin.Fd()) || isatty.IsCygwinTerminal(os.Stdin.Fd())
+	if !isStdinInteractive {
+		if !ctx.HasAuthFailed {
+			ctx.HasAuthFailed = true
+			errlog.Error("❌ TMDb API key is invalid (non-interactive mode). Disabling TMDb lookups for remainder of scan.")
+		}
+
+		ctx.HasTMDb = false
+
+		return false
+	}
+
+	fmt.Println()
+	fmt.Println("❌ TMDb API key was rejected as invalid (HTTP 401 Unauthorized).")
+
+	creds := promptForValidTmdbCredentials(ctx.Database)
+	if creds.HasAuth() {
+		ctx.Client.ApiKey = creds.ApiKey
+		ctx.Client.AccessToken = creds.Token
+
+		return true
+	}
+
+	ctx.HasTMDb = false
+	ctx.HasAuthFailed = true
+
+	return false
 }
 
 func buildTMDbSearchQuery(result cleaner.Result) string {

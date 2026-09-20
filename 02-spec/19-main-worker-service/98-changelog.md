@@ -1,3 +1,9 @@
+## v2.328.0 — 2026-09-20 (Prompt again for invalid TMDb API key and verify credentials)
+
+**Scope:** Version bump. Prompt again for invalid TMDb API key and verify credentials.
+
+---
+
 ## v2.327.0 — 2026-09-20 (Advanced installer parity: dual-mode auto-source, versioned repo discovery, and self-uninstall)
 
 **Scope:** Version bump. Advanced installer parity: dual-mode auto-source, versioned repo discovery, and self-uninstall.

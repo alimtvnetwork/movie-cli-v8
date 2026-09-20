@@ -1,7 +1,7 @@
 // movie_tmdb.go — TMDb credential helpers for interactive commands.
 //
-// SHARED: resolveScanTmdbCredentials, readTmdbCredentials, tmdbCredentials.
-// Callers: movie scan, movie rescan, movie rescan-failed.
+// SHARED: resolveScanTmdbCredentials, readTmdbCredentials, tmdbCredentials, ensureValidTmdbClient.
+// Callers: movie scan, movie rescan, movie rescan-failed, search, suggest, discover, info.
 // Do NOT re-read TMDb config keys directly in command files — go through
 // these helpers so credential resolution (DB → env → prompt) stays
 // consistent and the prompt is only shown once per command lifecycle.
@@ -9,12 +9,15 @@ package cmd
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
 
 	"github.com/alimtvnetwork/movie-cli-v8/db"
 	"github.com/alimtvnetwork/movie-cli-v8/errlog"
+	"github.com/alimtvnetwork/movie-cli-v8/tmdb"
+	"github.com/mattn/go-isatty"
 )
 
 type tmdbCredentials struct {
@@ -27,49 +30,128 @@ func (c tmdbCredentials) HasAuth() bool {
 }
 
 // resolveScanTmdbCredentials loads saved/env credentials or prompts before scan.
+// It verifies credentials against TMDb and prompts again if invalid.
 func resolveScanTmdbCredentials(database *db.DB) tmdbCredentials {
 	creds := readTmdbCredentials(database)
+
 	if creds.HasAuth() {
-		return creds
+		client := tmdb.NewClientWithToken(creds.ApiKey, creds.Token)
+
+		authErr := client.VerifyAuth()
+		if authErr == nil {
+			return creds
+		}
+
+		if !errors.Is(authErr, tmdb.ErrAuthInvalid) {
+			errlog.Warn("Could not verify TMDb credentials online (%v); continuing with saved credentials", authErr)
+
+			return creds
+		}
+
+		fmt.Println("❌ Configured TMDb API key or token is invalid (authentication rejected by TMDb).")
 	}
 
-	fmt.Println("⚠️  TMDb is not configured yet.")
-	fmt.Println("   Enter your TMDb API key and/or TMDb access token before scanning.")
-	fmt.Println("   Leave both blank to continue without metadata.")
+	isStdinInteractive := isatty.IsTerminal(os.Stdin.Fd()) || isatty.IsCygwinTerminal(os.Stdin.Fd())
+	if !isStdinInteractive {
+		errlog.Error("❌ TMDb API key is invalid or unset. In non-interactive mode, continuing without metadata.")
+
+		return tmdbCredentials{}
+	}
+
+	return promptForValidTmdbCredentials(database)
+}
+
+// promptForValidTmdbCredentials prompts the user for TMDb credentials and
+// loops until valid credentials are provided or the user skips.
+func promptForValidTmdbCredentials(database *db.DB) tmdbCredentials {
+	fmt.Println("⚠️  TMDb is not configured or current credentials are invalid.")
+	fmt.Println("   Enter a valid TMDb API key and/or TMDb access token.")
+	fmt.Println("   (Leave blank and press Enter to continue without metadata):")
 
 	scanner := bufio.NewScanner(os.Stdin)
-	fmt.Print("   TMDb API key: ")
-	if scanner.Scan() {
-		creds.ApiKey = strings.TrimSpace(scanner.Text())
+
+	for {
+		fmt.Print("   TMDb API key: ")
+
+		if !scanner.Scan() {
+			break
+		}
+
+		inputKey := strings.TrimSpace(scanner.Text())
+
+		fmt.Print("   TMDb access token: ")
+
+		if !scanner.Scan() {
+			break
+		}
+
+		inputToken := strings.TrimSpace(scanner.Text())
+
+		fmt.Println()
+
+		if inputKey == "" {
+			if inputToken == "" {
+				fmt.Println("⚠️  No TMDb credentials provided. Scanning will continue without metadata.")
+				fmt.Println()
+
+				return tmdbCredentials{}
+			}
+		}
+
+		testClient := tmdb.NewClientWithToken(inputKey, inputToken)
+
+		testErr := testClient.VerifyAuth()
+		if testErr == nil {
+			saveTmdbCredentialsToDB(database, inputKey, inputToken)
+			fmt.Println("✅ TMDb credentials verified and saved.")
+			fmt.Println()
+
+			return tmdbCredentials{ApiKey: inputKey, Token: inputToken}
+		}
+
+		if errors.Is(testErr, tmdb.ErrAuthInvalid) {
+			fmt.Println("❌ That TMDb API key or token is invalid (rejected by TMDb). Please try again:")
+			fmt.Println()
+
+			continue
+		}
+
+		fmt.Printf("⚠️  Could not reach TMDb to verify (%v). Saving credentials anyway.\n\n", testErr)
+		saveTmdbCredentialsToDB(database, inputKey, inputToken)
+
+		return tmdbCredentials{ApiKey: inputKey, Token: inputToken}
 	}
 
-	fmt.Print("   TMDb access token: ")
-	if scanner.Scan() {
-		creds.Token = strings.TrimSpace(scanner.Text())
-	}
-	fmt.Println()
+	return tmdbCredentials{}
+}
 
-	if creds.ApiKey != "" {
-		if err := database.SetConfig("TmdbApiKey", creds.ApiKey); err != nil {
+func saveTmdbCredentialsToDB(database *db.DB, apiKey, token string) {
+	if apiKey != "" {
+		if err := database.SetConfig("TmdbApiKey", apiKey); err != nil {
 			errlog.Warn("Could not save tmdb_api_key: %v", err)
 		}
 	}
-	if creds.Token != "" {
-		if err := database.SetConfig("TmdbToken", creds.Token); err != nil {
+
+	if token != "" {
+		if err := database.SetConfig("TmdbToken", token); err != nil {
 			errlog.Warn("Could not save tmdb_token: %v", err)
 		}
 	}
+}
 
-	if creds.HasAuth() {
-		fmt.Println("✅ TMDb credentials saved.")
-		fmt.Println()
-		return creds
+// ensureValidTmdbClient resolves and verifies TMDb credentials from DB/env,
+// prompting for a valid key if missing or rejected.
+func ensureValidTmdbClient(database *db.DB) *tmdb.Client {
+	creds := resolveScanTmdbCredentials(database)
+
+	if !creds.HasAuth() {
+		return nil
 	}
-	fmt.Println("⚠️  No TMDb credentials provided.")
-	fmt.Println("   Scanning will continue without metadata fetching.")
-	fmt.Println()
 
-	return creds
+	client := tmdb.NewClientWithToken(creds.ApiKey, creds.Token)
+	client.SetImdbCache(newImdbCacheAdapter(database))
+
+	return client
 }
 
 // readTmdbCredentials reads TMDb credentials from config first, then env.
@@ -78,12 +160,15 @@ func readTmdbCredentials(database *db.DB) tmdbCredentials {
 		ApiKey: strings.TrimSpace(readTmdbConfigValue(database, "TmdbApiKey")),
 		Token:  strings.TrimSpace(readTmdbConfigValue(database, "TmdbToken")),
 	}
+
 	if creds.ApiKey == "" {
 		creds.ApiKey = strings.TrimSpace(os.Getenv("TMDB_API_KEY"))
 	}
+
 	if creds.Token == "" {
 		creds.Token = strings.TrimSpace(os.Getenv("TMDB_TOKEN"))
 	}
+
 	return creds
 }
 
@@ -93,7 +178,9 @@ func readTmdbConfigValue(database *db.DB, key string) string {
 		if err.Error() != "sql: no rows in result set" {
 			errlog.Warn("Config read error for %s: %v", key, err)
 		}
+
 		return ""
 	}
+
 	return val
 }
