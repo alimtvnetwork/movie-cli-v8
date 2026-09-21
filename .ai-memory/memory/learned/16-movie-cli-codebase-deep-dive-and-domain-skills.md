@@ -49,6 +49,10 @@ The following skills have been authored in `.agents/skills/` adhering to strictl
    - 5-step copy-and-handoff updater bypassing Windows file locks, diagnostic health checks with `--fix`, and OS context menus.
 7. **`movie-cli-testing-and-qa` (`.agents/skills/movie-cli-testing-and-qa/skill.md`):**
    - Test suites, centralized test inventory (`.ai-memory/test-inventory.json`), strict owner-command testing rules, and `t.TempDir()` isolation.
+8. **`movie-cli-taxonomy-and-discovery` (`.agents/skills/movie-cli-taxonomy-and-discovery/skill.md`):**
+   - Media search, recommendations, user tagging, TV season/episode tracking, watchlist curation, and default player playback.
+9. **`movie-cli-configuration-and-admin` (`.agents/skills/movie-cli-configuration-and-admin/skill.md`):**
+   - Key-value configuration, database resets, diagnostic logs audit, CSV/JSON data export, and self-uninstallation.
 
 ---
 
