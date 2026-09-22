@@ -473,6 +473,37 @@ function Invoke-InstallVerification([string]$binPath, [string]$installDir, [bool
             Write-Host ("    [warn] data-store   could not initialize {0}" -f $dbDir) -ForegroundColor Yellow
         }
     }
+
+    # 4. Shell quick navigation helper (mcd)
+    if ($PROFILE) {
+        try {
+            $profileDir = Split-Path -Parent $PROFILE
+            if (-not (Test-Path $profileDir)) {
+                New-Item -ItemType Directory -Path $profileDir -Force | Out-Null
+            }
+            $mcdFunc = @"
+
+# movie-cli quick navigation helper
+function mcd {
+    `$p = (& "$binPath" cd @args)
+    if (`$p) { Set-Location `$p }
+}
+"@
+            $hasMcd = $false
+            if (Test-Path $PROFILE) {
+                $content = Get-Content $PROFILE -Raw -ErrorAction SilentlyContinue
+                if ($content -match 'function mcd') { $hasMcd = $true }
+            }
+            if (-not $hasMcd) {
+                Add-Content -Path $PROFILE -Value $mcdFunc -Encoding UTF8 -Force
+                Write-Host ("    [ok]   shell-func   mcd shortcut installed in {0}" -f $PROFILE) -ForegroundColor Green
+            } else {
+                Write-Host ("    [ok]   shell-func   mcd shortcut ready in {0}" -f $PROFILE) -ForegroundColor Green
+            }
+        } catch {
+            Write-Host ("    [info] shell-func   run 'movie cd --setup' to configure 'mcd'") -ForegroundColor DarkGray
+        }
+    }
 }
 
 # --- Uninstall ---
@@ -605,6 +636,11 @@ if ($env:MOVIE_UPDATING -ne "1" -and (Test-Path -LiteralPath $binPath)) {
     }
 }
 
+Write-Host ""
+Write-Host "  💡 Quick Shortcuts:" -ForegroundColor Cyan
+Write-Host "     mcd <movie-or-folder>   Jump directly into any movie or scanned folder" -ForegroundColor White
+Write-Host "     movie ui [folder]       Launch Web UI scoped to that folder" -ForegroundColor White
+Write-Host "     movie ls --folders      List all scanned root folders & item counts" -ForegroundColor White
 Write-Host ""
 Write-OK "Done! Run 'movie --help' to get started."
 Write-Host ""

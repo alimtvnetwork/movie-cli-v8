@@ -422,11 +422,24 @@ else
     fi
 fi
 
+# Shell quick navigation helper (mcd)
+for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
+    if [ -f "$rc" ] && ! grep -q 'mcd()' "$rc" 2>/dev/null; then
+        printf '\n# movie-cli quick navigation helper\nmcd() { p="$("%s" cd "$@")"; [ -n "$p" ] && cd "$p"; }\n' "$INSTALL_DIR/$BINARY_NAME" >> "$rc" 2>/dev/null || true
+        printf "    ${GREEN}[ok]   shell-func   ${NC}'mcd' shortcut added to %s\n" "$rc"
+    fi
+done
+
 if [ "${MOVIE_UPDATING:-0}" != "1" ] && [ -x "$INSTALL_DIR/$BINARY_NAME" ]; then
     echo ""
     "$INSTALL_DIR/$BINARY_NAME" binary || true
 fi
 
+echo ""
+printf "  ${CYAN}💡 Quick Shortcuts:${NC}\n"
+printf "     ${BOLD}mcd <movie-or-folder>${NC}   Jump directly into any movie or scanned folder\n"
+printf "     ${BOLD}movie ui [folder]${NC}       Launch Web UI scoped to that folder\n"
+printf "     ${BOLD}movie ls --folders${NC}      List all scanned root folders & item counts\n"
 echo ""
 ok "Done! Run 'movie --help' to get started."
 echo ""

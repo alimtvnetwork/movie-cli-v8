@@ -1,3 +1,9 @@
+## v2.341.0 — 2026-09-22 (Installer mcd auto-setup, interactive jump picker, and table root folders)
+
+**Scope:** Version bump. Installer mcd auto-setup, interactive jump picker, and table root folders.
+
+---
+
 ## v2.340.0 — 2026-09-22 (Add movie cd navigation, folder aliasing, ls root folders, and web ui shortcuts)
 
 **Scope:** Version bump. Add movie cd navigation, folder aliasing, ls root folders, and web ui shortcuts.

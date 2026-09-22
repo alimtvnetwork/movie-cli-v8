@@ -1,5 +1,26 @@
 # Changelog
 
+## v2.341.0
+
+### Added / Changed
+Auto-install mcd quick navigation shell function in PowerShell and Bash/Zsh installers
+Add interactive picker prompt to movie cd and movie go
+Add root folders summary to movie ls table output
+Display quick shortcuts hint in post-installation cards
+
+### Quick Install Movie CLI v2.341.0
+
+**Windows (PowerShell):**
+```powershell
+irm https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.341.0/install.ps1 | iex
+```
+
+**Linux / macOS (Bash):**
+```bash
+curl -fsSL https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.341.0/install.sh | bash
+```
+
+
 ## v2.340.0
 
 ### Added / Changed
