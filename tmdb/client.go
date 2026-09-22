@@ -49,14 +49,14 @@ type ImdbCache interface {
 
 // Client interacts with the TMDb API.
 type Client struct {
-	HttpClient    *http.Client
 	ImdbCache     ImdbCache // optional; persisted lookup cache to skip the web
-	credentials   []Credential
-	credMu        sync.Mutex
-	activeCredIdx int
+	HttpClient    *http.Client
 	ApiKey        string
 	AccessToken   string
 	BaseURL       string
+	credentials   []Credential
+	activeCredIdx int
+	credMu        sync.Mutex
 }
 
 // SetImdbCache attaches a persistent cache for DuckDuckGo→IMDb lookups.

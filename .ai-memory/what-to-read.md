@@ -5,6 +5,7 @@
 
 ## Changelog
 
+- 2026-09-22T09:00:00Z, GitMap CI/CD Runner Parity & Guidelines Sync: added run-smart / smart shortcuts and package discovery to 06-cicd-local-runner.py, refactored ci.yml to eliminate upload/download-artifact actions per Zero-Storage mandate, added purge-actions-artifacts.yml, synchronized canonical prompts, specs, and skills, while strictly preserving movie-cli domain assets.
 - 2026-09-22T08:15:00Z, Terminal UI Overhaul & Concurrency Fix: decoupled parallel worker stdout, added vertical padding and relative JSON paths, supported multi-token TMDb pool with auto-failover, implemented relaxed search and Google Search scraper fallback, eliminated SQLITE_BUSY with single-conn serialization and exponential retry, and upgraded HTML report with interactive guidance card.
 - 2026-09-13T08:15:00Z, Prompt & Memory Write Upgrade (v2.2.0): updated 01-write-antigravity.md, 03-write-memory.md, and skills to mandate 30-commit git history audit and recent 20-task tracking register in .ai-memory/plans/01-index.md.
 - 2026-09-13T07:45:00Z, Memory Persistence & Learned Standards: recorded institutional memory for regex centralization, generic dbengine architecture, isDefined positive convention, zero-storage GitHub Actions mandate, and pre-commit guard enforcement.

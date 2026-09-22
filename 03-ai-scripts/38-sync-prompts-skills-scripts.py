@@ -64,6 +64,26 @@ def run_cmd(cmd: str, cwd: Path) -> tuple[int, str, str]:
     return res.returncode, res.stdout.strip(), res.stderr.strip()
 
 
+PROTECTED_PREFIXES = (
+    "movie-cli-",
+    "gitmap-",
+    "21-app",
+    "22-app",
+    "23-app",
+    "24-app",
+)
+
+
+def is_protected(path: Path) -> bool:
+    """Checks if path or any of its parents match repository-specific protected prefixes."""
+    for part in path.parts:
+        part_lower = part.lower()
+        for prefix in PROTECTED_PREFIXES:
+            if part_lower.startswith(prefix):
+                return True
+    return False
+
+
 def mirror_directory(src: Path, dst: Path) -> tuple[int, int]:
     """Mirror src into dst, removing stale files and copying new/updated ones.
     Returns (copied_count, removed_count).
@@ -84,6 +104,10 @@ def mirror_directory(src: Path, dst: Path) -> tuple[int, int]:
         for f in files:
             dst_file = Path(root) / f
             src_file = src_root / f
+
+            if is_protected(dst_file):
+                continue
+
             if f in EXCLUDE_NAMES or dst_file.suffix.lower() in EXCLUDE_EXTS:
                 dst_file.unlink(missing_ok=True)
                 removed += 1
@@ -94,6 +118,10 @@ def mirror_directory(src: Path, dst: Path) -> tuple[int, int]:
         for d in dirs:
             dst_dir = Path(root) / d
             src_dir = src_root / d
+
+            if is_protected(dst_dir):
+                continue
+
             if d in EXCLUDE_NAMES:
                 shutil.rmtree(dst_dir, ignore_errors=True)
                 removed += 1

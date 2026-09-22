@@ -14,6 +14,7 @@
 package cmd
 
 import (
+	"fmt"
 	"runtime"
 	"sync"
 

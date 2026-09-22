@@ -10,7 +10,6 @@ import (
 
 	"github.com/alimtvnetwork/movie-cli-v8/db"
 	"github.com/alimtvnetwork/movie-cli-v8/errlog"
-	"github.com/alimtvnetwork/movie-cli-v8/tmdb"
 )
 
 var rescanFailedLimit int

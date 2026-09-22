@@ -89,27 +89,27 @@ func rankResultsByYear(results []SearchResult, targetYear int) []SearchResult {
 	var closeMatch []SearchResult
 	var other []SearchResult
 
-	for _, r := range results {
-		yStr := r.GetYear()
+	for i := range results {
+		yStr := results[i].GetYear()
 		if len(yStr) >= 4 {
 			if y, err := strconv.Atoi(yStr[:4]); err == nil {
 				diff := y - targetYear
 				if diff == 0 {
-					exact = append(exact, r)
+					exact = append(exact, results[i])
 					continue
 				}
 				if diff == 1 || diff == -1 {
-					closeMatch = append(closeMatch, r)
+					closeMatch = append(closeMatch, results[i])
 					continue
 				}
 			}
 		}
-		other = append(other, r)
+		other = append(other, results[i])
 	}
 
 	if len(exact) > 0 {
-		out := append(exact, closeMatch...)
-		return append(out, other...)
+		exact = append(exact, closeMatch...)
+		return append(exact, other...)
 	}
 	if len(closeMatch) > 0 {
 		return append(closeMatch, other...)

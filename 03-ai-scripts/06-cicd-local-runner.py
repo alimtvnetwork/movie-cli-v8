@@ -258,7 +258,8 @@ def run_smart_go_tests(
     name: str = "Go Base Test Suite",
     timeout_sec: int = 120,
     force: bool = False,
-    package_filter: list[str] | str | None = None
+    package_filter: list[str] | str | None = None,
+    is_fast_only: bool = False
 ) -> JobResult:
     """Executes Go tests with dual worker queues (slow: 4w x 2 tests; fast: 4w x 4 tests in 100-chunks)."""
     start_time = time.monotonic()
@@ -299,6 +300,10 @@ def run_smart_go_tests(
         or float(t.get("duration_sec", 0.0)) >= slow_threshold
     ]
     fast_tests = [t for t in dirty_tests if t not in slow_tests]
+
+    if is_fast_only:
+        slow_tests = []
+        dirty_tests = fast_tests
 
     total_dirty = len(dirty_tests)
     passed_count = 0
@@ -843,6 +848,37 @@ Examples:
         help="Run quality gates scoped strictly to files modified in .ai-memory/temp/recent-file-changes.json."
     )
     parser.add_argument(
+        "action",
+        nargs="?",
+        default=None,
+        help="Optional runner action: 'run-smart', 'smart', 'run-incremental', 'incremental', 'all', 'test'."
+    )
+    parser.add_argument(
+        "--smart",
+        action="store_true",
+        dest="is_smart",
+        help="Execute smart incremental Go tests and gates on changed packages only."
+    )
+    parser.add_argument(
+        "--incremental",
+        action="store_true",
+        dest="is_incremental",
+        help="Execute incremental tests on modified packages."
+    )
+    parser.add_argument(
+        "--fast",
+        action="store_true",
+        dest="is_fast_only",
+        help="Run only fast tests (skipping slow/heavy suites)."
+    )
+    parser.add_argument(
+        "--commits",
+        type=int,
+        default=20,
+        dest="commits",
+        help="Commit history window for detecting changed files (default: 20)."
+    )
+    parser.add_argument(
         "--pkg", "--package", "-p", "--target-file",
         nargs="*",
         dest="package_filter",
@@ -974,13 +1010,138 @@ def filter_jobs_for_changed_files(all_jobs: dict[str, list[str]]) -> dict[str, l
         return None
 
 
+def resolve_git_changed_packages(commits: int = 20) -> list[str]:
+    """Discovers modified Go packages from git working tree, recent commits, and tracking cache."""
+    changed_files: set[str] = set()
+
+    try:
+        proc = subprocess.run(
+            ["git", "status", "--porcelain"],
+            cwd=str(REPO_ROOT),
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace"
+        )
+        if proc.returncode == 0:
+            for line in proc.stdout.splitlines():
+                parts = line.strip().split(maxsplit=1)
+                if len(parts) >= 2:
+                    changed_files.add(parts[1].strip().replace("\\", "/"))
+    except Exception:
+        pass
+
+    try:
+        proc = subprocess.run(
+            ["git", "diff", "--name-only", f"HEAD~{commits}", "HEAD"],
+            cwd=str(REPO_ROOT),
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace"
+        )
+        if proc.returncode == 0:
+            for line in proc.stdout.splitlines():
+                line_clean = line.strip().replace("\\", "/")
+                if line_clean:
+                    changed_files.add(line_clean)
+        else:
+            proc = subprocess.run(
+                ["git", "diff", "--name-only", "HEAD"],
+                cwd=str(REPO_ROOT),
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace"
+            )
+            if proc.returncode == 0:
+                for line in proc.stdout.splitlines():
+                    line_clean = line.strip().replace("\\", "/")
+                    if line_clean:
+                        changed_files.add(line_clean)
+    except Exception:
+        pass
+
+    if RECENT_CHANGES_FILE.exists():
+        try:
+            data = json.loads(RECENT_CHANGES_FILE.read_text(encoding=DEFAULT_ENCODING))
+            if isinstance(data, list):
+                for f in data:
+                    changed_files.add(str(f).replace("\\", "/"))
+            elif isinstance(data, dict):
+                for f in data.get("files", []):
+                    changed_files.add(str(f).replace("\\", "/"))
+        except Exception:
+            pass
+
+    packages: set[str] = set()
+    for f in changed_files:
+        if not f.endswith(".go"):
+            continue
+
+        parts = f.split("/")
+        if len(parts) > 1:
+            packages.add(parts[0])
+        else:
+            packages.add(".")
+
+    return sorted(packages)
+
+
 def main():
     args = parse_arguments()
 
     clean_stale_locks()
 
+    is_smart_action = getattr(args, "action", None) in ("run-smart", "smart", "run-incremental", "incremental")
+    is_smart_mode = bool(getattr(args, "is_smart", False) or getattr(args, "is_incremental", False) or is_smart_action)
+
+    if is_smart_mode:
+        commits_window = getattr(args, "commits", 20)
+        changed_pkgs = resolve_git_changed_packages(commits=commits_window)
+
+        if changed_pkgs:
+            print(f"[SMART] Detected modified Go package(s): {', '.join(changed_pkgs)}")
+            res = run_smart_go_tests(
+                name="Go Smart Test Suite",
+                package_filter=changed_pkgs,
+                is_fast_only=getattr(args, "is_fast_only", False)
+            )
+
+            if not res.is_success:
+                print(f"❌ {res.output}")
+                sys.exit(1)
+
+            print(f"✔ {res.output}")
+        else:
+            print(f"[SMART] No Go packages modified in last {commits_window} commits (tests cached).")
+
+        scoped_jobs = filter_jobs_for_changed_files(CI_JOBS_MATRIX)
+
+        if scoped_jobs is not None:
+            if not scoped_jobs:
+                print("✔ All passed (smart quality gates clean).")
+                sys.exit(0)
+
+            target_jobs = scoped_jobs
+        else:
+            target_jobs = CI_JOBS_MATRIX
+
+        exit_code = run_pipeline(
+            jobs=target_jobs,
+            max_workers=args.workers,
+            show_all=args.show_all,
+            is_sync=args.is_sync,
+            output_file=args.output_file,
+            as_json=args.as_json,
+            filter_pattern=args.filter,
+            no_tests=True,
+        )
+        sys.exit(exit_code)
+
     sig = f"no_tests={getattr(args, 'no_tests', False)},run_tests={getattr(args, 'run_tests', False)},filter={getattr(args, 'filter', '') or ''},changed_only={getattr(args, 'changed_only', False)}"
     cached_code = check_recent_run_cache(CICD_LAST_RUN_CACHE, sig)
+
     if cached_code is not None:
         sys.exit(cached_code)
 

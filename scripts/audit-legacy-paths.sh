@@ -59,6 +59,7 @@ RAW="$(grep -rnE "$PATTERN" \
     --exclude-dir=.gitmap \
     --exclude-dir=audit-reports \
     --exclude-dir=.lovable \
+    --exclude-dir=.ai-memory \
     --exclude-dir=dist \
     --exclude-dir=build \
     . 2>/dev/null || true)"
