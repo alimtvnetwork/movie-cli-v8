@@ -422,16 +422,12 @@ else
     fi
 fi
 
+if [ "${MOVIE_UPDATING:-0}" != "1" ] && [ -x "$INSTALL_DIR/$BINARY_NAME" ]; then
+    echo ""
+    "$INSTALL_DIR/$BINARY_NAME" binary || true
+fi
+
 echo ""
-printf "  ${CYAN}── Quick Start Commands ──${NC}\n"
-printf "    ${YELLOW}%-22s${NC} %s\n" "movie scan <folder>" "Scan folder, enrich metadata & generate web report"
-printf "    ${YELLOW}%-22s${NC} %s\n" "movie ls" "List indexed movies and TV series in library"
-printf "    ${YELLOW}%-22s${NC} %s\n" "movie stats" "Display library statistics & Split-DB storage"
-printf "    ${YELLOW}%-22s${NC} %s\n" "movie info <title>" "Query TMDb and inspect media metadata"
-printf "    ${YELLOW}%-22s${NC} %s\n" "movie doctor" "Diagnose environment and database health"
-printf "    ${YELLOW}%-22s${NC} %s\n" "movie db" "Inspect multi-tier Split-DB architecture"
-printf "    ${YELLOW}%-22s${NC} %s\n" "movie ui" "Launch local web dashboard in browser"
-printf "    ${YELLOW}%-22s${NC} %s\n" "movie help" "Discover full command suite"
+ok "Done! Run 'movie --help' to get started."
 echo ""
-ok "Movie CLI is ready to use! Run 'movie doctor' or 'movie help' to get started."
-echo ""
+

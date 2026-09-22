@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     One-liner binary installer for movie CLI on Windows.
 
@@ -596,24 +596,16 @@ Write-InstallSummary $installedVersion $binPath $resolvedDir $pathResult $NoPath
 
 Invoke-InstallVerification $binPath $resolvedDir $NoPath.IsPresent
 
+if ($env:MOVIE_UPDATING -ne "1" -and (Test-Path -LiteralPath $binPath)) {
+    Write-Host ""
+    try {
+        & $binPath binary
+    } catch {
+        Write-Warning "[Main.MovieBinary] $_"
+    }
+}
+
 Write-Host ""
-Write-Host "  ── Quick Start Commands ──" -ForegroundColor Cyan
-Write-Host "    movie scan <folder>   " -ForegroundColor Yellow -NoNewline
-Write-Host "Scan folder, enrich metadata & generate web report" -ForegroundColor White
-Write-Host "    movie ls              " -ForegroundColor Yellow -NoNewline
-Write-Host "List indexed movies and TV series in library" -ForegroundColor White
-Write-Host "    movie stats           " -ForegroundColor Yellow -NoNewline
-Write-Host "Display library statistics & Split-DB storage" -ForegroundColor White
-Write-Host "    movie info <title>    " -ForegroundColor Yellow -NoNewline
-Write-Host "Query TMDb and inspect media metadata" -ForegroundColor White
-Write-Host "    movie doctor          " -ForegroundColor Yellow -NoNewline
-Write-Host "Diagnose environment and database health" -ForegroundColor White
-Write-Host "    movie db              " -ForegroundColor Yellow -NoNewline
-Write-Host "Inspect multi-tier Split-DB architecture" -ForegroundColor White
-Write-Host "    movie ui              " -ForegroundColor Yellow -NoNewline
-Write-Host "Launch local web dashboard in browser" -ForegroundColor White
-Write-Host "    movie help            " -ForegroundColor Yellow -NoNewline
-Write-Host "Discover full command suite" -ForegroundColor White
+Write-OK "Done! Run 'movie --help' to get started."
 Write-Host ""
-Write-OK "Movie CLI is ready to use! Run 'movie doctor' or 'movie help' to get started."
-Write-Host ""
+

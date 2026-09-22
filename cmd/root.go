@@ -61,6 +61,7 @@ func init() {
 	rootCmd.AddCommand(
 		helloCmd,
 		versionCmd,
+		binaryCmd,
 		updateCmd,
 		updateRunnerCmd,
 		updateCleanupCmd,

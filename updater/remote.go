@@ -136,14 +136,27 @@ func RunRemoteUpdate(installDir string) error {
 		return appfault.Wrap("remote installer execution failed", errRun)
 	}
 
-	fmt.Println()
-	fmt.Println("  ✓ Remote installer completed successfully.")
-	_ = printPostUpdateVersion(installDir)
+	newVer := resolveNewVersion(installDir)
+
+	fmt.Printf("\n  ✓ Successfully updated from %s to %s\n  → Source: %s\n\n",
+		formatVersion(currentVer),
+		formatVersion(newVer),
+		url,
+	)
+	_ = printPostUpdateIdentity(installDir)
 
 	return nil
 }
 
-func printPostUpdateVersion(installDir string) error {
+func formatVersion(v string) string {
+	if !strings.HasPrefix(v, "v") {
+		return "v" + v
+	}
+
+	return v
+}
+
+func resolveNewVersion(installDir string) string {
 	binName := "movie.exe"
 	if runtime.GOOS != "windows" {
 		binName = "movie"
@@ -156,16 +169,35 @@ func printPostUpdateVersion(installDir string) error {
 		if errRun == nil {
 			verStr := strings.TrimSpace(string(out))
 			if verStr != "" {
-				fmt.Printf("  • New active version: %s\n\n", verStr)
+				fields := strings.Fields(verStr)
+				if len(fields) > 0 {
+					return fields[0]
+				}
 
-				return nil
+				return verStr
 			}
 		}
 	}
 
-	fmt.Println()
+	return version.Version
+}
 
-	return nil
+func printPostUpdateIdentity(installDir string) error {
+	binName := "movie.exe"
+	if runtime.GOOS != "windows" {
+		binName = "movie"
+	}
+
+	binPath := filepath.Join(installDir, binName)
+	if _, err := os.Stat(binPath); err != nil {
+		return err
+	}
+
+	cmd := exec.Command(binPath, "binary")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	return cmd.Run()
 }
 
 func downloadRemoteInstaller(url, ext string) (string, error) {
