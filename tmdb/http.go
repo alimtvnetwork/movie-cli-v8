@@ -115,11 +115,13 @@ func (c *Client) doGet(reqURL string, target interface{}, attempt int) error {
 
 func classifyHTTPError(err error) error {
 	if IsTimeoutError(err) {
-		return appfault.New("%w: check your internet connection", ErrTimeout)
+		return appfault.Wrap("check your internet connection", ErrTimeout)
 	}
+
 	if IsNetworkError(err) {
 		return ErrNetworkError
 	}
+
 	return appfault.Wrap("HTTP request failed", err)
 }
 
@@ -128,25 +130,30 @@ func handleResponse(resp *http.Response, target interface{}, attempt int) error 
 	case resp.StatusCode == 401 || resp.StatusCode == 403:
 		resp.Body.Close()
 
-		return appfault.New("%w. Run: movie config set tmdb_api_key YOUR_KEY", ErrAuthInvalid)
+		return appfault.Wrap("Run: movie config set tmdb_api_key YOUR_KEY", ErrAuthInvalid)
 
 	case resp.StatusCode == 429:
 		resp.Body.Close()
 		retryAfter := resp.Header.Get("Retry-After")
 		delay := 2 * time.Second
+
 		if secs, parseErr := time.ParseDuration(retryAfter + "s"); parseErr == nil && secs > 0 {
 			delay = secs
 		}
+
 		time.Sleep(delay)
+
 		return ErrRateLimited
 
 	case resp.StatusCode >= 500:
 		resp.Body.Close()
-		lastErr := appfault.New("%w (HTTP %d)", ErrServerError, resp.StatusCode)
+		lastErr := appfault.Wrapf(ErrServerError, "HTTP %d", resp.StatusCode)
+
 		if attempt == 0 {
 			delay := serverRetryDelay(resp.StatusCode)
 			time.Sleep(delay)
 		}
+
 		return lastErr
 
 	case resp.StatusCode != 200:

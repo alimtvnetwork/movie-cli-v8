@@ -254,10 +254,7 @@ func writeRestJSON(w http.ResponseWriter, statusCode int, data interface{}) {
 func writeRestError(w http.ResponseWriter, statusCode int, code, message string) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(statusCode)
-	_ = json.NewEncoder(w).Encode(map[string]interface{}{
-		"error": map[string]string{
-			"code":    code,
-			"message": message,
-		},
-	})
+
+	env := appfault.NewErrorEnvelope(statusCode, code, message, "")
+	_ = json.NewEncoder(w).Encode(env)
 }

@@ -1,32 +1,62 @@
-// Package appfault provides standardized error wrapping for the CLI.
-//
-// Use Wrap to attach context to an existing error (preserves the cause chain).
-// Use Wrapf when the context message needs format arguments.
-// Use New to create a standalone error with a formatted message.
+// appfault.go — constructors and wrapping functions for AppError.
 package appfault
 
 import "fmt"
 
-// Wrap returns a new error that prepends msg to err's message.
-// The original error is preserved and can be unwrapped.
-//
-//	return appfault.Wrap("open database", err)
-//	// → "open database: original message"
-func Wrap(msg string, err error) error {
-	return fmt.Errorf("%s: %w", msg, err)
+// Wrap wraps an existing error with a contextual message.
+// Returns an *AppError preserving the underlying cause and stack trace.
+func Wrap(msg string, err error) *AppError {
+	if err == nil {
+		return nil
+	}
+
+	return &AppError{
+		Message:    msg,
+		Cause:      err,
+		StackTrace: captureStackTrace(2),
+	}
 }
 
-// Wrapf is like Wrap but accepts a format string with arguments.
-// The last argument is NOT included in formatting — it is the wrapped error.
-//
-//	return appfault.Wrapf(err, "cannot open file %s", path)
-func Wrapf(err error, format string, args ...any) error {
-	return fmt.Errorf("%s: %w", fmt.Sprintf(format, args...), err)
+// Wrapf wraps an existing error with a formatted contextual message.
+func Wrapf(err error, format string, args ...any) *AppError {
+	if err == nil {
+		return nil
+	}
+
+	return &AppError{
+		Message:    fmt.Sprintf(format, args...),
+		Cause:      err,
+		StackTrace: captureStackTrace(2),
+	}
 }
 
-// New creates a new error with a formatted message (no cause chain).
-//
-//	return appfault.New("media not found for ID %d", id)
-func New(format string, args ...any) error {
-	return fmt.Errorf(format, args...)
+// New creates a new AppError with a formatted message (no cause chain).
+func New(format string, args ...any) *AppError {
+	return &AppError{
+		Message:    fmt.Sprintf(format, args...),
+		StackTrace: captureStackTrace(2),
+	}
+}
+
+// NewCode creates a new AppError with an explicit error code and formatted message.
+func NewCode(code, format string, args ...any) *AppError {
+	return &AppError{
+		Code:       code,
+		Message:    fmt.Sprintf(format, args...),
+		StackTrace: captureStackTrace(2),
+	}
+}
+
+// WrapCode wraps an existing error with an explicit error code and message.
+func WrapCode(err error, code, format string, args ...any) *AppError {
+	if err == nil {
+		return nil
+	}
+
+	return &AppError{
+		Code:       code,
+		Message:    fmt.Sprintf(format, args...),
+		Cause:      err,
+		StackTrace: captureStackTrace(2),
+	}
 }

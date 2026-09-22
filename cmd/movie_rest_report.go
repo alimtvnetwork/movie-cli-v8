@@ -18,8 +18,10 @@ import (
 func handleMediaByID(w http.ResponseWriter, r *http.Request, database *db.DB) {
 	idStr := strings.TrimPrefix(r.URL.Path, "/api/media/")
 	id, err := strconv.ParseInt(idStr, 10, 64)
+
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		writeRestError(w, http.StatusBadRequest, "INVALID_MEDIA_ID", "invalid media id")
+
 		return
 	}
 
@@ -31,23 +33,28 @@ func handleMediaByID(w http.ResponseWriter, r *http.Request, database *db.DB) {
 	case http.MethodPatch:
 		handleMediaPatch(MediaPatchRequest{Writer: w, Request: r, Database: database, ID: id})
 	default:
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		writeRestError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "method not allowed")
 	}
 }
 
 func handleMediaGet(w http.ResponseWriter, database *db.DB, id int64) {
 	m, getErr := database.GetMediaByID(id)
-	if getErr != nil {
-		http.Error(w, "not found", http.StatusNotFound)
+
+	if getErr != nil || m == nil {
+		writeRestError(w, http.StatusNotFound, "MEDIA_NOT_FOUND", "media item not found")
+
 		return
 	}
+
 	writeJSON(w, m)
 }
 
 func handleMediaDelete(w http.ResponseWriter, database *db.DB, id int64) {
 	media, getErr := database.GetMediaByID(id)
+
 	if getErr != nil || media == nil {
-		http.Error(w, "media not found", http.StatusNotFound)
+		writeRestError(w, http.StatusNotFound, "MEDIA_NOT_FOUND", "media item not found")
+
 		return
 	}
 
@@ -61,8 +68,10 @@ func handleMediaDelete(w http.ResponseWriter, database *db.DB, id int64) {
 	}
 
 	stagedID, err := database.InsertStagedAction(rec)
+
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeRestError(w, http.StatusInternalServerError, "INSERT_STAGED_FAILED", err.Error())
+
 		return
 	}
 
@@ -75,13 +84,17 @@ func handleMediaDelete(w http.ResponseWriter, database *db.DB, id int64) {
 
 func handleMediaPatch(req MediaPatchRequest) {
 	var updates map[string]interface{}
+
 	if decErr := json.NewDecoder(req.Request.Body).Decode(&updates); decErr != nil {
-		http.Error(req.Writer, "invalid json", http.StatusBadRequest)
+		writeRestError(req.Writer, http.StatusBadRequest, "INVALID_JSON", "malformed JSON payload")
+
 		return
 	}
+
 	for key, val := range updates {
 		applyMediaUpdate(MediaUpdateField{Database: req.Database, ID: req.ID, Key: key, Val: val})
 	}
+
 	m, _ := req.Database.GetMediaByID(req.ID)
 	writeJSON(req.Writer, m)
 }

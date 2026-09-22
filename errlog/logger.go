@@ -128,6 +128,64 @@ func Error(msg string, args ...interface{}) {
 	log(LevelError, fmt.Sprintf(msg, args...), true)
 }
 
+// ErrorFault logs a structured AppError with code, message, and stack trace.
+func ErrorFault(err *appfault.AppError) {
+	if err == nil {
+		return
+	}
+
+	source, fn := callerInfo(2)
+	entry := Entry{
+		Timestamp:  time.Now().Format(time.RFC3339),
+		Level:      LevelError,
+		Source:     source,
+		Function:   fn,
+		Message:    formatFaultMessage(err),
+		StackTrace: formatFaultStack(err.StackTrace),
+	}
+
+	populateGlobalContext(&entry)
+	writeEntry(entry)
+}
+
+func formatFaultMessage(err *appfault.AppError) string {
+	msg := err.Error()
+
+	if err.Code != "" {
+		msg = fmt.Sprintf("[%s] %s", err.Code, msg)
+	}
+
+	if err.Details != "" {
+		msg = fmt.Sprintf("%s (details: %s)", msg, err.Details)
+	}
+
+	return msg
+}
+
+func formatFaultStack(trace appfault.StackTrace) string {
+	if len(trace) == 0 {
+		return captureStack(3)
+	}
+
+	var sb strings.Builder
+
+	for _, frame := range trace {
+		sb.WriteString(fmt.Sprintf("  %s\n    %s:%d\n", frame.Function, frame.File, frame.Line))
+	}
+
+	return sb.String()
+}
+
+func populateGlobalContext(entry *Entry) {
+	globalMu.Lock()
+	defer globalMu.Unlock()
+
+	if global != nil {
+		entry.Command = global.command
+		entry.WorkDir = global.workDir
+	}
+}
+
 // Warn logs a warning-level message without stack trace.
 func Warn(msg string, args ...interface{}) {
 	log(LevelWarn, fmt.Sprintf(msg, args...), false)
