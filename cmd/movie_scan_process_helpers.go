@@ -157,7 +157,6 @@ func downloadThumbnail(input ThumbnailInput) {
 	}
 
 	input.Media.ThumbnailPath = "thumbnails/" + thumbFileName
-	fmt.Println("     🖼️  Thumbnail saved")
 	copyThumbnailToDataDir(input.Database.BasePath, thumbPath, thumbFileName)
 }
 

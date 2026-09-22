@@ -17,28 +17,62 @@ type FindResponse struct {
 	TVResults    []SearchResult `json:"tv_results"`
 }
 
-// SearchWithFallback tries SearchMulti first, then progressively trims trailing
-// tokens from the title, and finally falls back to a web search → IMDb id →
-// TMDb /find lookup. Returns the first non-empty result set or nil.
+const desktopUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+
+// SearchWithFallback tries year-specific search first (exact and year ±1),
+// clean title search, progressive trimming, OMDB, and finally web search
+// fallback (DuckDuckGo + Google Search) → IMDb id → TMDb /find lookup.
 func (c *Client) SearchWithFallback(title string, year int) ([]SearchResult, error) {
-	query := title
+	// Tier 1: Year-specific searches with exact year and year ± 1
 	if year > 0 {
-		query = title + " " + strconv.Itoa(year)
+		if results, err := c.SearchMovie(title, year); err == nil && len(results) > 0 {
+			return results, nil
+		}
+		if results, err := c.SearchTV(title, year); err == nil && len(results) > 0 {
+			return results, nil
+		}
+
+		// Relax year ± 1 (festival vs theatrical release year discrepancies)
+		for _, offset := range []int{1, -1} {
+			if results, err := c.SearchMovie(title, year+offset); err == nil && len(results) > 0 {
+				return results, nil
+			}
+			if results, err := c.SearchTV(title, year+offset); err == nil && len(results) > 0 {
+				return results, nil
+			}
+		}
 	}
-	if results, err := c.SearchMulti(query); err == nil && len(results) > 0 {
+
+	// Tier 2: SearchMulti with clean title alone (no year in query text string)
+	if results, err := c.SearchMulti(title); err == nil && len(results) > 0 {
+		if year > 0 {
+			ranked := rankResultsByYear(results, year)
+			return ranked, nil
+		}
 		return results, nil
 	} else if err != nil && !isEmptyResultErr(err) {
 		return nil, err
 	}
 
+	// Tier 3: If year was provided, try SearchMulti with title + year string
+	if year > 0 {
+		query := title + " " + strconv.Itoa(year)
+		if results, err := c.SearchMulti(query); err == nil && len(results) > 0 {
+			return results, nil
+		}
+	}
+
+	// Tier 4: Progressive word trimming for multi-word titles
 	if results := c.tryProgressiveTrim(title, year); len(results) > 0 {
 		return results, nil
 	}
 
+	// Tier 5: OMDB fallback
 	if results := c.tryOmdbFallback(title, year); len(results) > 0 {
 		return results, nil
 	}
 
+	// Tier 6: Multi-engine web search (DuckDuckGo + Google Search fallback)
 	if results := c.tryImdbViaWeb(title, year); len(results) > 0 {
 		return results, nil
 	}
@@ -46,41 +80,78 @@ func (c *Client) SearchWithFallback(title string, year int) ([]SearchResult, err
 	return nil, nil
 }
 
+func rankResultsByYear(results []SearchResult, targetYear int) []SearchResult {
+	if len(results) <= 1 || targetYear <= 0 {
+		return results
+	}
+
+	var exact []SearchResult
+	var closeMatch []SearchResult
+	var other []SearchResult
+
+	for _, r := range results {
+		yStr := r.GetYear()
+		if len(yStr) >= 4 {
+			if y, err := strconv.Atoi(yStr[:4]); err == nil {
+				diff := y - targetYear
+				if diff == 0 {
+					exact = append(exact, r)
+					continue
+				}
+				if diff == 1 || diff == -1 {
+					closeMatch = append(closeMatch, r)
+					continue
+				}
+			}
+		}
+		other = append(other, r)
+	}
+
+	if len(exact) > 0 {
+		out := append(exact, closeMatch...)
+		return append(out, other...)
+	}
+	if len(closeMatch) > 0 {
+		return append(closeMatch, other...)
+	}
+
+	return results
+}
+
 func isEmptyResultErr(err error) bool {
 	// network / auth errors should bubble up; only "no results" is treated as empty.
 	return false
 }
 
-// tryProgressiveTrim drops the last word from the title repeatedly until a
+// tryProgressiveTrim drops trailing tokens from the title repeatedly until a
 // match is found or the title is too short.
 func (c *Client) tryProgressiveTrim(title string, year int) []SearchResult {
 	words := strings.Fields(title)
-	for n := len(words) - 1; n >= 2; n-- {
+	if len(words) <= 1 {
+		return nil
+	}
+
+	for n := len(words) - 1; n >= 1; n-- {
 		shorter := strings.Join(words[:n], " ")
-		query := shorter
 		if year > 0 {
-			query = shorter + " " + strconv.Itoa(year)
-		}
-		if results, err := c.SearchMulti(query); err == nil && len(results) > 0 {
-			return results
-		}
-		if year > 0 {
-			if results, err := c.SearchMulti(shorter); err == nil && len(results) > 0 {
+			if results, err := c.SearchMovie(shorter, year); err == nil && len(results) > 0 {
+				return results
+			}
+			if results, err := c.SearchTV(shorter, year); err == nil && len(results) > 0 {
 				return results
 			}
 		}
+		if results, err := c.SearchMulti(shorter); err == nil && len(results) > 0 {
+			return results
+		}
 	}
+
 	return nil
 }
 
 var imdbIdPattern = regexp.MustCompile(`tt\d{7,10}`)
 
 // tryImdbViaWeb resolves a title via the IMDb-cache-aware fallback chain.
-// On a fully warm cache hit it returns a synthetic SearchResult containing
-// just the TMDb id + media type — the caller is expected to enrich it via
-// the /movie/{id} or /tv/{id} detail endpoints. On a partial hit (IMDb id
-// cached but TmdbId not yet resolved) it calls TMDb /find and back-fills the
-// cache so the next run is fully warm.
 func (c *Client) tryImdbViaWeb(title string, year int) []SearchResult {
 	imdbID, cachedTmdbID, cachedMediaType, found := c.lookupImdbCache(title, year)
 	if found && imdbID == "" {
@@ -92,7 +163,14 @@ func (c *Client) tryImdbViaWeb(title string, year int) []SearchResult {
 	}
 
 	if imdbID == "" {
+		// Tier 6A: DuckDuckGo scraper
 		imdbID = c.fetchImdbIdFromDuckDuckGo(title, year)
+
+		// Tier 6B: Google Search scraper fallback
+		if imdbID == "" {
+			imdbID = c.fetchImdbIdFromGoogle(title, year)
+		}
+
 		if imdbID == "" {
 			c.storeImdbCache(title, year, "", 0, "")
 			return nil
@@ -128,33 +206,81 @@ func (c *Client) storeImdbCache(
 	_ = c.ImdbCache.Store(title, year, imdbID, tmdbID, mediaType)
 }
 
-// fetchImdbIdFromDuckDuckGo performs the actual HTTP scrape. Always hits the
-// network; callers should consult the cache via tryImdbViaWeb instead.
+// fetchImdbIdFromDuckDuckGo performs the actual HTTP scrape.
 func (c *Client) fetchImdbIdFromDuckDuckGo(title string, year int) string {
 	query := title + " imdb"
 	if year > 0 {
 		query = title + " " + strconv.Itoa(year) + " imdb"
 	}
-	searchURL := "https://duckduckgo.com/html/?q=" + url.QueryEscape(query)
+
+	urls := []string{
+		"https://html.duckduckgo.com/html/?q=" + url.QueryEscape(query),
+		"https://lite.duckduckgo.com/lite/?q=" + url.QueryEscape(query),
+	}
+
+	httpClient := &http.Client{Timeout: 10 * time.Second}
+	for _, searchURL := range urls {
+		req, reqErr := http.NewRequest(http.MethodGet, searchURL, nil)
+		if reqErr != nil {
+			continue
+		}
+		req.Header.Set("User-Agent", desktopUserAgent)
+		req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+		req.Header.Set("Accept-Language", "en-US,en;q=0.5")
+
+		resp, getErr := httpClient.Do(req)
+		if getErr != nil {
+			continue
+		}
+
+		if resp.StatusCode == 200 {
+			body, readErr := io.ReadAll(io.LimitReader(resp.Body, 512*1024))
+			resp.Body.Close()
+			if readErr == nil {
+				if id := imdbIdPattern.FindString(string(body)); id != "" {
+					return id
+				}
+			}
+		} else {
+			resp.Body.Close()
+		}
+	}
+
+	return ""
+}
+
+// fetchImdbIdFromGoogle scrapes Google Search to extract IMDb IDs if DuckDuckGo fails.
+func (c *Client) fetchImdbIdFromGoogle(title string, year int) string {
+	query := title + " imdb"
+	if year > 0 {
+		query = title + " " + strconv.Itoa(year) + " imdb"
+	}
+	searchURL := "https://www.google.com/search?q=" + url.QueryEscape(query)
 
 	httpClient := &http.Client{Timeout: 10 * time.Second}
 	req, reqErr := http.NewRequest(http.MethodGet, searchURL, nil)
 	if reqErr != nil {
 		return ""
 	}
-	req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; movie-cli/1.0)")
+	req.Header.Set("User-Agent", desktopUserAgent)
+	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+	req.Header.Set("Accept-Language", "en-US,en;q=0.5")
+
 	resp, getErr := httpClient.Do(req)
 	if getErr != nil {
 		return ""
 	}
 	defer resp.Body.Close()
+
 	if resp.StatusCode != 200 {
 		return ""
 	}
+
 	body, readErr := io.ReadAll(io.LimitReader(resp.Body, 512*1024))
 	if readErr != nil {
 		return ""
 	}
+
 	return imdbIdPattern.FindString(string(body))
 }
 

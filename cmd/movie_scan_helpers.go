@@ -133,5 +133,5 @@ func printScanFooter(stats ScanStats) {
 	}
 
 	printScanOutputFiles(stats)
-	fmt.Println()
+	printScanGuidanceCard(stats)
 }

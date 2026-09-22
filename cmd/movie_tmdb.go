@@ -23,10 +23,20 @@ import (
 type tmdbCredentials struct {
 	ApiKey string
 	Token  string
+	Pool   []tmdb.Credential
 }
 
 func (c tmdbCredentials) HasAuth() bool {
-	return c.ApiKey != "" || c.Token != ""
+	return c.ApiKey != "" || c.Token != "" || len(c.Pool) > 0
+}
+
+func newTmdbClientFromCreds(creds tmdbCredentials) *tmdb.Client {
+	client := tmdb.NewClientWithToken(creds.ApiKey, creds.Token)
+	if len(creds.Pool) > 0 {
+		client.SetCredentials(creds.Pool)
+	}
+
+	return client
 }
 
 // resolveScanTmdbCredentials loads saved/env credentials or prompts before scan.
@@ -35,7 +45,7 @@ func resolveScanTmdbCredentials(database *db.DB) tmdbCredentials {
 	creds := readTmdbCredentials(database)
 
 	if creds.HasAuth() {
-		client := tmdb.NewClientWithToken(creds.ApiKey, creds.Token)
+		client := newTmdbClientFromCreds(creds)
 
 		authErr := client.VerifyAuth()
 		if authErr == nil {
@@ -155,14 +165,64 @@ func ensureValidTmdbClient(database *db.DB) *tmdb.Client {
 		return nil
 	}
 
-	client := tmdb.NewClientWithToken(creds.ApiKey, creds.Token)
+	client := newTmdbClientFromCreds(creds)
 	client.SetImdbCache(newImdbCacheAdapter(database))
 
 	return client
 }
 
-// readTmdbCredentials reads TMDb credentials from config first, then env.
+// readTmdbCredentials reads TMDb credentials from config first, then env, supporting multi-token pools.
 func readTmdbCredentials(database *db.DB) tmdbCredentials {
+	var pool []tmdb.Credential
+	seen := make(map[string]bool)
+
+	addCred := func(key, token string) {
+		key = strings.TrimSpace(key)
+		token = strings.TrimSpace(token)
+		if key == "" && token == "" {
+			return
+		}
+		combo := key + "::" + token
+		if seen[combo] {
+			return
+		}
+		seen[combo] = true
+		pool = append(pool, tmdb.Credential{ApiKey: key, AccessToken: token})
+	}
+
+	addRaw := func(val string) {
+		for _, part := range strings.FieldsFunc(val, func(r rune) bool {
+			return r == ',' || r == '\n' || r == ';'
+		}) {
+			tokenOrKey := strings.Trim(strings.TrimSpace(part), "\"'`")
+			if tokenOrKey == "" {
+				continue
+			}
+			if strings.HasPrefix(tokenOrKey, "eyJ") {
+				addCred("", tokenOrKey)
+			} else {
+				addCred(tokenOrKey, "")
+			}
+		}
+	}
+
+	// 1. Multi-key config entries
+	addRaw(readTmdbConfigValue(database, "tmdb_api_keys"))
+	addRaw(readTmdbConfigValue(database, "tmdb_tokens"))
+	addRaw(readTmdbConfigValue(database, "TmdbApiKeys"))
+	addRaw(readTmdbConfigValue(database, "TmdbTokens"))
+
+	// 2. Multi-key environment variables
+	addRaw(os.Getenv("TMDB_API_KEYS"))
+	addRaw(os.Getenv("TMDB_TOKENS"))
+
+	// 3. Numbered environment variables (TMDB_TOKEN_1..9, TMDB_API_KEY_1..9)
+	for i := 1; i <= 9; i++ {
+		addRaw(os.Getenv(fmt.Sprintf("TMDB_TOKEN_%d", i)))
+		addRaw(os.Getenv(fmt.Sprintf("TMDB_API_KEY_%d", i)))
+	}
+
+	// 4. Single-key database config
 	apiKey := strings.TrimSpace(readTmdbConfigValue(database, "TmdbApiKey"))
 	if apiKey == "" {
 		apiKey = strings.TrimSpace(readTmdbConfigValue(database, "tmdb_api_key"))
@@ -173,6 +233,7 @@ func readTmdbCredentials(database *db.DB) tmdbCredentials {
 		token = strings.TrimSpace(readTmdbConfigValue(database, "tmdb_token"))
 	}
 
+	// 5. Single-key environment variables
 	if apiKey == "" {
 		apiKey = strings.TrimSpace(os.Getenv("TMDB_API_KEY"))
 	}
@@ -181,9 +242,21 @@ func readTmdbCredentials(database *db.DB) tmdbCredentials {
 		token = strings.TrimSpace(os.Getenv("TMDB_TOKEN"))
 	}
 
+	if apiKey != "" || token != "" {
+		addCred(apiKey, token)
+	}
+
+	primaryKey := ""
+	primaryToken := ""
+	if len(pool) > 0 {
+		primaryKey = pool[0].ApiKey
+		primaryToken = pool[0].AccessToken
+	}
+
 	return tmdbCredentials{
-		ApiKey: apiKey,
-		Token:  token,
+		ApiKey: primaryKey,
+		Token:  primaryToken,
+		Pool:   pool,
 	}
 }
 

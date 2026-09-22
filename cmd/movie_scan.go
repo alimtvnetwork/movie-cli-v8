@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/spf13/cobra"
 
@@ -21,6 +22,7 @@ var scanFormat string
 var scanRest bool
 var scanRestPort int
 var scanKeepLogs bool
+var scanForce bool
 
 var movieScanCmd = &cobra.Command{
 	Use:   "scan [folder]",
@@ -73,6 +75,8 @@ func init() {
 		"skip the DB→JSON reverse-sync pass (debug; default: enabled)")
 	movieScanCmd.Flags().BoolVar(&scanReverseSyncOnly, "reverse-sync-only", false,
 		"only run the reverse-sync pass; skip forward scan and TMDb fetches")
+	movieScanCmd.Flags().BoolVarP(&scanForce, "force", "f", false,
+		"force full re-scan: bypass cache and re-enrich all files from TMDb")
 }
 
 func runMovieScan(cmd *cobra.Command, args []string) {
@@ -132,7 +136,7 @@ func runMovieScan(cmd *cobra.Command, args []string) {
 }
 
 func createScanContext(database *db.DB, creds tmdbCredentials, outputDir string) *ScanContext {
-	tmdbClient := tmdb.NewClientWithToken(creds.ApiKey, creds.Token)
+	tmdbClient := newTmdbClientFromCreds(creds)
 	tmdbClient.SetImdbCache(newImdbCacheAdapter(database))
 	return &ScanContext{
 		Database:      database,
@@ -190,7 +194,7 @@ func finalizeScan(cmd *cobra.Command, ctx *ScanContext, input FinalizeScanInput)
 		})
 	}
 
-	tmdbClient := tmdb.NewClientWithToken(input.Creds.ApiKey, input.Creds.Token)
+	tmdbClient := newTmdbClientFromCreds(input.Creds)
 	tmdbClient.SetImdbCache(newImdbCacheAdapter(input.Database))
 	startPostScanServices(cmd, ScanServiceConfig{
 		ScanDir: input.ScanDir, OutputDir: input.OutputDir, Database: input.Database, Creds: input.Creds,
@@ -202,15 +206,17 @@ func initScanLogger(database *db.DB, outputDir string) {
 	if errlog.FilePath() == "" {
 		return
 	}
+
+	var dbLogMu sync.Mutex
 	errlog.SetDBWriter(func(e errlog.Entry) {
-		dbErr := database.InsertErrorLog(db.ErrorLogEntry{
+		dbLogMu.Lock()
+		defer dbLogMu.Unlock()
+
+		_ = database.InsertErrorLog(db.ErrorLogEntry{
 			Timestamp: e.Timestamp, Level: string(e.Level), Source: e.Source,
 			Function: e.Function, Command: e.Command, WorkDir: e.WorkDir,
 			Message: e.Message, StackTrace: e.StackTrace,
 		})
-		if dbErr != nil {
-			fmt.Fprintf(os.Stderr, "⚠️  Could not write error to DB: %v\n", dbErr)
-		}
 	})
 }
 

@@ -41,7 +41,7 @@ func splitNewFromExisting(ctx *ScanContext, videoFiles []videoFile,
 	newFiles := make([]videoFile, 0, len(videoFiles))
 	for _, vf := range videoFiles {
 		em, found := existingPaths[vf.FullPath]
-		if !found {
+		if !found || scanForce {
 			newFiles = append(newFiles, vf)
 			continue
 		}

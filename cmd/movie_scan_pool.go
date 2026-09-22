@@ -152,8 +152,13 @@ func commitEnrichedFile(ctx *ScanContext, ef enrichedFile, idx, total int) {
 	if ef.Media == nil {
 		return
 	}
+
 	ctx.TotalFiles++
 	announceWorkerCompletion(ctx, idx, total, ef)
+	if ef.Media.ThumbnailPath != "" {
+		fmt.Println("     🖼️  Thumbnail saved")
+	}
+
 	mediaID := insertScanMedia(ctx, ef.Media)
 	trackScanAction(ctx, TrackScanResult{
 		Media: ef.Media, FullPath: ef.VF.FullPath, MediaID: mediaID,
@@ -161,4 +166,8 @@ func commitEnrichedFile(ctx *ScanContext, ef enrichedFile, idx, total int) {
 	writeScanJSON(ctx, ef.Media)
 	ctx.ScannedItems = append(ctx.ScannedItems, *ef.Media)
 	incrementTypeCount(ctx, ef.Media.Type)
+
+	if !shouldSuppressProgress(ctx) {
+		fmt.Println()
+	}
 }

@@ -84,9 +84,11 @@ func openAndConfigureDB(base string) (*sql.DB, error) {
 		return nil, appfault.Wrap("cannot open database", err)
 	}
 
+	conn.SetMaxOpenConns(1)
+
 	pragmas := []struct{ stmt, errMsg string }{
 		{"PRAGMA journal_mode=WAL", "cannot set WAL mode"},
-		{"PRAGMA busy_timeout = 5000", "cannot set busy_timeout"},
+		{"PRAGMA busy_timeout = 10000", "cannot set busy_timeout"},
 		{"PRAGMA foreign_keys = ON", "cannot enable foreign keys"},
 	}
 	for _, p := range pragmas {

@@ -9,6 +9,8 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
+	"sync"
 	"time"
 
 	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
@@ -27,40 +29,89 @@ var (
 	ErrTimeout      = errors.New("TMDb request timed out")
 )
 
+// Credential holds an API key and optional bearer access token.
+type Credential struct {
+	ApiKey      string
+	AccessToken string
+}
+
+func (c Credential) HasAuth() bool {
+	return c.ApiKey != "" || c.AccessToken != ""
+}
+
 // ImdbCache caches DuckDuckGo→IMDb id lookups (and the resolved TMDb id +
 // media type) for the search fallback chain. It is optional; when nil the
 // fallback always hits the web AND TMDb /find.
-//
-// Look returns (imdbID, tmdbID, mediaType, isHit, found):
-//   - (id,  >0, "movie"|"tv", true,  true)  fully warm hit — skip both web AND /find.
-//   - (id,  0,  "",           true,  true)  IMDb id cached but /find never resolved
-//     (or returned nothing) — caller still needs /find.
-//   - ("",  0,  "",           false, true)  cached "no match" — skip the web entirely.
-//   - ("",  0,  "",           _,     false) no cache entry — caller must hit the web.
-//
-// Store records a result. Pass tmdbID=0 / mediaType="" when only the IMDb id
-// is known. Pass empty imdbID to record a miss.
 type ImdbCache interface {
 	Look(cleanTitle string, year int) (imdbID string, tmdbID int, mediaType string, isHit, found bool)
 	Store(cleanTitle string, year int, imdbID string, tmdbID int, mediaType string) error
 }
 
 // Client interacts with the TMDb API.
-// Field order is tuned for govet fieldalignment: pointer-heavy fields first,
-// then strings (whose trailing length word is non-pointer), so the GC pointer
-// scan stops at offset 40 instead of 48 (48 pointer bytes vs 56).
 type Client struct {
-	HttpClient  *http.Client
-	ImdbCache   ImdbCache // optional; persisted lookup cache to skip the web
-	ApiKey      string
-	AccessToken string
-	BaseURL     string
+	HttpClient    *http.Client
+	ImdbCache     ImdbCache // optional; persisted lookup cache to skip the web
+	credentials   []Credential
+	credMu        sync.Mutex
+	activeCredIdx int
+	ApiKey        string
+	AccessToken   string
+	BaseURL       string
 }
 
 // SetImdbCache attaches a persistent cache for DuckDuckGo→IMDb lookups.
 // Safe to call with nil to detach.
 func (c *Client) SetImdbCache(cache ImdbCache) {
 	c.ImdbCache = cache
+}
+
+// SetCredentials sets multiple credentials in the pool for automatic rotation.
+func (c *Client) SetCredentials(creds []Credential) {
+	c.credMu.Lock()
+	defer c.credMu.Unlock()
+
+	var valid []Credential
+	for _, cr := range creds {
+		if cr.HasAuth() {
+			valid = append(valid, cr)
+		}
+	}
+
+	c.credentials = valid
+	c.activeCredIdx = 0
+	if len(valid) > 0 {
+		c.ApiKey = valid[0].ApiKey
+		c.AccessToken = valid[0].AccessToken
+	}
+}
+
+// RotateCredential switches to the next credential in the pool if more than 1 is available.
+// Returns true if successfully switched to a different credential.
+func (c *Client) RotateCredential() bool {
+	c.credMu.Lock()
+	defer c.credMu.Unlock()
+
+	if len(c.credentials) <= 1 {
+		return false
+	}
+
+	c.activeCredIdx = (c.activeCredIdx + 1) % len(c.credentials)
+	c.ApiKey = c.credentials[c.activeCredIdx].ApiKey
+	c.AccessToken = c.credentials[c.activeCredIdx].AccessToken
+
+	return true
+}
+
+// CredentialCount returns the number of credentials in the pool.
+func (c *Client) CredentialCount() int {
+	c.credMu.Lock()
+	defer c.credMu.Unlock()
+
+	if len(c.credentials) == 0 && c.HasAuth() {
+		return 1
+	}
+
+	return len(c.credentials)
 }
 
 // NewClient creates a new TMDb client from an API key or env vars.
@@ -76,13 +127,20 @@ func NewClientWithToken(apiKey, accessToken string) *Client {
 	if accessToken == "" {
 		accessToken = os.Getenv("TMDB_TOKEN")
 	}
-	return &Client{
+
+	client := &Client{
 		ApiKey:      apiKey,
 		AccessToken: accessToken,
 		HttpClient: &http.Client{
 			Timeout: 15 * time.Second,
 		},
 	}
+
+	if apiKey != "" || accessToken != "" {
+		client.credentials = []Credential{{ApiKey: apiKey, AccessToken: accessToken}}
+	}
+
+	return client
 }
 
 // HasAuth returns true if the client has either an API key or access token.
@@ -119,7 +177,50 @@ func (c *Client) SearchMulti(query string) ([]SearchResult, error) {
 			filtered = append(filtered, resp.Results[i])
 		}
 	}
+
 	return filtered, nil
+}
+
+// SearchMovie searches for movies with optional release year.
+func (c *Client) SearchMovie(query string, year int) ([]SearchResult, error) {
+	params := url.Values{}
+	params.Set("query", query)
+	params.Set("page", "1")
+	if year > 0 {
+		params.Set("primary_release_year", strconv.Itoa(year))
+	}
+
+	var resp searchResponse
+	if err := c.get(c.buildURL("/search/movie", params), &resp); err != nil {
+		return nil, err
+	}
+
+	for i := range resp.Results {
+		resp.Results[i].MediaType = "movie"
+	}
+
+	return resp.Results, nil
+}
+
+// SearchTV searches for TV shows with optional first air date year.
+func (c *Client) SearchTV(query string, year int) ([]SearchResult, error) {
+	params := url.Values{}
+	params.Set("query", query)
+	params.Set("page", "1")
+	if year > 0 {
+		params.Set("first_air_date_year", strconv.Itoa(year))
+	}
+
+	var resp searchResponse
+	if err := c.get(c.buildURL("/search/tv", params), &resp); err != nil {
+		return nil, err
+	}
+
+	for i := range resp.Results {
+		resp.Results[i].MediaType = "tv"
+	}
+
+	return resp.Results, nil
 }
 
 // GetMovieDetails returns detailed info for a movie.

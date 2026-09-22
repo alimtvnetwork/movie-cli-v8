@@ -15,6 +15,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/alimtvnetwork/movie-cli-v8/cleaner"
@@ -65,8 +66,20 @@ func writeMediaJSON(basePath string, m *db.Media) error {
 	}
 
 	MirrorToGlobalCache(data)
-	fmt.Printf("     📝 JSON metadata saved: %s\n", jsonPath)
+	displayPath := formatScanDisplayPath(jsonPath)
+	fmt.Printf("     📝 JSON metadata saved: %s\n", displayPath)
+
 	return nil
+}
+
+func formatScanDisplayPath(p string) string {
+	normalized := filepath.ToSlash(p)
+	const marker = ".movie-output"
+	if idx := strings.Index(normalized, marker); idx != -1 {
+		return normalized[idx:]
+	}
+
+	return normalized
 }
 
 func mediaSlug(m *db.Media) string {

@@ -43,17 +43,49 @@ func (c *Client) get(reqURL string, target interface{}) error {
 		if lastErr == nil {
 			return nil
 		}
-		if errors.Is(lastErr, ErrRateLimited) {
-			continue
+
+		if errors.Is(lastErr, ErrRateLimited) || errors.Is(lastErr, ErrAuthInvalid) {
+			if c.RotateCredential() {
+				updatedURL := c.rebuildURLWithCurrentKey(reqURL)
+				return c.get(updatedURL, target)
+			}
+			if errors.Is(lastErr, ErrRateLimited) {
+				continue
+			}
+			return lastErr
 		}
+
 		isFatal := errors.Is(lastErr, ErrTimeout) ||
-			errors.Is(lastErr, ErrNetworkError) ||
-			errors.Is(lastErr, ErrAuthInvalid)
+			errors.Is(lastErr, ErrNetworkError)
 		if isFatal {
 			return lastErr
 		}
 	}
+
 	return appfault.Wrapf(lastErr, "TMDb request failed after %d retries", MaxRetries)
+}
+
+func (c *Client) rebuildURLWithCurrentKey(rawURL string) string {
+	parsed, err := url.Parse(rawURL)
+	if err != nil {
+		return rawURL
+	}
+
+	q := parsed.Query()
+	if q.Has("api_key") {
+		c.credMu.Lock()
+		key := c.ApiKey
+		c.credMu.Unlock()
+
+		if key != "" {
+			q.Set("api_key", key)
+		} else {
+			q.Del("api_key")
+		}
+		parsed.RawQuery = q.Encode()
+	}
+
+	return parsed.String()
 }
 
 func (c *Client) doGet(reqURL string, target interface{}, attempt int) error {
@@ -63,8 +95,13 @@ func (c *Client) doGet(reqURL string, target interface{}, attempt int) error {
 		backoff(attempt)
 		return appfault.Wrap("build request failed", reqErr)
 	}
-	if c.AccessToken != "" {
-		req.Header.Set("Authorization", "Bearer "+c.AccessToken)
+
+	c.credMu.Lock()
+	token := c.AccessToken
+	c.credMu.Unlock()
+
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
 	}
 	req.Header.Set("Accept", "application/json")
 

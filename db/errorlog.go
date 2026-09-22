@@ -3,6 +3,8 @@ package db
 
 import (
 	"fmt"
+	"strings"
+	"time"
 
 	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 )
@@ -19,18 +21,30 @@ type ErrorLogEntry struct {
 	StackTrace string
 }
 
-// InsertErrorLog writes an error entry to the ErrorLog table.
+// InsertErrorLog writes an error entry to the ErrorLog table with retry on busy.
 func (d *DB) InsertErrorLog(entry ErrorLogEntry) error {
-	_, err := d.Exec(`
-		INSERT INTO ErrorLog (Timestamp, Level, Source, Function, Command, WorkDir, Message, StackTrace)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-		entry.Timestamp, entry.Level, entry.Source, entry.Function,
-		entry.Command, entry.WorkDir, entry.Message, entry.StackTrace,
-	)
-	if err != nil {
-		return appfault.Wrap("insert error log", err)
+	var lastErr error
+	for attempt := 0; attempt < 5; attempt++ {
+		_, err := d.Exec(`
+			INSERT INTO ErrorLog (Timestamp, Level, Source, Function, Command, WorkDir, Message, StackTrace)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+			entry.Timestamp, entry.Level, entry.Source, entry.Function,
+			entry.Command, entry.WorkDir, entry.Message, entry.StackTrace,
+		)
+		if err == nil {
+			return nil
+		}
+
+		lastErr = err
+		errStr := strings.ToLower(err.Error())
+		if !strings.Contains(errStr, "locked") && !strings.Contains(errStr, "busy") {
+			break
+		}
+
+		time.Sleep(time.Duration(25*(attempt+1)) * time.Millisecond)
 	}
-	return nil
+
+	return appfault.Wrap("insert error log", lastErr)
 }
 
 // RecentErrorLogs returns the most recent N error log entries.

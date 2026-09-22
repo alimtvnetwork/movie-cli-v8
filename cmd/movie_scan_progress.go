@@ -59,13 +59,18 @@ func announceWorkerCompletion(ctx *ScanContext, idx, total int, ef enrichedFile)
 	if shouldSuppressProgress(ctx) {
 		return
 	}
-	rating := ef.Media.TmdbRating
+
 	title := ef.Media.CleanTitle
 	year := ""
 	if ef.Media.Year > 0 {
 		year = fmt.Sprintf(" (%d)", ef.Media.Year)
 	}
-	fmt.Printf("  [%d/%d] ⭐ %.1f  %s%s\n", idx, total, rating, title, year)
+
+	if ef.Media.TmdbID > 0 {
+		fmt.Printf("  [%d/%d] ⭐ %.1f  %s%s\n", idx, total, ef.Media.TmdbRating, title, year)
+	} else {
+		fmt.Printf("  [%d/%d] ⚠️  0.0  %s%s (local info only)\n", idx, total, title, year)
+	}
 }
 
 // announceBatchSummary prints the parallel-batch wrap-up line.

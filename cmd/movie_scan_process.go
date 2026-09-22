@@ -164,8 +164,6 @@ func enrichFromTMDb(ctx *ScanContext, m *db.Media, result cleaner.Result) {
 	}
 
 	if len(tmdbResults) == 0 {
-		errlog.Warn("no TMDb match for '%s' (year %d) after fallback chain — inserted with local data only", result.CleanTitle, result.Year)
-
 		return
 	}
 
@@ -269,5 +267,4 @@ func applyTMDbResult(ctx *ScanContext, m *db.Media, best tmdb.SearchResult) {
 		Client: ctx.Client, Database: ctx.Database,
 		Media: m, PosterPath: posterPath, OutputDir: ctx.OutputDir,
 	})
-	fmt.Printf("     ⭐ %.1f  %s\n", m.TmdbRating, m.Title)
 }

@@ -10,6 +10,7 @@ Master directory of architectural and execution plans.
 - [11-code-red-refactor-remediation.md](pending/11-code-red-refactor-remediation.md): Remediate Code Red enum, boolean, and query wrapper violations across the codebase.
 ## Completed Plans
 
+- [12-terminal-ui-tmdb-rotation-and-search-enhancements.md](completed/12-terminal-ui-tmdb-rotation-and-search-enhancements.md): Terminal UI overhaul, TMDb multi-token rotation, relaxed search & Google fallback, SQLite lock fix, and HTML report.
 - [20-fix-movie-update-and-doctor-deploypath.md](completed/20-fix-movie-update-and-doctor-deploypath.md): Fix movie update, doctor self-replace on missing binary, deployPath auto-synchronization, and tilde expansion.
 - [19-invalid-api-key-reprompt-loop-and-spam-suppression.md](completed/19-invalid-api-key-reprompt-loop-and-spam-suppression.md): TMDb invalid API key single-prompt detection, re-prompt loop, and error spam elimination.
 - [18-fix-windows-terminal-ansi-virtual-terminal.md](completed/18-fix-windows-terminal-ansi-virtual-terminal.md): Fix Windows terminal broken ANSI escape characters by initializing Virtual Terminal Processing and graceful fallback.

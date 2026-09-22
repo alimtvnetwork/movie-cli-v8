@@ -58,3 +58,25 @@ func writeScanOutputHTML(stats ScanStats) {
 	}
 	fmt.Printf("  ├── 🌐 report.html       Interactive HTML report\n")
 }
+
+func printScanGuidanceCard(stats ScanStats) {
+	fmt.Println()
+	fmt.Println("  ╭──────────────────────────────────────────────────────────╮")
+	fmt.Println("  │ 🚀 Next Steps & Helpful Commands                         │")
+	fmt.Println("  ├──────────────────────────────────────────────────────────┤")
+	fmt.Println("  │                                                          │")
+	fmt.Println("  │  🎬 Open Interactive UI in Browser:                      │")
+	fmt.Println("  │     movie ui                                             │")
+	fmt.Println("  │     movie rest --open                                    │")
+	fmt.Println("  │                                                          │")
+	fmt.Println("  │  ⚡ Force Re-Scan (Bypass Cache & Re-Enrich All Files):   │")
+	fmt.Println("  │     movie scan --force                                   │")
+	fmt.Println("  │     movie rescan                                         │")
+	fmt.Println("  │                                                          │")
+	fmt.Println("  │  🔍 Instant Search & Library Navigation:                 │")
+	fmt.Println("  │     movie search <title>    Search metadata in terminal  │")
+	fmt.Println("  │     movie ls                Tabular view of all titles   │")
+	fmt.Println("  │                                                          │")
+	fmt.Println("  ╰──────────────────────────────────────────────────────────╯")
+	fmt.Println()
+}
