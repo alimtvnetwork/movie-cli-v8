@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-09-22T01:52:33Z",
+  "updated_at": "2026-09-22T02:03:19Z",
   "files": [
     ".ai-memory/plans/completed/01-delete-old-folders.md",
     ".ai-memory/plans/completed/02-migrate-new-folders.md",
@@ -15,15 +15,20 @@
     "D:/work/wp-exam/wp-exam.php",
     "cmd/help_categories.go",
     "cmd/movie_db.go",
+    "cmd/movie_history_table.go",
     "cmd/movie_info_table.go",
     "cmd/movie_ls_table.go",
     "cmd/movie_rescan_failed.go",
     "cmd/movie_scan.go",
+    "cmd/movie_scan_helpers_print.go",
     "cmd/movie_scan_loop.go",
     "cmd/movie_scan_pool.go",
     "cmd/movie_scan_process.go",
     "cmd/movie_scan_process_helpers.go",
     "cmd/movie_scan_progress.go",
+    "cmd/movie_search_table.go",
+    "cmd/movie_stats.go",
+    "cmd/movie_stats_table.go",
     "cmd/path_scope.go",
     "cmd/types.go",
     "cmd/version.go",
@@ -37,7 +42,9 @@
     "doctor/preflight.go",
     "doctor/report.go",
     "tmdb/client.go",
-    "tmdb/fallback.go"
+    "tmdb/fallback.go",
+    "uninstall-quick.ps1",
+    "uninstall-quick.sh"
   ],
   "associated_tests": [
     "cmd/e2e_test.go",

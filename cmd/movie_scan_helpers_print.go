@@ -14,69 +14,87 @@ import (
 )
 
 func printScanCounts(stats ScanStats) {
-	fmt.Printf("     Total files: %d\n", stats.Total)
-	fmt.Printf("     Movies:      %d\n", stats.Movies)
-	fmt.Printf("     TV Shows:    %d\n", stats.TV)
+	isColor := isColorEnabled()
+
+	fmt.Println()
+	fmt.Println(colorText("  ┌──────────────────────────────────────────────────────────┐", ansiDim, isColor))
+	fmt.Println(colorText("  │   🎬 MOVIE CLI — Scan Summary Report                     │", ansiCyan, isColor))
+	fmt.Println(colorText("  └──────────────────────────────────────────────────────────┘", ansiDim, isColor))
+	fmt.Println()
+
+	fmt.Printf("  %s %s:\n", colorText("●", ansiCyan, isColor), colorText("Library Additions", ansiBold, isColor))
+	fmt.Printf("    %-18s %d\n", colorText("Total Files:", ansiDim, isColor), stats.Total)
+	fmt.Printf("    %-18s %d\n", colorText("Movies:", ansiDim, isColor), stats.Movies)
+	fmt.Printf("    %-18s %d\n", colorText("TV Series:", ansiDim, isColor), stats.TV)
+
 	newCount := stats.Total - stats.Skipped
+
 	if newCount > 0 {
-		fmt.Printf("     New:         %d\n", newCount)
+		fmt.Printf("    %-18s %s\n", colorText("New Additions:", ansiDim, isColor), colorText(fmt.Sprintf("%d", newCount), ansiGreen, isColor))
 	}
+
 	if stats.Skipped > 0 {
-		fmt.Printf("     Existing:    %d (already in DB)\n", stats.Skipped)
+		fmt.Printf("    %-18s %d (already in DB)\n", colorText("Existing:", ansiDim, isColor), stats.Skipped)
 	}
+
 	if stats.Removed > 0 {
-		fmt.Printf("     Removed:     %d (files no longer on disk)\n", stats.Removed)
+		fmt.Printf("    %-18s %s\n", colorText("Removed:", ansiDim, isColor), colorText(fmt.Sprintf("%d", stats.Removed), ansiYellow, isColor))
 	}
+
+	fmt.Println()
+	fmt.Printf("  %s %s:\n", colorText("●", ansiCyan, isColor), colorText("Split-DB Storage", ansiBold, isColor))
+	fmt.Printf("    %-18s %s\n", colorText("Master Store:", ansiDim, isColor), "movie.db (Primary Library)")
+	fmt.Printf("    %-18s %s\n", colorText("Cache Store:", ansiDim, isColor), "cache.db (Lookups & Search)")
+	fmt.Printf("    %-18s %s\n", colorText("Journal Mode:", ansiDim, isColor), "WAL")
 }
 
 func printScanOutputFiles(stats ScanStats) {
+	isColor := isColorEnabled()
+
 	fmt.Println()
-	fmt.Println("  ■ Output Files")
-	fmt.Println("  ──────────────────────────────────────────")
-	fmt.Printf("  📁 %s/\n", stats.OutputDir)
+	fmt.Printf("  %s %s:\n", colorText("●", ansiCyan, isColor), colorText("Output Artifacts", ansiBold, isColor))
+	fmt.Printf("    %-18s %s/\n", colorText("Target Folder:", ansiDim, isColor), stats.OutputDir)
 
 	writeScanOutputSummary(stats)
 	writeScanOutputHTML(stats)
 
-	fmt.Printf("  ├── 📁 json/movie/       Per-movie JSON metadata\n")
-	fmt.Printf("  ├── 📁 json/tv/          Per-show JSON metadata\n")
-	fmt.Printf("  └── 📁 thumbnails/       Movie poster thumbnails\n")
+	fmt.Printf("    %-18s %s\n", colorText("Media JSON:", ansiDim, isColor), "json/movie/, json/tv/")
+	fmt.Printf("    %-18s %s\n", colorText("Thumbnails:", ansiDim, isColor), "thumbnails/")
 }
 
 func writeScanOutputSummary(stats ScanStats) {
 	if err := writeScanSummary(stats); err != nil {
 		errlog.Warn("Could not write summary.json: %v", err)
+
 		return
 	}
-	fmt.Printf("  ├── 📄 summary.json      Scan report with metadata\n")
+
+	isColor := isColorEnabled()
+	fmt.Printf("    %-18s %s\n", colorText("Summary JSON:", ansiDim, isColor), "summary.json")
 }
 
 func writeScanOutputHTML(stats ScanStats) {
 	if err := writeHTMLReport(stats); err != nil {
 		errlog.Warn("Could not write report.html: %v", err)
+
 		return
 	}
-	fmt.Printf("  ├── 🌐 report.html       Interactive HTML report\n")
+
+	isColor := isColorEnabled()
+	fmt.Printf("    %-18s %s\n", colorText("HTML Report:", ansiDim, isColor), "report.html")
 }
 
 func printScanGuidanceCard(stats ScanStats) {
+	isColor := isColorEnabled()
+
 	fmt.Println()
-	fmt.Println("  ╭──────────────────────────────────────────────────────────╮")
-	fmt.Println("  │ 🚀 Next Steps & Helpful Commands                         │")
-	fmt.Println("  ├──────────────────────────────────────────────────────────┤")
-	fmt.Println("  │                                                          │")
-	fmt.Println("  │  🎬 Open Interactive UI in Browser:                      │")
-	fmt.Println("  │     movie ui                                             │")
-	fmt.Println("  │     movie rest --open                                    │")
-	fmt.Println("  │                                                          │")
-	fmt.Println("  │  ⚡ Force Re-Scan (Bypass Cache & Re-Enrich All Files):   │")
-	fmt.Println("  │     movie scan --force                                   │")
-	fmt.Println("  │     movie rescan                                         │")
-	fmt.Println("  │                                                          │")
-	fmt.Println("  │  🔍 Instant Search & Library Navigation:                 │")
-	fmt.Println("  │     movie search <title>    Search metadata in terminal  │")
-	fmt.Println("  │     movie ls                Tabular view of all titles   │")
-	fmt.Println("  │                                                          │")
-	fmt.Println("  ╰──────────────────────────────────────────────────────────╯")
+	fmt.Println(colorText("  ────────────────────────────────────────────────────────────", ansiDim, isColor))
+	fmt.Println(colorText("  Quick Actions & Next Steps:", ansiCyan, isColor))
+	fmt.Printf("    %-24s %s\n", colorText("movie ui", ansiYellow, isColor), "Launch local web dashboard in browser")
+	fmt.Printf("    %-24s %s\n", colorText("movie ls", ansiYellow, isColor), "List indexed library movies and TV series")
+	fmt.Printf("    %-24s %s\n", colorText("movie info <title>", ansiYellow, isColor), "Query TMDb and inspect media metadata")
+	fmt.Printf("    %-24s %s\n", colorText("movie stats", ansiYellow, isColor), "View comprehensive library metrics")
+	fmt.Printf("    %-24s %s\n", colorText("movie db", ansiYellow, isColor), "Inspect multi-tier Split-DB statistics")
+	fmt.Println(colorText("  ────────────────────────────────────────────────────────────", ansiDim, isColor))
 	fmt.Println()
 }

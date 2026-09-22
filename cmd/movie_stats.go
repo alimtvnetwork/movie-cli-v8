@@ -141,59 +141,114 @@ func buildStatsGenresJSON(database *db.DB) []statsGenre {
 }
 
 func printStatsDefault(database *db.DB, counts StatsCounts) {
-	printStatsDefaultCounts(counts.Movies, counts.TV, counts.Total)
-	printStatsDefaultStorage(database, counts.Total)
-	printStatsDefaultGenres(database)
-	printStatsDefaultRatings(database)
+	isColor := isColorEnabled()
+
+	fmt.Println()
+	fmt.Println(colorText("  ┌──────────────────────────────────────────────────────────┐", ansiCyan, isColor))
+	fmt.Println(colorText("  │  📊 Movie CLI Library Statistics                         │", ansiCyan, isColor))
+	fmt.Println(colorText("  └──────────────────────────────────────────────────────────┘", ansiCyan, isColor))
+	fmt.Println()
+
+	printStatsDefaultCounts(counts.Movies, counts.TV, counts.Total, isColor)
+	printStatsDefaultStorage(database, counts.Total, isColor)
+	printStatsDefaultSplitDB(database, isColor)
+	printStatsDefaultGenres(database, isColor)
+	printStatsDefaultRatings(database, isColor)
 }
 
-func printStatsDefaultCounts(totalMovies, totalTV, total int) {
-	fmt.Println("📊 Library Statistics")
-	fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-	fmt.Printf("  🎬 Total Movies:    %d\n", totalMovies)
-	fmt.Printf("  📺 Total TV Shows:  %d\n", totalTV)
-	fmt.Printf("  📁 Total:           %d\n", total)
+func printStatsDefaultCounts(totalMovies, totalTV, total int, isColor bool) {
+	bullet := colorText("●", ansiCyan, isColor)
+
+	fmt.Println(colorText("  ── Library Overview ──", ansiCyan, isColor))
+	fmt.Printf("  %s %-18s %s\n", bullet, colorText("Total Movies:", ansiDim, isColor), colorText(fmt.Sprintf("%d", totalMovies), ansiWhite, isColor))
+	fmt.Printf("  %s %-18s %s\n", bullet, colorText("Total TV Shows:", ansiDim, isColor), colorText(fmt.Sprintf("%d", totalTV), ansiWhite, isColor))
+	fmt.Printf("  %s %-18s %s\n", bullet, colorText("Total Media:", ansiDim, isColor), colorText(fmt.Sprintf("%d", total), ansiBold, isColor))
 	fmt.Println()
 }
 
-func printStatsDefaultStorage(database *db.DB, total int) {
+func printStatsDefaultStorage(database *db.DB, total int, isColor bool) {
 	totalSize, largestSize, smallestSize, sizeErr := database.FileSizeStats()
 	if sizeErr != nil {
 		errlog.Warn("File size stats error: %v", sizeErr)
+
 		return
 	}
+
 	if totalSize <= 0 {
 		return
 	}
-	fmt.Println("  💾 Storage:")
-	fmt.Printf("     Total Size:    %s\n", db.HumanSize(totalSize))
-	fmt.Printf("     Largest File:  %s\n", db.HumanSize(largestSize))
-	fmt.Printf("     Smallest File: %s\n", db.HumanSize(smallestSize))
+
+	bullet := colorText("●", ansiCyan, isColor)
+
+	fmt.Println(colorText("  ── Storage & Filesystem ──", ansiCyan, isColor))
+	fmt.Printf("  %s %-18s %s\n", bullet, colorText("Total Size:", ansiDim, isColor), colorText(db.HumanSize(totalSize), ansiWhite, isColor))
+	fmt.Printf("  %s %-18s %s\n", bullet, colorText("Largest File:", ansiDim, isColor), colorText(db.HumanSize(largestSize), ansiWhite, isColor))
+	fmt.Printf("  %s %-18s %s\n", bullet, colorText("Smallest File:", ansiDim, isColor), colorText(db.HumanSize(smallestSize), ansiWhite, isColor))
+
 	if total > 0 {
-		fmt.Printf("     Average Size:  %s\n", db.HumanSize(totalSize/float64(total)))
+		avgSize := totalSize / float64(total)
+
+		fmt.Printf("  %s %-18s %s\n", bullet, colorText("Average Size:", ansiDim, isColor), colorText(db.HumanSize(avgSize), ansiWhite, isColor))
 	}
+
 	fmt.Println()
 }
 
-func printStatsDefaultGenres(database *db.DB) {
+func printStatsDefaultSplitDB(database *db.DB, isColor bool) {
+	status := database.GetSplitDBStatus()
+	bullet := colorText("●", ansiCyan, isColor)
+
+	fmt.Println(colorText("  ── SQLite Split-DB Stores ──", ansiCyan, isColor))
+	fmt.Printf("  %s %-18s %s (%s, %s)\n", bullet, colorText("Primary Library:", ansiDim, isColor),
+		colorText(status.MasterTier.Name, ansiWhite, isColor),
+		status.MasterTier.SizeFormatted,
+		colorText(status.MasterTier.JournalMode+" mode", ansiGreen, isColor))
+	fmt.Printf("  %s %-18s %s (%s, %s)\n", bullet, colorText("Ephemeral Cache:", ansiDim, isColor),
+		colorText(status.CacheTier.Name, ansiWhite, isColor),
+		status.CacheTier.SizeFormatted,
+		colorText(status.CacheTier.JournalMode+" mode", ansiGreen, isColor))
+	fmt.Printf("  %s %-18s %s\n", bullet, colorText("Total Footprint:", ansiDim, isColor),
+		colorText(status.TotalSize, ansiWhite, isColor))
+	fmt.Println()
+}
+
+func printStatsDefaultGenres(database *db.DB, isColor bool) {
 	sorted := sortedGenreCounts(database, 10)
 	if len(sorted) == 0 {
 		return
 	}
-	fmt.Println("  🎭 Top Genres:")
+
+	fmt.Println(colorText("  ── Top Genres ──", ansiCyan, isColor))
+
 	for _, g := range sorted {
-		bar := strings.Repeat("█", minInt(g.count, 30))
-		fmt.Printf("     %-20s %s %d\n", g.name, bar, g.count)
+		barLen := minInt(g.count, 25)
+		bar := colorText(strings.Repeat("█", barLen), ansiCyan, isColor)
+
+		fmt.Printf("     %-18s %s %s\n", g.name, bar, colorText(fmt.Sprintf("%d", g.count), ansiDim, isColor))
 	}
+
 	fmt.Println()
 }
 
-func printStatsDefaultRatings(database *db.DB) {
+func printStatsDefaultRatings(database *db.DB, isColor bool) {
 	avgImdb, avgTmdb := computeAvgRatings(database)
+	hasRatings := avgImdb > 0 || avgTmdb > 0
+
+	if !hasRatings {
+		return
+	}
+
+	bullet := colorText("●", ansiCyan, isColor)
+
+	fmt.Println(colorText("  ── Ratings Overview ──", ansiCyan, isColor))
+
 	if avgImdb > 0 {
-		fmt.Printf("  ⭐ Avg IMDb Rating: %.1f\n", avgImdb)
+		fmt.Printf("  %s %-18s ⭐ %s / 10\n", bullet, colorText("Average IMDb:", ansiDim, isColor), colorText(fmt.Sprintf("%.1f", avgImdb), ansiYellow, isColor))
 	}
+
 	if avgTmdb > 0 {
-		fmt.Printf("  ⭐ Avg TMDb Rating: %.1f\n", avgTmdb)
+		fmt.Printf("  %s %-18s ⭐ %s / 10\n", bullet, colorText("Average TMDb:", ansiDim, isColor), colorText(fmt.Sprintf("%.1f", avgTmdb), ansiYellow, isColor))
 	}
+
+	fmt.Println()
 }

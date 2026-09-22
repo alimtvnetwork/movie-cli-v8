@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     One-liner uninstaller for movie CLI on Windows.
 
@@ -31,10 +31,10 @@ param(
 $ErrorActionPreference = "Continue"
 $ProgressPreference    = "SilentlyContinue"
 
-function Write-Step($msg) { Write-Host "  $msg" -ForegroundColor Cyan }
-function Write-Ok($msg)   { Write-Host "    $msg" -ForegroundColor Green }
-function Write-Warn($msg) { Write-Host "    $msg" -ForegroundColor Yellow }
-function Write-Err($msg)  { Write-Host "    $msg" -ForegroundColor Red }
+function Write-Step($msg) { Write-Host "  ● $msg" -ForegroundColor Cyan }
+function Write-Ok($msg)   { Write-Host "    [ok]   $msg" -ForegroundColor Green }
+function Write-Warn($msg) { Write-Host "    [warn] $msg" -ForegroundColor Yellow }
+function Write-Err($msg)  { Write-Host "    [err]  $msg" -ForegroundColor Red }
 
 function Resolve-TargetDir {
     if ($InstallDir) { return $InstallDir }
@@ -87,8 +87,9 @@ function Try-SelfUninstall {
 }
 
 Write-Host ""
-Write-Host "  movie CLI Quick Uninstaller" -ForegroundColor White
-Write-Host "  ===========================" -ForegroundColor DarkGray
+Write-Host "  ┌──────────────────────────────────────────────────────────┐" -ForegroundColor DarkGray
+Write-Host "  │   🎬 MOVIE CLI — Quick Uninstaller                       │" -ForegroundColor Cyan
+Write-Host "  └──────────────────────────────────────────────────────────┘" -ForegroundColor DarkGray
 Write-Host ""
 
 if (-not $InstallDir) {
@@ -141,8 +142,9 @@ if (Test-Path $userData) {
         $shouldDelete = $Yes
         if (-not $shouldDelete) {
             Write-Host ""
-            Write-Host "  Found user configuration & database at $userData" -ForegroundColor Yellow
-            Write-Host "  Delete ~/.movie user data? [y/N]: " -ForegroundColor Yellow -NoNewline
+            Write-Host "  Found user configuration & Split-DB storage at $userData" -ForegroundColor Yellow
+            Write-Host "  (Stores: movie.db library + cache.db lookups)" -ForegroundColor DarkGray
+            Write-Host "  Delete ~/.movie user data and databases? [y/N]: " -ForegroundColor Yellow -NoNewline
             $ans = Read-Host
             if ($ans -match '^(y|yes)$') { $shouldDelete = $true }
         }
