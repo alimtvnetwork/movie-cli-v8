@@ -231,7 +231,8 @@ def update_version_info_go(next_version, dry_run=False):
     with open(VERSION_INFO_GO, "w", encoding="utf-8", newline="\n") as f:
         f.write(new_content)
 
-    print(f"[*] Updated version/info.go -> v{next_version}")
+    run_cmd(["gofmt", "-w", str(VERSION_INFO_GO)], check=False)
+    print(f"[*] Updated and formatted version/info.go -> v{next_version}")
 
 
 def update_package_json(next_version, dry_run=False):
