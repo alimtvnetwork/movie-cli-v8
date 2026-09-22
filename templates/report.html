@@ -71,7 +71,8 @@
   .card-meta .sep { color: var(--border-hover); }
   .card-rating { color: var(--warn); font-weight: 600; display: inline-flex; align-items: center; gap: 0.15rem; }
   .card-genre { display: flex; flex-wrap: wrap; gap: 0.25rem; }
-  .card-genre span { background: var(--bg); border: 1px solid var(--border); padding: 0.1rem 0.45rem; border-radius: 4px; font-size: 0.65rem; color: var(--text-secondary); }
+  .card-genre span { background: var(--bg); border: 1px solid var(--border); padding: 0.1rem 0.45rem; border-radius: 4px; font-size: 0.65rem; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; }
+  .card-genre span:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
   .card-tags { display: flex; flex-wrap: wrap; gap: 0.25rem; }
   .card-tags .tag { background: rgba(167,139,250,0.15); color: var(--purple); border: 1px solid rgba(167,139,250,0.25); padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.6rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.2rem; transition: all 0.15s; }
   .card-tags .tag:hover { background: rgba(167,139,250,0.25); }
@@ -353,6 +354,131 @@
     border-radius: 4px;
     font-weight: 600;
   }
+  .badge-versions {
+    background: rgba(99, 102, 241, 0.2);
+    border: 1px solid rgba(99, 102, 241, 0.4);
+    color: #a5b4fc;
+    font-size: 0.65rem;
+    padding: 0.1rem 0.45rem;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+  .category-pill-bar {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding: 0.25rem 0 0.85rem;
+    margin-bottom: 0.5rem;
+    scrollbar-width: thin;
+  }
+  .cat-pill {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    padding: 0.35rem 0.85rem;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .cat-pill:hover {
+    border-color: var(--border-hover);
+    color: var(--text);
+  }
+  .cat-pill.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    box-shadow: 0 0 12px var(--accent-glow);
+  }
+  .video-player-section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+  .video-player-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  .player-controls-strip {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .video-wrapper {
+    position: relative;
+    width: 100%;
+    background: #000;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+  }
+  .video-wrapper video {
+    width: 100%;
+    max-height: 520px;
+    display: block;
+    outline: none;
+  }
+  .versions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-top: 0.5rem;
+  }
+  .version-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    gap: 1rem;
+    transition: border-color 0.15s;
+  }
+  .version-card:hover {
+    border-color: var(--border-hover);
+  }
+  .version-card.current {
+    border-color: var(--accent);
+    background: rgba(99, 102, 241, 0.08);
+  }
+  .version-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+  .version-title {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text);
+    word-break: break-all;
+  }
+  .version-meta {
+    font-size: 0.72rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .version-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+  }
   @media (max-width: 860px) {
     .hero-guidance-card { flex-direction: column; align-items: stretch; gap: 1.25rem; }
     .hero-guidance-right { justify-content: space-around; }
@@ -416,6 +542,21 @@
         </div>
       </div>
 
+      <!-- Category & Genre Quick Pills -->
+      <div class="category-pill-bar" id="categoryPillBar">
+        <button class="cat-pill active" onclick="selectGenrePill('', this)">All Categories</button>
+        <button class="cat-pill" onclick="selectGenrePill('Action', this)">⚡ Action</button>
+        <button class="cat-pill" onclick="selectGenrePill('Comedy', this)">😂 Comedy</button>
+        <button class="cat-pill" onclick="selectGenrePill('Drama', this)">🎭 Drama</button>
+        <button class="cat-pill" onclick="selectGenrePill('Sci-Fi', this)">🚀 Sci-Fi</button>
+        <button class="cat-pill" onclick="selectGenrePill('Thriller', this)">🔪 Thriller</button>
+        <button class="cat-pill" onclick="selectGenrePill('Horror', this)">👻 Horror</button>
+        <button class="cat-pill" onclick="selectGenrePill('Adventure', this)">🗺️ Adventure</button>
+        <button class="cat-pill" onclick="selectGenrePill('Animation', this)">🎨 Animation</button>
+        <button class="cat-pill" onclick="selectGenrePill('Crime', this)">🕵️ Crime</button>
+        <button class="cat-pill" onclick="selectGenrePill('Documentary', this)">📽️ Documentary</button>
+      </div>
+
       <!-- Filters -->
       <div class="filter-bar">
         <div class="filter-group">
@@ -469,7 +610,8 @@
              data-runtime="{{.Runtime}}" data-imdb="{{.ImdbID}}" data-trailer="{{.TrailerURL}}"
              data-filepath="{{.FilePath}}" data-filesize="{{printf "%.1f" .FileSizeMb}}"
              data-filename="{{.FileName}}" data-tmdbid="{{.TmdbID}}" data-tagline="{{.Tagline}}"
-             data-desc="{{.Description}}"
+             data-desc="{{.Description}}" data-versioncount="{{.VersionCount}}"
+             data-versions='{{.VersionsJSON}}'
              onclick="handleCardClick(event, {{.ID}})">
           <div class="card-top">
             {{if .ThumbnailPath}}
@@ -484,11 +626,12 @@
                 <span>{{.Type}}</span>
                 {{if .Runtime}}<span class="sep">·</span><span>{{.Runtime}} min</span>{{end}}
                 {{if .TmdbRating}}<span class="sep">·</span><span class="card-rating">⭐ {{printf "%.1f" .TmdbRating}}</span>{{end}}
+                {{if gt .VersionCount 1}}<span class="sep">·</span><span class="badge-versions">📦 {{.VersionCount}} Versions</span>{{end}}
                 {{if eq .TmdbID 0}}<span class="sep">·</span><span class="badge-local">Local File</span>{{end}}
               </div>
               {{if .Genre}}
               <div class="card-genre">
-                {{range .GenreList}}<span>{{.}}</span>{{end}}
+                {{range .GenreList}}<span onclick="event.stopPropagation(); filterByGenre('{{.}}')">{{.}}</span>{{end}}
               </div>
               {{end}}
               {{if .Tagline}}<div class="card-tagline">"{{.Tagline}}"</div>{{end}}
@@ -508,6 +651,7 @@
               {{if .CastList}} · 🎭 {{.CastList}}{{end}}
             </div>
             <div class="card-actions">
+              <button onclick="event.stopPropagation(); playDirect({{.ID}})" class="action-btn play-btn" title="Stream Video">▶️</button>
               <button onclick="markWatched({{.ID}}, this)" class="action-btn watched-btn" title="Mark as watched">👁</button>
               <button onclick="showSimilar({{.ID}}, '{{.Title}}')" class="action-btn similar-btn" title="Find similar">🔍</button>
               <button onclick="undoStagedAction({{.ID}}, this)" class="action-btn undo-btn" title="Undo / Unstage">↩</button>
@@ -557,6 +701,12 @@
             <div id="detailTagline" class="detail-tagline">"Tagline"</div>
 
             <div class="detail-actions-bar">
+              <button id="detailPlayBtn" class="detail-btn play-btn" onclick="scrollToPlayerAndPlay()" style="background:var(--accent);color:#fff;border-color:var(--accent);">
+                <span>▶️</span> Stream Video
+              </button>
+              <button id="detailVlcBtn" class="detail-btn" onclick="playInExternalApp()">
+                <span>🍿</span> Play in VLC
+              </button>
               <button id="detailWatchedBtn" class="detail-btn watched-btn" onclick="toggleDetailWatched()">
                 <span>👁</span> <span id="detailWatchedBtnText">Mark Watched</span>
               </button>
@@ -582,6 +732,33 @@
 
       <div class="detail-body">
         <div class="detail-main-col">
+          <!-- In-Browser Video Stream Section -->
+          <div class="video-player-section" id="detailVideoSection">
+            <div class="video-player-header">
+              <h3 class="section-title" style="margin-bottom:0; border:none; padding:0;">🎬 In-Browser Stream</h3>
+              <div class="player-controls-strip">
+                <button class="detail-btn" onclick="playInExternalApp()" title="Open in VLC / Default Player">
+                  <span>🍿</span> VLC
+                </button>
+                <button class="detail-btn" onclick="toggleVideoFullscreen()" title="Fullscreen Video">
+                  <span>⛶</span> Fullscreen
+                </button>
+              </div>
+            </div>
+            <div class="video-wrapper">
+              <video id="movieVideoPlayer" controls preload="metadata" playsinline>
+                <source id="movieVideoSource" src="" type="video/mp4">
+                Your browser does not support HTML5 video streaming.
+              </video>
+            </div>
+          </div>
+
+          <!-- Versions Section -->
+          <div class="detail-section" id="detailVersionsSection" style="display:none;">
+            <h3 class="section-title">📦 Available Versions & Releases</h3>
+            <div id="detailVersionsList" class="versions-list"></div>
+          </div>
+
           <div class="detail-section">
             <h3 class="section-title">Overview</h3>
             <p id="detailOverview" class="detail-overview">Movie overview text...</p>
@@ -692,6 +869,12 @@ function initMediaStore() {
   document.querySelectorAll('.card').forEach(function(card) {
     var id = parseInt(card.dataset.id, 10);
     if (!id) return;
+    var versions = [];
+    try {
+      if (card.dataset.versions) {
+        versions = JSON.parse(card.dataset.versions);
+      }
+    } catch(e) {}
     MEDIA_STORE[id] = {
       id: id,
       title: card.dataset.title || '',
@@ -712,6 +895,8 @@ function initMediaStore() {
       file_size_mb: card.dataset.filesize || '',
       file_name: card.dataset.filename || '',
       tmdb_id: parseInt(card.dataset.tmdbid, 10) || 0,
+      version_count: parseInt(card.dataset.versioncount, 10) || (versions.length || 1),
+      versions: versions,
       watched: card.classList.contains('watched'),
       tags: []
     };
@@ -928,6 +1113,8 @@ function cardTemplate(c) {
   const watchedClass = c.watched ? ' watched' : '';
   const watchedBtn = c.watched ? ' is-watched' : '';
   const fileSizeMb = c.file_size ? (c.file_size / (1024 * 1024)).toFixed(1) : (c.file_size_mb ? c.file_size_mb : '0.0');
+  const versionsCount = c.version_count || (c.versions ? c.versions.length : 1);
+  const versionBadge = versionsCount > 1 ? '<span class="sep">·</span><span class="badge-versions">📦 ' + versionsCount + ' Versions</span>' : '';
 
   return '<div class="card' + watchedClass + '" data-type="' + escAttr(c.type) + '" data-title="' + escAttr(c.title) + '" data-id="' + c.id +
     '" data-rating="' + ratingTxt + '" data-year="' + (c.year || 0) + '" data-genre="' + escAttr(c.genre || '') +
@@ -936,6 +1123,7 @@ function cardTemplate(c) {
     '" data-runtime="' + (c.runtime || 0) + '" data-imdb="' + escAttr(c.imdb_id || '') + '" data-trailer="' + escAttr(c.trailer_url || '') +
     '" data-filepath="' + escAttr(c.current_file_path || c.original_file_path || '') + '" data-filesize="' + fileSizeMb +
     '" data-filename="' + escAttr(c.original_file_name || '') + '" data-tmdbid="' + (c.tmdb_id || 0) +
+    '" data-versioncount="' + versionsCount + '" data-versions="' + escAttr(JSON.stringify(c.versions || [])) +
     '" data-tagline="' + escAttr(c.tagline || '') + '" data-desc="' + escAttr(c.description || '') +
     '" onclick="handleCardClick(event, ' + c.id + ')">' +
     '<div class="card-top">' + thumb +
@@ -946,8 +1134,9 @@ function cardTemplate(c) {
           '<span>' + esc(c.type) + '</span>' +
           (c.runtime ? '<span class="sep">·</span><span>' + c.runtime + ' min</span>' : '') +
           (c.tmdb_rating ? '<span class="sep">·</span><span class="card-rating">⭐ ' + ratingTxt + '</span>' : '') +
+          versionBadge +
         '</div>' +
-        ((c.genre_list && c.genre_list.length) ? '<div class="card-genre">' + c.genre_list.map(function(g){return '<span>' + esc(g) + '</span>';}).join('') + '</div>' : '') +
+        ((c.genre_list && c.genre_list.length) ? '<div class="card-genre">' + c.genre_list.map(function(g){return '<span onclick="event.stopPropagation(); filterByGenre(\'' + escAttr(g) + '\')">' + esc(g) + '</span>';}).join('') + '</div>' : '') +
         (c.tagline ? '<div class="card-tagline">"' + esc(c.tagline) + '"</div>' : '') +
         (c.description ? '<div class="card-desc">' + esc(c.description) + '</div>' : '') +
       '</div>' +
@@ -967,6 +1156,7 @@ function cardTemplate(c) {
         (c.cast_list ? ' · 🎭 ' + esc(c.cast_list) : '') +
       '</div>' +
       '<div class="card-actions">' +
+        '<button onclick="event.stopPropagation(); playDirect(' + c.id + ')" class="action-btn play-btn" title="Stream Video">▶️</button>' +
         '<button onclick="markWatched(' + c.id + ', this)" class="action-btn watched-btn' + watchedBtn + '" title="Mark as watched">👁</button>' +
         '<button onclick="showSimilar(' + c.id + ', \'' + esc(c.title) + '\')" class="action-btn similar-btn" title="Find similar">🔍</button>' +
         '<button onclick="undoStagedAction(' + c.id + ', this)" class="action-btn undo-btn" title="Undo / Unstage">↩</button>' +
@@ -1047,6 +1237,8 @@ async function showDetailView(id) {
             file_size_mb: m.file_size ? (m.file_size / (1024 * 1024)).toFixed(1) : '',
             file_name: m.original_file_name,
             tmdb_id: m.tmdb_id,
+            version_count: (payload.versions && payload.versions.length) || (item.versions && item.versions.length) || 1,
+            versions: payload.versions || item.versions || [],
             watched: m.watched,
             tags: payload.tags || []
           };
@@ -1146,11 +1338,52 @@ async function showDetailView(id) {
     trailerLink.style.display = 'none';
   }
 
+  // Update Video Player Stream Source
+  var videoElem = document.getElementById('movieVideoPlayer');
+  var videoSource = document.getElementById('movieVideoSource');
+  if (videoElem && videoSource) {
+    videoElem.pause();
+    videoSource.src = API_BASE + '/api/stream/' + item.id;
+    videoElem.load();
+  }
+
+  // Render Versions if multiple exist
+  var versionsContainer = document.getElementById('detailVersionsList');
+  var versionsSection = document.getElementById('detailVersionsSection');
+  var allVersions = (item.versions && item.versions.length) ? item.versions : [];
+  if (allVersions.length > 1 && versionsContainer && versionsSection) {
+    versionsSection.style.display = 'block';
+    versionsContainer.innerHTML = allVersions.map(function(v) {
+      var isCurrent = v.id === item.id;
+      var currentBadge = isCurrent ? '<span style="color:var(--accent);font-weight:700;"> (Current)</span>' : '';
+      var switchBtn = !isCurrent ? '<button class="detail-btn" onclick="navigateToMedia(' + v.id + ')">Switch Version</button>' : '';
+      var trashBtn = '<button class="detail-btn delete-btn" onclick="deleteVersionFile(' + v.id + ', \'' + escAttr(v.title || item.title) + '\')">🗑 Trash</button>';
+      var vSize = v.file_size_mb ? parseFloat(v.file_size_mb).toFixed(1) + ' MB' : '';
+      return '<div class="version-card' + (isCurrent ? ' current' : '') + '">' +
+        '<div class="version-main">' +
+          '<div class="version-title">' + esc(v.file_name || v.file_path) + currentBadge + '</div>' +
+          '<div class="version-meta">' +
+            (v.year ? '<span>' + v.year + '</span>' : '') +
+            (vSize ? '<span>· ' + vSize + '</span>' : '') +
+            '<span style="font-family:monospace;font-size:0.7rem;overflow:hidden;text-overflow:ellipsis;" title="' + escAttr(v.file_path) + '">· ' + esc(v.file_path) + '</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="version-actions">' + switchBtn + trashBtn + '</div>' +
+      '</div>';
+    }).join('');
+  } else if (versionsSection) {
+    versionsSection.style.display = 'none';
+  }
+
   renderDetailTags(item.id);
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function showCatalogView() {
+  var videoElem = document.getElementById('movieVideoPlayer');
+  if (videoElem) {
+    videoElem.pause();
+  }
   document.getElementById('detailView').style.display = 'none';
   document.getElementById('catalogView').style.display = 'block';
   document.title = 'Movie CLI — Library';
@@ -1529,20 +1762,52 @@ function renderStagedBar() {
 
 async function deleteMedia(id, btn) {
   if (restRequired()) return;
-  if (!confirm('Stage removal of this item? (Files will NOT be deleted until you click Accept All)')) return;
+  var title = MEDIA_STORE[id] ? MEDIA_STORE[id].title : ('Item #' + id);
+  if (!confirm('Move "' + title + '" to your OS Recycle Bin / Trash immediately? This removes it from your library.')) return;
   try {
-    var r = await fetch(API_BASE + '/api/media/' + id, { method: 'DELETE' });
+    var r = await fetch(API_BASE + '/api/media/' + id + '?immediate=true', { method: 'DELETE' });
     if (!r.ok) {
       var errText = await r.text();
-      showToast('Action failed: ' + errText, true);
+      showToast('Deletion failed: ' + errText, true);
       return;
     }
     var card = btn ? btn.closest('.card') : document.querySelector('.card[data-id="' + id + '"]');
     if (card) {
-      card.classList.add('staged-delete');
+      card.style.transition = 'all 0.3s ease';
+      card.style.opacity = '0';
+      card.style.transform = 'scale(0.9)';
+      setTimeout(function() {
+        card.remove();
+        updateResultsInfo();
+      }, 300);
     }
-    showToast('Marked for trash (staged). Click Accept All to execute.');
-    await loadStagedActions();
+    delete MEDIA_STORE[id];
+    showToast('Moved to OS Trash Bin and removed from library');
+    if (currentDetailItem && currentDetailItem.id === id) {
+      navigateToCatalog();
+    }
+  } catch(e) {
+    showToast('Network error: ' + e.message, true);
+  }
+}
+
+async function deleteVersionFile(id, title) {
+  if (restRequired()) return;
+  if (!confirm('Move version "' + title + '" to your OS Recycle Bin / Trash?')) return;
+  try {
+    var r = await fetch(API_BASE + '/api/media/' + id + '?immediate=true', { method: 'DELETE' });
+    if (!r.ok) {
+      var errText = await r.text();
+      showToast('Deletion failed: ' + errText, true);
+      return;
+    }
+    showToast('Version moved to Trash');
+    var card = document.querySelector('.card[data-id="' + id + '"]');
+    if (card) card.remove();
+    delete MEDIA_STORE[id];
+    if (currentDetailItem) {
+      showDetailView(currentDetailItem.id);
+    }
   } catch(e) {
     showToast('Network error: ' + e.message, true);
   }
@@ -1684,6 +1949,85 @@ function showCopied(btn) {
   var orig = btn.innerHTML;
   btn.innerHTML = '<span>✅ Copied!</span>';
   setTimeout(function() { btn.innerHTML = orig; }, 2000);
+}
+
+function playDirect(id) {
+  navigateToMedia(id);
+  setTimeout(function() {
+    scrollToPlayerAndPlay();
+  }, 350);
+}
+
+function scrollToPlayerAndPlay() {
+  var videoSection = document.getElementById('detailVideoSection');
+  var video = document.getElementById('movieVideoPlayer');
+  if (videoSection) {
+    videoSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  if (video) {
+    video.play().catch(function(e) {
+      console.log('Playback deferred:', e);
+    });
+  }
+}
+
+function toggleVideoFullscreen() {
+  var video = document.getElementById('movieVideoPlayer');
+  if (!video) return;
+  if (video.requestFullscreen) {
+    video.requestFullscreen();
+  } else if (video.webkitRequestFullscreen) {
+    video.webkitRequestFullscreen();
+  } else if (video.msRequestFullscreen) {
+    video.msRequestFullscreen();
+  }
+}
+
+async function playInExternalApp() {
+  if (!currentDetailItem) return;
+  try {
+    var r = await fetch(API_BASE + '/api/play/' + currentDetailItem.id, { method: 'POST' });
+    if (r.ok) {
+      showToast('Opened in external media player!');
+    } else {
+      var err = await r.text();
+      showToast('Failed to open player: ' + err, true);
+    }
+  } catch(e) {
+    showToast('Network error launching player: ' + e.message, true);
+  }
+}
+
+function filterByGenre(genre) {
+  var sel = document.getElementById('genreFilter');
+  if (sel) {
+    sel.value = genre;
+  }
+  document.querySelectorAll('.cat-pill').forEach(function(b) {
+    var bText = b.textContent.replace(/[^a-zA-Z0-9-]/g, '').toLowerCase();
+    var gText = genre.replace(/[^a-zA-Z0-9-]/g, '').toLowerCase();
+    if (bText === gText) {
+      b.classList.add('active');
+    } else if (!genre && bText.includes('all')) {
+      b.classList.add('active');
+    } else {
+      b.classList.remove('active');
+    }
+  });
+  applyFilters();
+  if (window.location.hash && window.location.hash.startsWith('#/media/')) {
+    navigateToCatalog();
+  }
+}
+
+function selectGenrePill(genre, btn) {
+  document.querySelectorAll('.cat-pill').forEach(function(b) { b.classList.remove('active'); });
+  if (btn) btn.classList.add('active');
+  var sel = document.getElementById('genreFilter');
+  if (sel) {
+    sel.value = genre;
+  }
+  applyFilters();
 }
 
 init();

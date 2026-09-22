@@ -32,23 +32,37 @@ func (c *Client) SearchWithFallback(title string, year int) ([]SearchResult, err
 			return results, nil
 		}
 
-		// Relax year ± 1 (festival vs theatrical release year discrepancies)
-		for _, offset := range []int{1, -1} {
+		// Relax year ± 1 and ± 2 (festival vs theatrical release year discrepancies)
+		for _, offset := range []int{1, -1, 2, -2} {
 			if results, err := c.SearchMovie(title, year+offset); err == nil && len(results) > 0 {
 				return results, nil
 			}
+
 			if results, err := c.SearchTV(title, year+offset); err == nil && len(results) > 0 {
 				return results, nil
 			}
 		}
 	}
 
-	// Tier 2: SearchMulti with clean title alone (no year in query text string)
+	// Tier 2: SearchMovie with clean title alone (no year parameter)
+	if results, err := c.SearchMovie(title, 0); err == nil && len(results) > 0 {
+		if year > 0 {
+			ranked := rankResultsByYear(results, year)
+
+			return ranked, nil
+		}
+
+		return results, nil
+	}
+
+	// Tier 2b: SearchMulti with clean title alone (no year in query text string)
 	if results, err := c.SearchMulti(title); err == nil && len(results) > 0 {
 		if year > 0 {
 			ranked := rankResultsByYear(results, year)
+
 			return ranked, nil
 		}
+
 		return results, nil
 	} else if err != nil && !isEmptyResultErr(err) {
 		return nil, err

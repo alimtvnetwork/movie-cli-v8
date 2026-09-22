@@ -11,6 +11,7 @@ Master directory of architectural and execution plans.
 
 ## Completed Plans
 
+- [26-media-library-ui-poster-dedup-player-and-tvshows.md](completed/26-media-library-ui-poster-dedup-player-and-tvshows.md): Media library UI overhaul, poster fallback auto-heal, multi-version deduplication, in-browser streaming player, immediate trash-bin deletion, category quick pills, and TV show hierarchical grouping architecture.
 - [25-error-management-and-appfault-architecture.md](completed/25-error-management-and-appfault-architecture.md): Error management, structured AppError, Monadic Result wrappers, and Universal Response Envelope following 02-spec/03-error-manage.
 - [24-splitdb-diagnostics-report-and-service-ui.md](completed/24-splitdb-diagnostics-report-and-service-ui.md): Split-DB deep diagnostics, reports, web UI server banner, and command category discovery following GitMap.
 - [23-installer-postinstall-and-cli-ui-modernization.md](completed/23-installer-postinstall-and-cli-ui-modernization.md): Installer post-install verification, movie info cards, clean/move preview, and config/reset UI following GitMap.

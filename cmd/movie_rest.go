@@ -202,6 +202,30 @@ func buildRESTMux(database *db.DB) *http.ServeMux {
 	mux.HandleFunc("/api/system/reset", corsWrap(func(w http.ResponseWriter, r *http.Request) {
 		handleSystemReset(w, r, database)
 	}))
+	mux.HandleFunc("/api/stream/", corsWrap(func(w http.ResponseWriter, r *http.Request) {
+		path := strings.TrimPrefix(r.URL.Path, "/api/stream/")
+		id, err := strconv.ParseInt(path, 10, 64)
+
+		if err != nil {
+			writeRestError(w, http.StatusBadRequest, "INVALID_ID", "invalid media id")
+
+			return
+		}
+
+		handleVideoStream(w, r, database, id)
+	}))
+	mux.HandleFunc("/api/play/", corsWrap(func(w http.ResponseWriter, r *http.Request) {
+		path := strings.TrimPrefix(r.URL.Path, "/api/play/")
+		id, err := strconv.ParseInt(path, 10, 64)
+
+		if err != nil {
+			writeRestError(w, http.StatusBadRequest, "INVALID_ID", "invalid media id")
+
+			return
+		}
+
+		handleExternalPlay(w, r, database, id)
+	}))
 
 	return mux
 }

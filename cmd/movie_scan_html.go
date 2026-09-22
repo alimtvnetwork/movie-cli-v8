@@ -2,12 +2,15 @@
 package cmd
 
 import (
+	"encoding/json"
+	"fmt"
 	"html/template"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/alimtvnetwork/movie-cli-v8/cleaner"
 	"github.com/alimtvnetwork/movie-cli-v8/db"
 	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
 	"github.com/alimtvnetwork/movie-cli-v8/templates"
@@ -27,6 +30,15 @@ type htmlReportData struct {
 	Port          int
 }
 
+// htmlReportVersion represents an alternate file version of a movie item.
+type htmlReportVersion struct {
+	FilePath   string  `json:"file_path"`
+	FileName   string  `json:"file_name"`
+	ID         int64   `json:"id"`
+	FileSizeMb float64 `json:"file_size_mb"`
+	Year       int     `json:"year"`
+}
+
 // htmlReportItem represents a single media item in the HTML report.
 type htmlReportItem struct {
 	Title         string
@@ -43,7 +55,10 @@ type htmlReportItem struct {
 	FileName      string
 	TrailerURL    string
 	ImdbID        string
+	VersionsJSON  string
 	GenreList     []string
+	Versions      []htmlReportVersion
+	VersionCount  int
 	ID            int64
 	TmdbRating    float64
 	ImdbRating    float64
@@ -90,18 +105,95 @@ func writeHTMLReport(stats ScanStats) error {
 }
 
 func buildHTMLReportItems(media []db.Media) []htmlReportItem {
-	items := make([]htmlReportItem, 0, len(media))
+	itemMap := make(map[string]*htmlReportItem)
+	orderedKeys := make([]string, 0, len(media))
+
 	for i := range media {
-		items = append(items, toHTMLReportItem(&media[i]))
+		m := &media[i]
+		key := makeMediaGroupingKey(m)
+
+		ver := htmlReportVersion{
+			ID:         m.ID,
+			FilePath:   resolveMediaFilePath(m),
+			FileName:   m.OriginalFileName,
+			FileSizeMb: m.FileSizeMb,
+			Year:       m.Year,
+		}
+
+		existing, found := itemMap[key]
+
+		if found {
+			existing.Versions = append(existing.Versions, ver)
+			existing.VersionCount = len(existing.Versions)
+
+			isExistingMissingMeta := existing.TmdbID == 0 || existing.ThumbnailPath == ""
+			isNewHasMeta := m.TmdbID > 0 || m.ThumbnailPath != ""
+
+			if isExistingMissingMeta && isNewHasMeta {
+				updated := toHTMLReportItem(m)
+				updated.Versions = existing.Versions
+				updated.VersionCount = len(existing.Versions)
+				*existing = updated
+			}
+
+			continue
+		}
+
+		item := toHTMLReportItem(m)
+		item.Versions = []htmlReportVersion{ver}
+		item.VersionCount = 1
+
+		itemMap[key] = &item
+		orderedKeys = append(orderedKeys, key)
 	}
 
-	return items
+	result := make([]htmlReportItem, 0, len(orderedKeys))
+
+	for _, k := range orderedKeys {
+		it := *itemMap[k]
+
+		if b, err := json.Marshal(it.Versions); err == nil {
+			it.VersionsJSON = string(b)
+		}
+
+		result = append(result, it)
+	}
+
+	return result
+}
+
+func resolveMediaFilePath(m *db.Media) string {
+	if m.CurrentFilePath != "" {
+		return m.CurrentFilePath
+	}
+
+	return m.OriginalFilePath
+}
+
+func makeMediaGroupingKey(m *db.Media) string {
+	if m.TmdbID > 0 {
+		return fmt.Sprintf("tmdb:%d", m.TmdbID)
+	}
+
+	slug := cleaner.ToSlug(m.CleanTitle)
+
+	if slug == "" {
+		slug = cleaner.ToSlug(m.Title)
+	}
+
+	if slug == "" {
+		return fmt.Sprintf("file:%s", m.OriginalFilePath)
+	}
+
+	return fmt.Sprintf("title:%s", slug)
 }
 
 func toHTMLReportItem(m *db.Media) htmlReportItem {
-	filePath := m.CurrentFilePath
-	if filePath == "" {
-		filePath = m.OriginalFilePath
+	filePath := resolveMediaFilePath(m)
+	thumb := normalizeExistingThumb(m.ThumbnailPath)
+
+	if thumb == "" && m.TmdbID > 0 {
+		thumb = constructTmdbThumbCandidate(nil, m)
 	}
 
 	return htmlReportItem{
@@ -120,7 +212,7 @@ func toHTMLReportItem(m *db.Media) htmlReportItem {
 		TmdbRating:    m.TmdbRating,
 		ImdbRating:    m.ImdbRating,
 		Runtime:       m.Runtime,
-		ThumbnailPath: normalizeExistingThumb(m.ThumbnailPath),
+		ThumbnailPath: thumb,
 		BackdropPath:  m.BackdropPath,
 		FilePath:      filePath,
 		FileName:      m.OriginalFileName,

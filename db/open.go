@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"os"
 	"path/filepath"
+	"strings"
 
 	_ "modernc.org/sqlite"
 
@@ -34,7 +35,39 @@ func exeDir() (string, error) {
 		return "", appfault.Wrap("cannot resolve symlinks for executable", err)
 	}
 
-	return filepath.Dir(exe), nil
+	dir := filepath.Dir(exe)
+	isTemp := strings.Contains(dir, "go-build") ||
+		strings.Contains(dir, "Temp") ||
+		strings.Contains(dir, "tmp") ||
+		strings.Contains(dir, "cache")
+
+	if isTemp {
+		localAppData := os.Getenv("LOCALAPPDATA")
+
+		if localAppData != "" {
+			appDataDir := filepath.Join(localAppData, "movie-cli")
+
+			if _, errStat := os.Stat(filepath.Join(appDataDir, "data", "movie.db")); errStat == nil {
+				return appDataDir, nil
+			}
+		}
+
+		homeDir, errHome := os.UserHomeDir()
+
+		if errHome == nil {
+			userDir := filepath.Join(homeDir, ".movie")
+
+			if _, errStat := os.Stat(filepath.Join(userDir, "data", "movie.db")); errStat == nil {
+				return userDir, nil
+			}
+		}
+
+		if localAppData != "" {
+			return filepath.Join(localAppData, "movie-cli"), nil
+		}
+	}
+
+	return dir, nil
 }
 
 // Open opens (or creates) the SQLite database and runs migrations.

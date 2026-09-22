@@ -228,30 +228,49 @@ func tryFetchThumbnailOnDemand(database *db.DB, thumbDir string, fileName string
 	}
 
 	apiKey, _ := database.GetConfig("TmdbApiKey")
+
+	if apiKey == "" {
+		apiKey, _ = database.GetConfig("tmdb_api_key")
+	}
+
 	token, _ := database.GetConfig("TmdbToken")
 
+	if token == "" {
+		token, _ = database.GetConfig("tmdb_token")
+	}
+
 	hasKey := len(apiKey) > 0 || len(token) > 0
+
 	if !hasKey {
 		return false
 	}
 
 	client := tmdb.NewClientWithToken(apiKey, token)
+	posterPath := ""
+
 	imgs, err := client.GetMovieImages(tmdbID)
-	if err != nil {
-		return false
+	if err == nil && imgs != nil && len(imgs.Posters) > 0 {
+		posterPath = imgs.Posters[0].FilePath
 	}
 
-	if imgs == nil {
-		return false
+	if posterPath == "" {
+		details, dErr := client.GetMovieDetails(tmdbID)
+
+		if dErr == nil && details != nil && details.PosterPath != "" {
+			posterPath = details.PosterPath
+		}
 	}
 
-	hasPoster := len(imgs.Posters) > 0
-	if !hasPoster {
-		return false
+	if posterPath == "" {
+		tvDetails, tvErr := client.GetTVDetails(tmdbID)
+
+		if tvErr == nil && tvDetails != nil && tvDetails.PosterPath != "" {
+			posterPath = tvDetails.PosterPath
+		}
 	}
 
-	posterPath := imgs.Posters[0].FilePath
 	hasPosterPath := len(posterPath) > 0
+
 	if !hasPosterPath {
 		return false
 	}
@@ -260,6 +279,7 @@ func tryFetchThumbnailOnDemand(database *db.DB, thumbDir string, fileName string
 	destPath := filepath.Join(thumbDir, fileName)
 
 	dlErr := client.DownloadPoster(posterPath, destPath)
+
 	if dlErr != nil {
 		return false
 	}

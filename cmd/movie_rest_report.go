@@ -4,6 +4,7 @@ package cmd
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"net/http"
 	"strconv"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/alimtvnetwork/movie-cli-v8/db"
 	"github.com/alimtvnetwork/movie-cli-v8/errlog"
+	"github.com/alimtvnetwork/movie-cli-v8/pkg/trashbin"
 	"github.com/alimtvnetwork/movie-cli-v8/templates"
 )
 
@@ -29,7 +31,7 @@ func handleMediaByID(w http.ResponseWriter, r *http.Request, database *db.DB) {
 	case http.MethodGet:
 		handleMediaGet(w, database, id)
 	case http.MethodDelete:
-		handleMediaDelete(w, database, id)
+		handleMediaDelete(w, r, database, id)
 	case http.MethodPatch:
 		handleMediaPatch(MediaPatchRequest{Writer: w, Request: r, Database: database, ID: id})
 	default:
@@ -49,11 +51,45 @@ func handleMediaGet(w http.ResponseWriter, database *db.DB, id int64) {
 	writeJSON(w, m)
 }
 
-func handleMediaDelete(w http.ResponseWriter, database *db.DB, id int64) {
+func handleMediaDelete(w http.ResponseWriter, r *http.Request, database *db.DB, id int64) {
 	media, getErr := database.GetMediaByID(id)
 
 	if getErr != nil || media == nil {
 		writeRestError(w, http.StatusNotFound, "MEDIA_NOT_FOUND", "media item not found")
+
+		return
+	}
+
+	isImmediate := r.URL.Query().Get("immediate") == "true" || r.URL.Query().Get("immediate") == "1"
+
+	if isImmediate {
+		filePath := media.CurrentFilePath
+
+		if filePath == "" {
+			filePath = media.OriginalFilePath
+		}
+
+		if filePath != "" {
+			_ = trashbin.MoveToTrash(filePath)
+		}
+
+		_ = database.SoftDeleteMedia(id)
+		removeRmSidecar(media)
+
+		snap, _ := db.MediaToJSON(media)
+		_, _ = database.InsertActionSimple(db.ActionSimpleInput{
+			FileAction: db.FileActionDelete,
+			MediaID:    media.ID,
+			Snapshot:   snap,
+			Detail:     fmt.Sprintf("Moved to trash via Web UI: %s (%d)", media.Title, media.Year),
+		})
+
+		writeJSON(w, map[string]interface{}{
+			"status":  "deleted",
+			"id":      id,
+			"title":   media.Title,
+			"message": "Moved to OS trash bin and removed from library",
+		})
 
 		return
 	}
@@ -141,17 +177,20 @@ func serveHTMLReport(w http.ResponseWriter, database *db.DB, port int) {
 
 func buildReportData(database *db.DB, items []db.Media, port int) htmlReportData {
 	movies, tv := 0, 0
-	reportItems := make([]htmlReportItem, 0, len(items))
+
 	for i := range items {
 		m := &items[i]
+
 		if m.Type == string(db.MediaTypeMovie) {
 			movies++
 		}
+
 		if m.Type != string(db.MediaTypeMovie) {
 			tv++
 		}
-		reportItems = append(reportItems, buildHTMLReportItem(database, *m))
 	}
+
+	reportItems := buildHTMLReportItems(items)
 
 	return htmlReportData{
 		ScannedFolder: "Library",
@@ -161,44 +200,6 @@ func buildReportData(database *db.DB, items []db.Media, port int) htmlReportData
 		TVShows:       tv,
 		Port:          port,
 		Items:         reportItems,
-	}
-}
-
-func buildHTMLReportItem(database *db.DB, m db.Media) htmlReportItem {
-	var genres []string
-	if m.Genre != "" {
-		genres = append(genres, splitGenres(m.Genre)...)
-	}
-
-	thumbSrc := resolveMediaThumbnail(database, &m)
-	filePath := m.CurrentFilePath
-	if filePath == "" {
-		filePath = m.OriginalFilePath
-	}
-
-	return htmlReportItem{
-		ID:            m.ID,
-		TmdbID:        m.TmdbID,
-		Title:         m.Title,
-		CleanTitle:    m.CleanTitle,
-		Year:          m.Year,
-		Type:          m.Type,
-		Genre:         m.Genre,
-		GenreList:     genres,
-		Director:      m.Director,
-		CastList:      m.CastList,
-		Description:   m.Description,
-		Tagline:       m.Tagline,
-		TmdbRating:    m.TmdbRating,
-		ImdbRating:    m.ImdbRating,
-		Runtime:       m.Runtime,
-		ThumbnailPath: thumbSrc,
-		BackdropPath:  m.BackdropPath,
-		FilePath:      filePath,
-		FileName:      m.OriginalFileName,
-		FileSizeMb:    m.FileSizeMb,
-		TrailerURL:    m.TrailerURL,
-		ImdbID:        m.ImdbID,
 	}
 }
 

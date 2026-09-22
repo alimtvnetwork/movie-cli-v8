@@ -34,16 +34,33 @@ func isAlreadyScanned(ctx *ScanContext, vf videoFile, result cleaner.Result) boo
 			continue
 		}
 
-		if ctx.IsTableOutput {
-			printScanTableRow(buildMediaTableRow(ctx.TotalFiles, &db.Media{
-				OriginalFileName: vf.Name,
-				CleanTitle:       result.CleanTitle,
-				Year:             result.Year,
-				Type:             result.Type,
-			}, "skipped"))
+		isMissingMetadata := (existing[i].TmdbID == 0 || existing[i].ThumbnailPath == "") && ctx.HasTMDb
+
+		if isMissingMetadata {
+			if !ctx.IsTableOutput {
+				fmt.Println("     🔄 Incomplete metadata in database, auto-enriching from TMDb...")
+			}
+
+			enrichFromTMDb(ctx, &existing[i], result)
+
+			if updateErr := ctx.Database.UpdateMediaByID(&existing[i]); updateErr != nil {
+				errlog.Warn("DB update error auto-enriching '%s': %v", result.CleanTitle, updateErr)
+			}
+
+			writeScanJSON(ctx, &existing[i])
 		}
 
-		if !ctx.IsTableOutput {
+		if ctx.IsTableOutput {
+			status := "skipped"
+
+			if isMissingMetadata {
+				status = "enriched"
+			}
+
+			printScanTableRow(buildMediaTableRow(ctx.TotalFiles, &existing[i], status))
+		}
+
+		if !ctx.IsTableOutput && !isMissingMetadata {
 			fmt.Println("     ⏩ Already in database, skipping")
 		}
 
