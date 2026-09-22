@@ -164,18 +164,18 @@ curl -fsSL https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v8/main/get
 
 ### Install a specific version (pinned)
 
-Installs exactly the version in the URL — never auto-upgrades. Use this for CI pipelines, Dockerfiles, reproducible setups, or when you need to roll back. Replace `v2.338.0` with the [release tag](https://github.com/alimtvnetwork/movie-cli-v8/releases) you want.
+Installs exactly the version in the URL — never auto-upgrades. Use this for CI pipelines, Dockerfiles, reproducible setups, or when you need to roll back. Replace `v2.339.0` with the [release tag](https://github.com/alimtvnetwork/movie-cli-v8/releases) you want.
 
 **Windows (PowerShell)**
 
 ```powershell
-irm https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.338.0/install.ps1 | iex
+irm https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.339.0/install.ps1 | iex
 ```
 
 **Linux / macOS**
 
 ```bash
-curl -fsSL https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.338.0/install.sh | bash
+curl -fsSL https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.339.0/install.sh | bash
 ```
 
 > **Which one should I use?** Use **latest** for personal machines so you stay current. Use **pinned** anywhere reproducibility matters — the pinned script is hard-locked to the version in the URL and will install that exact tag forever, even after newer releases ship. ([contract spec](spec/12-ci-cd-pipeline/06-version-pinned-install-scripts.md))
@@ -924,27 +924,27 @@ curl -fsSL https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v8/main/get
 
 `get.{ps1,sh}` first checks `releases/latest/download/install.{ps1,sh}`. If a release is published it installs the pre-built binary; otherwise it falls back to a source-build from `main`, prints exactly which path it took, and tells the maintainer how to publish a release so future installs skip the build step.
 
-#### Install Movie CLI v2.338.0
+#### Install Movie CLI v2.339.0
 
 To pin your repository to this exact version, run the following one-liner:
-Unix/Bash: `curl -sL https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v8/v2.338.0/install.sh | bash -s -- ".ai-memory/prompts" "v2.338.0"`
-PowerShell: `Invoke-WebRequest -Uri https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v8/v2.338.0/install.ps1 -OutFile install.ps1; .\install.ps1 -TargetDir ".ai-memory/prompts" -Version "v2.338.0"`
+Unix/Bash: `curl -sL https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v8/v2.339.0/install.sh | bash -s -- ".ai-memory/prompts" "v2.339.0"`
+PowerShell: `Invoke-WebRequest -Uri https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v8/v2.339.0/install.ps1 -OutFile install.ps1; .\install.ps1 -TargetDir ".ai-memory/prompts" -Version "v2.339.0"`
 
 ### Pinned to a specific release
 
 **Windows (PowerShell)**
 
 ```powershell
-irm https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.338.0/install.ps1 | iex
+irm https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.339.0/install.ps1 | iex
 ```
 
 **Linux / macOS (Bash)**
 
 ```bash
-curl -fsSL https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.338.0/install.sh | bash
+curl -fsSL https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.339.0/install.sh | bash
 ```
 
-The script attached to each release has the version baked in (`PINNED_VERSION="v2.338.0"`) and will install **exactly** that tag — it never falls back to "latest" and never delegates to the bootstrap scripts. Replace `v2.338.0` with any [published release](https://github.com/alimtvnetwork/movie-cli-v8/releases).
+The script attached to each release has the version baked in (`PINNED_VERSION="v2.339.0"`) and will install **exactly** that tag — it never falls back to "latest" and never delegates to the bootstrap scripts. Replace `v2.339.0` with any [published release](https://github.com/alimtvnetwork/movie-cli-v8/releases).
 
 > **When to use which**
 > - **Latest** — personal machines, demos, "just give me the newest one"

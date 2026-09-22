@@ -1,3 +1,9 @@
+## v2.339.0 — 2026-09-22 (Structured appfault architecture, monadic Result containers, and response envelope)
+
+**Scope:** Version bump. Structured appfault architecture, monadic Result containers, and response envelope.
+
+---
+
 ## v2.338.0 — 2026-09-22 (Automated gofmt formatting on bump, release notes generator, and GitMap database ignore)
 
 **Scope:** Version bump. Automated gofmt formatting on bump, release notes generator, and GitMap database ignore.
