@@ -32,10 +32,11 @@ func runMovieLsTable(database *db.DB) {
 
 	if len(allMedia) == 0 {
 		fmt.Println(emptyLsMessage(mode))
+
 		return
 	}
 
-	fmt.Println()
+	printScanFolders(database)
 	printLsTableHeader()
 
 	for i := range allMedia {

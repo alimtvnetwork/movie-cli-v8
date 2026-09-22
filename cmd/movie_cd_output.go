@@ -4,12 +4,21 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/mattn/go-isatty"
 )
 
 func isTerminalOutput() bool {
 	fd := os.Stdout.Fd()
+	isTerm := isatty.IsTerminal(fd) || isatty.IsCygwinTerminal(fd)
+
+	return isTerm
+}
+
+func isTerminalInput() bool {
+	fd := os.Stdin.Fd()
 	isTerm := isatty.IsTerminal(fd) || isatty.IsCygwinTerminal(fd)
 
 	return isTerm
@@ -106,4 +115,33 @@ func printCdSetupInstructions() {
 	fmt.Println("  mcd tvshows        Jump directly to TV Shows folder")
 	fmt.Println("  mcd 1              Jump to folder #1")
 	fmt.Println("  mcd Inception      Jump to containing folder of Inception")
+}
+
+func promptCdSelection(suggestions []CdSuggestion) *CdSuggestion {
+	if len(suggestions) == 0 {
+		return nil
+	}
+
+	if !isTerminalInput() {
+		return nil
+	}
+
+	fmt.Fprintf(os.Stderr, "Select number (1-%d) to navigate [or press Enter to cancel]: ", len(suggestions))
+
+	var input string
+	_, err := fmt.Fscanln(os.Stdin, &input)
+
+	if err != nil {
+		return nil
+	}
+
+	num, parseErr := strconv.Atoi(strings.TrimSpace(input))
+
+	if parseErr != nil || num < 1 || num > len(suggestions) {
+		return nil
+	}
+
+	selected := suggestions[num-1]
+
+	return &selected
 }

@@ -15,6 +15,7 @@ var (
 	cdAliasFlag string
 	cdSetupFlag bool
 	cdListFlag  bool
+	cdPickFlag  bool
 )
 
 var movieCdCmd = &cobra.Command{
@@ -29,14 +30,17 @@ Features:
   • Match by movie title (e.g., 'Inception' jumps to its containing folder)
   • Match by numeric index from 'movie cd' or 'movie ls'
   • Explicit alias navigation via -A / --alias
+  • Interactive picker when multiple targets match or no args are passed
   • Shell integration via 'mcd' helper (see 'movie cd --setup')
 
 Examples:
-  movie cd                       List all available scanned root folders
+  movie cd                       Interactive picker of all scanned root folders
   movie cd movies                Print path of the 'movies' root folder
   movie cd 1                     Print path of folder #1
   movie cd "Inception"           Print directory containing Inception
   movie cd -A movies             Jump using explicit alias
+  movie cd --pick                Force interactive target picker
+  movie cd --list                List all available targets without picker
   movie cd --setup               Show shell 'mcd' function configuration`,
 	Args: cobra.MaximumNArgs(1),
 	Run:  runMovieCd,
@@ -46,6 +50,7 @@ func init() {
 	movieCdCmd.Flags().StringVarP(&cdAliasFlag, "alias", "A", "", "jump by folder alias")
 	movieCdCmd.Flags().BoolVar(&cdSetupFlag, "setup", false, "display shell 'mcd' configuration")
 	movieCdCmd.Flags().BoolVar(&cdListFlag, "list", false, "list all scanned folders and targets")
+	movieCdCmd.Flags().BoolVar(&cdPickFlag, "pick", false, "force interactive target picker")
 }
 
 func runMovieCd(cmd *cobra.Command, args []string) {
@@ -76,13 +81,20 @@ func runMovieCd(cmd *cobra.Command, args []string) {
 		query = ""
 	}
 
-	executeCdResolution(database, query, cdAliasFlag, cdListFlag)
+	executeCdResolution(database, query, cdAliasFlag, cdListFlag, cdPickFlag)
 }
 
-func executeCdResolution(database *db.DB, query, alias string, isListRequested bool) {
-	if isListRequested {
+func executeCdResolution(database *db.DB, query, alias string, isListRequested, isPickRequested bool) {
+	if isListRequested && !isPickRequested {
 		suggestions := buildAllSuggestions(database)
 		printCdSuggestions(suggestions)
+
+		return
+	}
+
+	if isPickRequested {
+		suggestions := buildAllSuggestions(database)
+		handleCdSuggestions(suggestions)
 
 		return
 	}
@@ -91,7 +103,7 @@ func executeCdResolution(database *db.DB, query, alias string, isListRequested b
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "❌ Navigation target not found: %v\n", err)
-		fmt.Fprintln(os.Stderr, "💡 Run 'movie cd' or 'movie ls --folders' to see available folders.")
+		fmt.Fprintln(os.Stderr, "💡 Run 'movie cd --list' or 'movie ls --folders' to see available folders.")
 		os.Exit(1)
 	}
 
@@ -102,10 +114,24 @@ func executeCdResolution(database *db.DB, query, alias string, isListRequested b
 	}
 
 	if len(suggestions) > 0 {
-		printCdSuggestions(suggestions)
+		handleCdSuggestions(suggestions)
 
 		return
 	}
 
 	fmt.Fprintln(os.Stderr, "📭 No scanned folders found. Run 'movie scan <folder>' first.")
+}
+
+func handleCdSuggestions(suggestions []CdSuggestion) {
+	printCdSuggestions(suggestions)
+
+	chosen := promptCdSelection(suggestions)
+
+	if chosen != nil {
+		printCdResult(&CdTargetResult{
+			TargetDirectory: chosen.Path,
+			MatchName:       chosen.Name,
+			MatchType:       chosen.Type,
+		})
+	}
 }
