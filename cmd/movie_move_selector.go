@@ -101,17 +101,25 @@ func ensureDestDir(dest string) bool {
 }
 
 func previewMoveTargets(database *db.DB, ids []int64, dest string) {
-	fmt.Printf("📦 %d media will be moved → %s\n\n", len(ids), dest)
-	limit := len(ids)
-	if limit > 20 {
-		limit = 20
-	}
+	isColor := isColorEnabled()
+	bullet := colorText("●", ansiCyan, isColor)
+
+	fmt.Println()
+	fmt.Println(colorText("  ── Move Operation Preview ──", ansiCyan, isColor))
+	fmt.Printf("  %s %-16s %d items\n", bullet, colorText("Matched Media:", ansiDim, isColor), len(ids))
+	fmt.Printf("  %s %-16s %s\n\n", bullet, colorText("Destination:", ansiDim, isColor), colorText(dest, ansiCyan, isColor))
+
+	limit := minInt(len(ids), 20)
+
 	for i := 0; i < limit; i++ {
 		printRmRow(database, ids[i])
 	}
+
 	if len(ids) > limit {
-		fmt.Printf("  … and %d more\n", len(ids)-limit)
+		fmt.Printf("  %s\n", colorText(fmt.Sprintf("… and %d more", len(ids)-limit), ansiDim, isColor))
 	}
+
+	fmt.Println()
 }
 
 const moveConfirmThreshold = 5
@@ -120,52 +128,75 @@ func confirmSelectorMove(count int) bool {
 	if moveAssumeYes {
 		return true
 	}
+
 	if count < moveConfirmThreshold {
 		return true
 	}
+
 	fmt.Printf("\nProceed with move of %d items? [y/N]: ", count)
 	scanner := bufio.NewScanner(os.Stdin)
 	if !scanner.Scan() {
 		return false
 	}
+
 	confirm := strings.ToLower(strings.TrimSpace(scanner.Text()))
 	if confirm != "y" && confirm != "yes" {
 		fmt.Println("❌ Canceled.")
+
 		return false
 	}
+
 	return true
 }
 
 func applySelectorMove(database *db.DB, ids []int64, dest string) {
+	isColor := isColorEnabled()
 	success := 0
+
 	for _, id := range ids {
-		if applySingleSelectorMove(database, id, dest) {
+		if applySingleSelectorMove(database, id, dest, isColor) {
 			success++
 		}
 	}
-	fmt.Printf("\n✅ Moved %d/%d media.\n", success, len(ids))
+
+	fmt.Printf("\n  %s Moved %d/%d media to %s.\n\n", colorText("[ok]", ansiGreen, isColor), success, len(ids), dest)
+
 	if success > 0 {
 		regenerateReports(database)
 	}
 }
 
-func applySingleSelectorMove(database *db.DB, id int64, dest string) bool {
+func applySingleSelectorMove(database *db.DB, id int64, dest string, isColor bool) bool {
 	m, err := database.GetMediaByID(id)
 	if err != nil {
 		errlog.Warn("move: load #%d: %v", id, err)
+
 		return false
 	}
+
 	if m.CurrentFilePath == "" {
 		errlog.Warn("move: #%d has no current path; skipped", id)
+
 		return false
 	}
+
 	newPath := filepath.Join(dest, filepath.Base(m.CurrentFilePath))
 	if mvErr := MoveFile(m.CurrentFilePath, newPath); mvErr != nil {
 		errlog.Error("move: #%d %v", id, mvErr)
+
 		return false
 	}
+
 	updateMoveDB(database, m, newPath)
-	fmt.Printf("  ✅ #%d  %s → %s\n", id, m.CurrentFilePath, newPath)
+	arrow := colorText("→", ansiCyan, isColor)
+
+	fmt.Printf("  %s #%-4d %s %s %s\n",
+		colorText("[ok]", ansiGreen, isColor),
+		id,
+		colorText(m.CurrentFilePath, ansiDim, isColor),
+		arrow,
+		colorText(newPath, ansiWhite, isColor))
+
 	return true
 }
 

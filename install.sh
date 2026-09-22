@@ -361,8 +361,11 @@ DB_PATH="$DATA_DIR/movie.db"
 CACHE_DB_PATH="$DATA_DIR/cache.db"
 
 echo ""
-printf "  ${GRAY}────────────────────────────────────────────────────────────${NC}\n"
-printf "  ${CYAN}Installation Summary${NC}\n"
+printf "  ${CYAN}┌──────────────────────────────────────────────────────────┐${NC}\n"
+printf "  ${CYAN}│   🎬 MOVIE CLI — Installation Summary                    │${NC}\n"
+printf "  ${CYAN}└──────────────────────────────────────────────────────────┘${NC}\n"
+echo ""
+printf "  ${CYAN}── Installation Details ──${NC}\n"
 if [ -n "$PREV_VERSION" ] && [ "$PREV_VERSION" != "$VERSION" ]; then
     printf "  ${BOLD}● Version:        ${NC}%s ${GREEN}(upgraded from %s)${NC}\n" "$VERSION" "$PREV_VERSION"
 else
@@ -371,8 +374,12 @@ fi
 printf "  ${BOLD}● Binary:         ${NC}%s/%s\n" "$INSTALL_DIR" "$BINARY_NAME"
 printf "  ${BOLD}● Install Dir:    ${NC}%s\n" "$INSTALL_DIR"
 printf "  ${BOLD}● Data Folder:    ${NC}%s\n" "$USER_DATA"
-printf "  ${BOLD}● Library Store:  ${NC}%s (SQLite Split-DB)\n" "$DB_PATH"
-printf "  ${BOLD}● Cache Store:    ${NC}%s (SQLite WAL mode)\n" "$CACHE_DB_PATH"
+echo ""
+printf "  ${CYAN}── SQLite Split-DB Stores ──${NC}\n"
+printf "  ${BOLD}● Primary Store:  ${NC}%s (Persistent Library, WAL)\n" "$DB_PATH"
+printf "  ${BOLD}● Cache Store:    ${NC}%s (Ephemeral Cache, WAL)\n" "$CACHE_DB_PATH"
+echo ""
+printf "  ${CYAN}── Shell Integration ──${NC}\n"
 
 if [ "$NO_PATH" -eq 1 ]; then
     printf "  ${BOLD}● PATH Status:    ${NC}${YELLOW}skipped (--no-path)${NC}\n"
@@ -386,10 +393,9 @@ else
             ;;
     esac
 fi
-printf "  ${GRAY}────────────────────────────────────────────────────────────${NC}\n"
 
 echo ""
-printf "  ${CYAN}System Diagnostics:${NC}\n"
+printf "  ${CYAN}── System Diagnostics ──${NC}\n"
 if [ -x "$INSTALL_DIR/$BINARY_NAME" ]; then
     VER_OUT="$("$INSTALL_DIR/$BINARY_NAME" version 2>&1 | head -1 || true)"
     printf "    ${GREEN}[ok]   version      ${NC}%s\n" "$VER_OUT"
@@ -417,16 +423,15 @@ else
 fi
 
 echo ""
-printf "  ${GRAY}────────────────────────────────────────────────────────────${NC}\n"
-printf "  ${CYAN}Quick Start Commands:${NC}\n"
+printf "  ${CYAN}── Quick Start Commands ──${NC}\n"
 printf "    ${YELLOW}%-22s${NC} %s\n" "movie scan <folder>" "Scan folder, enrich metadata & generate web report"
 printf "    ${YELLOW}%-22s${NC} %s\n" "movie ls" "List indexed movies and TV series in library"
+printf "    ${YELLOW}%-22s${NC} %s\n" "movie stats" "Display library statistics & Split-DB storage"
 printf "    ${YELLOW}%-22s${NC} %s\n" "movie info <title>" "Query TMDb and inspect media metadata"
-printf "    ${YELLOW}%-22s${NC} %s\n" "movie ui" "Launch local web dashboard in browser"
 printf "    ${YELLOW}%-22s${NC} %s\n" "movie doctor" "Diagnose environment and database health"
-printf "    ${YELLOW}%-22s${NC} %s\n" "movie db" "Inspect multi-tier Split-DB statistics"
+printf "    ${YELLOW}%-22s${NC} %s\n" "movie db" "Inspect multi-tier Split-DB architecture"
+printf "    ${YELLOW}%-22s${NC} %s\n" "movie ui" "Launch local web dashboard in browser"
 printf "    ${YELLOW}%-22s${NC} %s\n" "movie help" "Discover full command suite"
-printf "  ${GRAY}────────────────────────────────────────────────────────────${NC}\n"
 echo ""
-ok "Installation complete! Run 'movie doctor' or 'movie --help' to get started."
+ok "Movie CLI is ready to use! Run 'movie doctor' or 'movie help' to get started."
 echo ""

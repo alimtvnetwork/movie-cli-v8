@@ -397,8 +397,11 @@ function Write-InstallSummary([string]$version, [string]$binPath, [string]$insta
     $cacheDbPath = Join-Path $userData "data\cache.db"
 
     Write-Host ""
-    Write-Host "  ────────────────────────────────────────────────────────────" -ForegroundColor DarkGray
-    Write-Host "  Installation Summary" -ForegroundColor Cyan
+    Write-Host "  ┌──────────────────────────────────────────────────────────┐" -ForegroundColor Cyan
+    Write-Host "  │   🎬 MOVIE CLI — Installation Summary                    │" -ForegroundColor Cyan
+    Write-Host "  └──────────────────────────────────────────────────────────┘" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "  ── Installation Details ──" -ForegroundColor Cyan
     if ($prevVersion -and $prevVersion -ne $version) {
         Write-Host "  ● Version:        $version " -ForegroundColor White -NoNewline
         Write-Host "(upgraded from $prevVersion)" -ForegroundColor Green
@@ -408,18 +411,20 @@ function Write-InstallSummary([string]$version, [string]$binPath, [string]$insta
     Write-Host "  ● Binary:         $binPath" -ForegroundColor White
     Write-Host "  ● Install Dir:    $installDir" -ForegroundColor White
     Write-Host "  ● Data Folder:    $userData" -ForegroundColor White
-    Write-Host "  ● Library Store:  $dbPath (SQLite Split-DB)" -ForegroundColor White
-    Write-Host "  ● Cache Store:    $cacheDbPath (SQLite WAL mode)" -ForegroundColor White
+    Write-Host ""
+    Write-Host "  ── SQLite Split-DB Stores ──" -ForegroundColor Cyan
+    Write-Host "  ● Primary Store:  $dbPath (Persistent Library, WAL)" -ForegroundColor White
+    Write-Host "  ● Cache Store:    $cacheDbPath (Ephemeral Cache, WAL)" -ForegroundColor White
+    Write-Host ""
+    Write-Host "  ── Shell Integration ──" -ForegroundColor Cyan
 
     if ($isNoPath) {
         Write-Host "  ● PATH Status:    skipped (-NoPath)" -ForegroundColor Yellow
-        Write-Host "  ────────────────────────────────────────────────────────────" -ForegroundColor DarkGray
         return
     }
 
     Write-Host "  ● PATH Status:    active in current session & User PATH" -ForegroundColor Green
     Write-Host "  ● PATH Target:    $($pathResult.Target) ($($pathResult.Status))" -ForegroundColor DarkGray
-    Write-Host "  ────────────────────────────────────────────────────────────" -ForegroundColor DarkGray
 }
 
 function Invoke-InstallVerification([string]$binPath, [string]$installDir, [bool]$isNoPath) {
@@ -427,7 +432,7 @@ function Invoke-InstallVerification([string]$binPath, [string]$installDir, [bool
     $dbDir = Join-Path $userData "data"
 
     Write-Host ""
-    Write-Host "  System Diagnostics:" -ForegroundColor Cyan
+    Write-Host "  ── System Diagnostics ──" -ForegroundColor Cyan
 
     # 1. Version
     if (Test-Path $binPath) {
@@ -592,23 +597,23 @@ Write-InstallSummary $installedVersion $binPath $resolvedDir $pathResult $NoPath
 Invoke-InstallVerification $binPath $resolvedDir $NoPath.IsPresent
 
 Write-Host ""
-Write-Host "  ────────────────────────────────────────────────────────────" -ForegroundColor DarkGray
-Write-Host "  Quick Start Commands:" -ForegroundColor Cyan
+Write-Host "  ── Quick Start Commands ──" -ForegroundColor Cyan
 Write-Host "    movie scan <folder>   " -ForegroundColor Yellow -NoNewline
 Write-Host "Scan folder, enrich metadata & generate web report" -ForegroundColor White
 Write-Host "    movie ls              " -ForegroundColor Yellow -NoNewline
 Write-Host "List indexed movies and TV series in library" -ForegroundColor White
+Write-Host "    movie stats           " -ForegroundColor Yellow -NoNewline
+Write-Host "Display library statistics & Split-DB storage" -ForegroundColor White
 Write-Host "    movie info <title>    " -ForegroundColor Yellow -NoNewline
 Write-Host "Query TMDb and inspect media metadata" -ForegroundColor White
-Write-Host "    movie ui              " -ForegroundColor Yellow -NoNewline
-Write-Host "Launch local web dashboard in browser" -ForegroundColor White
 Write-Host "    movie doctor          " -ForegroundColor Yellow -NoNewline
 Write-Host "Diagnose environment and database health" -ForegroundColor White
 Write-Host "    movie db              " -ForegroundColor Yellow -NoNewline
-Write-Host "Inspect multi-tier Split-DB statistics" -ForegroundColor White
+Write-Host "Inspect multi-tier Split-DB architecture" -ForegroundColor White
+Write-Host "    movie ui              " -ForegroundColor Yellow -NoNewline
+Write-Host "Launch local web dashboard in browser" -ForegroundColor White
 Write-Host "    movie help            " -ForegroundColor Yellow -NoNewline
 Write-Host "Discover full command suite" -ForegroundColor White
-Write-Host "  ────────────────────────────────────────────────────────────" -ForegroundColor DarkGray
 Write-Host ""
-Write-OK "Installation complete! Run 'movie doctor' or 'movie --help' to get started."
+Write-OK "Movie CLI is ready to use! Run 'movie doctor' or 'movie help' to get started."
 Write-Host ""

@@ -219,7 +219,7 @@ if [ "$__movie_eval_mode" -eq 1 ]; then
             rm -f "$__movie_hint_file"
         fi
         if command -v movie >/dev/null 2>&1; then
-            printf "\n  \033[1;32m✓\033[0m \033[1mmovie\033[0m activated on PATH for this shell: %s\n\n" "$(command -v movie)"
+            printf "\n  \033[1;32m[ok]\033[0m   \033[1;36mmovie\033[0m CLI activated on PATH: \033[2m%s\033[0m\n\n" "$(command -v movie)"
         fi
     fi
 else

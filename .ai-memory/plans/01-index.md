@@ -11,6 +11,7 @@ Master directory of architectural and execution plans.
 
 ## Completed Plans
 
+- [23-installer-postinstall-and-cli-ui-modernization.md](completed/23-installer-postinstall-and-cli-ui-modernization.md): Installer post-install verification, movie info cards, clean/move preview, and config/reset UI following GitMap.
 - [22-cli-ui-and-quick-installers-polish.md](completed/22-cli-ui-and-quick-installers-polish.md): Polish quick installers/uninstallers, scan summary cards, stats dashboard, and search/history tables following GitMap.
 - [21-installer-ui-splitdb-overhaul.md](completed/21-installer-ui-splitdb-overhaul.md): Overhaul installer scripts UI, CLI headers/version, terminal tables/doctor, and Split-DB architecture following GitMap.
 - [12-terminal-ui-tmdb-rotation-and-search-enhancements.md](completed/12-terminal-ui-tmdb-rotation-and-search-enhancements.md): Terminal UI overhaul, TMDb multi-token rotation, relaxed search & Google fallback, SQLite lock fix, and HTML report.

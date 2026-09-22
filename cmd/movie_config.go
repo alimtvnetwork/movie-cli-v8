@@ -38,60 +38,104 @@ func runMovieConfig(cmd *cobra.Command, args []string) {
 	database, err := db.Open()
 	if err != nil {
 		errlog.Error(msgDatabaseError, err)
+
 		return
 	}
+
 	defer database.Close()
 
 	if len(args) == 0 {
 		showAllConfig(database)
+
 		return
 	}
 
 	action := args[0]
+	isColor := isColorEnabled()
 
 	switch action {
 	case "get":
-		if len(args) < 2 {
-			fmt.Fprintln(os.Stderr, "❌ Usage: movie config get <key>")
-			return
-		}
-		val, getErr := database.GetConfig(args[1])
-		if getErr != nil {
-			fmt.Printf("  %s = (not set)\n", args[1])
-			return
-		}
-		fmt.Printf("  %s = %s\n", args[1], val)
+		handleConfigGet(database, args, isColor)
 
 	case "set":
-		if len(args) < 3 {
-			fmt.Fprintln(os.Stderr, "❌ Usage: movie config set <key> <value>")
-			return
-		}
-		key, value := args[1], args[2]
-		if setErr := database.SetConfig(key, value); setErr != nil {
-			errlog.Error("Config set error: %v", setErr)
-			return
-		}
-		fmt.Printf("  ✅ %s = %s\n", key, value)
+		handleConfigSet(database, args, isColor)
 
 	default:
 		errlog.Error("Unknown action: %s. Use 'get' or 'set'.", action)
 	}
 }
 
+func handleConfigGet(database *db.DB, args []string, isColor bool) {
+	if len(args) < 2 {
+		fmt.Fprintln(os.Stderr, "❌ Usage: movie config get <key>")
+
+		return
+	}
+
+	key := args[1]
+	val, getErr := database.GetConfig(key)
+	bullet := colorText("●", ansiCyan, isColor)
+
+	if getErr != nil {
+		fmt.Printf("  %s %s = %s\n", bullet, colorText(key, ansiDim, isColor), colorText("(not set)", ansiDim, isColor))
+
+		return
+	}
+
+	fmt.Printf("  %s %s = %s\n", bullet, colorText(key, ansiDim, isColor), colorText(val, ansiWhite, isColor))
+}
+
+func handleConfigSet(database *db.DB, args []string, isColor bool) {
+	if len(args) < 3 {
+		fmt.Fprintln(os.Stderr, "❌ Usage: movie config set <key> <value>")
+
+		return
+	}
+
+	key, value := args[1], args[2]
+	if setErr := database.SetConfig(key, value); setErr != nil {
+		errlog.Error("Config set error: %v", setErr)
+
+		return
+	}
+
+	fmt.Printf("  %s Set %s = %s\n", colorText("[ok]", ansiGreen, isColor), colorText(key, ansiWhite, isColor), colorText(value, ansiCyan, isColor))
+}
+
 func showAllConfig(database *db.DB) {
-	fmt.Println("⚙️  Configuration:")
-	fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+	isColor := isColorEnabled()
+	bullet := colorText("●", ansiCyan, isColor)
+
+	fmt.Println()
+	fmt.Println(colorText("  ┌──────────────────────────────────────────────────────────┐", ansiCyan, isColor))
+	fmt.Println(colorText("  │  ⚙️  Movie CLI Configuration Settings                     │", ansiCyan, isColor))
+	fmt.Println(colorText("  └──────────────────────────────────────────────────────────┘", ansiCyan, isColor))
+	fmt.Println()
+
+	fmt.Println(colorText("  ── Active Settings ──", ansiCyan, isColor))
 
 	keys := []string{"MoviesDir", "TvDir", "ArchiveDir", "ScanDir", "TmdbApiKey", "TmdbToken", "PageSize"}
 	for _, key := range keys {
-		val, err := database.GetConfig(key)
-		if err != nil {
-			val = "(not set)"
-		}
-		if (key == "TmdbApiKey" || key == "TmdbToken") && len(val) > 8 {
-			val = val[:4] + "..." + val[len(val)-4:]
-		}
-		fmt.Printf("  %-15s = %s\n", key, val)
+		val := formatConfigValue(database, key, isColor)
+
+		fmt.Printf("  %s %-16s %s\n", bullet, colorText(key+":", ansiDim, isColor), val)
 	}
+
+	fmt.Println()
+}
+
+func formatConfigValue(database *db.DB, key string, isColor bool) string {
+	val, err := database.GetConfig(key)
+	if err != nil {
+		return colorText("(not set)", ansiDim, isColor)
+	}
+
+	hasSecret := (key == "TmdbApiKey" || key == "TmdbToken") && len(val) > 8
+	if hasSecret {
+		masked := val[:4] + "••••••••" + val[len(val)-4:]
+
+		return colorText(masked, ansiYellow, isColor)
+	}
+
+	return colorText(val, ansiWhite, isColor)
 }

@@ -41,9 +41,12 @@ func discoverResetTargets(database *db.DB, opts ResetOptions) []ResetTarget {
 
 func collectDataTargets(basePath string, isKeepConfig bool) []ResetTarget {
 	targets := []ResetTarget{
-		{Path: filepath.Join(basePath, "movie.db"), Description: "SQLite database"},
-		{Path: filepath.Join(basePath, "movie.db-wal"), Description: "SQLite WAL file"},
-		{Path: filepath.Join(basePath, "movie.db-shm"), Description: "SQLite SHM file"},
+		{Path: filepath.Join(basePath, "movie.db"), Description: "Primary SQLite database"},
+		{Path: filepath.Join(basePath, "movie.db-wal"), Description: "Primary SQLite WAL file"},
+		{Path: filepath.Join(basePath, "movie.db-shm"), Description: "Primary SQLite SHM file"},
+		{Path: filepath.Join(basePath, "cache.db"), Description: "Ephemeral Cache database"},
+		{Path: filepath.Join(basePath, "cache.db-wal"), Description: "Ephemeral Cache WAL file"},
+		{Path: filepath.Join(basePath, "cache.db-shm"), Description: "Ephemeral Cache SHM file"},
 		{Path: filepath.Join(basePath, "thumbnails"), Description: "Cached thumbnail images"},
 		{Path: filepath.Join(basePath, "json"), Description: "JSON sidecar metadata"},
 		{Path: filepath.Join(basePath, "log"), Description: "System error logs"},
@@ -153,15 +156,25 @@ func reinitResetDatabase() {
 
 func confirmResetInteractive(targets []ResetTarget) bool {
 	existingCount := 0
+
 	for _, t := range targets {
 		if t.HasTarget {
 			existingCount++
 		}
 	}
 
-	fmt.Printf("\n⚠️  WARNING: System reset will permanently wipe %d targets (database, caches, logs).\n", existingCount)
-	fmt.Println("    Your media files will NOT be deleted.")
-	fmt.Print("\nAre you sure you want to proceed? [y/N]: ")
+	isColor := isColorEnabled()
+
+	fmt.Println()
+	fmt.Println(colorText("  ┌──────────────────────────────────────────────────────────┐", ansiYellow, isColor))
+	fmt.Println(colorText("  │  ⚠️  WARNING: SYSTEM RESET                                │", ansiYellow, isColor))
+	fmt.Println(colorText("  └──────────────────────────────────────────────────────────┘", ansiYellow, isColor))
+	fmt.Printf("\n  System reset will permanently wipe %d targets in Split-DB stores:\n", existingCount)
+	fmt.Println("    • movie.db (Primary persistent library)")
+	fmt.Println("    • cache.db (Ephemeral cache store)")
+	fmt.Println("    • thumbnails, logs, and sidecar metadata")
+	fmt.Println("\n  Your actual media files on disk will NEVER be deleted.")
+	fmt.Print("\n  Are you sure you want to proceed? [y/N]: ")
 
 	reader := bufio.NewReader(os.Stdin)
 	ans, _ := reader.ReadString('\n')
@@ -171,24 +184,34 @@ func confirmResetInteractive(targets []ResetTarget) bool {
 }
 
 func printResetDryRun(targets []ResetTarget) {
-	fmt.Println("\n🔍 System Reset — Dry Run Preview:")
+	isColor := isColorEnabled()
+	bullet := colorText("●", ansiCyan, isColor)
+
+	fmt.Println()
+	fmt.Println(colorText("  ── System Reset — Dry Run Preview ──", ansiCyan, isColor))
+
 	for _, t := range targets {
-		status := "NOT FOUND"
+		status := colorText("[missing]", ansiDim, isColor)
+
 		if t.HasTarget {
-			status = "WILL WIPE"
+			status = colorText("[wipe]   ", ansiYellow, isColor)
 		}
 
-		fmt.Printf("  • [%s] %s (%s)\n", status, t.Path, t.Description)
+		fmt.Printf("  %s %s %-30s %s\n", bullet, status, colorText(t.Description+":", ansiDim, isColor), t.Path)
 	}
 
-	fmt.Println("\nDry run complete. No files were removed.")
+	fmt.Printf("\n  %s Dry run complete. No files were removed.\n\n", colorText("[ok]", ansiGreen, isColor))
 }
 
 func printResetSummary(wipedCount int, opts ResetOptions) {
-	fmt.Printf("\n✅ System reset complete. Successfully wiped %d targets.\n", wipedCount)
+	isColor := isColorEnabled()
+
+	fmt.Println()
+	fmt.Printf("  %s System reset complete. Successfully wiped %d targets.\n", colorText("[ok]", ansiGreen, isColor), wipedCount)
+
 	if opts.IsKeepConfig {
-		fmt.Println("   Preserved user configuration settings.")
+		fmt.Printf("  %s Preserved user configuration settings.\n", colorText("•", ansiCyan, isColor))
 	}
 
-	fmt.Println("   Database reinitialized with fresh schema.")
+	fmt.Printf("  %s SQLite Split-DB stores reinitialized with fresh schemas.\n\n", colorText("•", ansiCyan, isColor))
 }

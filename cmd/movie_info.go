@@ -71,13 +71,7 @@ func displayMediaInfo(m *db.Media, source string) {
 	case string(db.OutputFormatTable):
 		printMediaDetailTable(m)
 	default:
-		label := "📚 Found in local library:"
-		if source == "tmdb" {
-			label = "✅ Saved to your library!"
-		}
-		fmt.Println(label)
-		fmt.Println()
-		printMediaDetail(m)
+		printMediaDetailCard(m, source)
 	}
 }
 
