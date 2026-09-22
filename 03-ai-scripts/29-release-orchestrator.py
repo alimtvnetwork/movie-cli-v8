@@ -293,7 +293,7 @@ def stage_and_commit_release(next_version, scope, dry_run=False):
         NODE_BUMP_SCRIPT,
         PYTHON_BUMP_SCRIPT,
         AI_BUMP_SCRIPT,
-        REPO_ROOT / ".gitmap" / "release",
+        REPO_ROOT / ".ai-memory" / "release",
         REPO_ROOT / "public" / "health-score.json",
         REPO_ROOT / "src" / "data" / "specTree.json",
         REPO_ROOT / "02-spec" / "19-main-worker-service" / "98-changelog.md",
@@ -442,7 +442,11 @@ def orchestrate_release(tier="minor", explicit_version=None, scope=None, dry_run
         # STEP 5: Put that commit back to the main branch (and push)
         merge_release_to_main(release_branch, main_branch=main_branch, dry_run=dry_run)
 
-        is_push_enabled = push and not dry_run
+        is_push_enabled = False
+        if push:
+            if not dry_run:
+                is_push_enabled = True
+
         if is_push_enabled:
             push_release(release_branch, tag_name, main_branch=main_branch, dry_run=dry_run)
 

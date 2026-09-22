@@ -325,20 +325,20 @@ curl -fsSL https://github.com/{owner_repo}/releases/download/v{next_version}/ins
     print(f"[*] Updated readme.md version pins -> v{next_version}")
 
 
-def update_changelogs(next_version, scope, today_str, dry_run=False):
-    """Prepends release entries to CHANGELOG.md / changelog.md."""
+def update_changelogs(next_version, scope, today_str, bullets=None, dry_run=False):
+    """Prepends release entries to CHANGELOG.md / changelog.md and writes release notes."""
     owner_repo = get_owner_repo()
     cl_target = CHANGELOG_MD if CHANGELOG_MD.is_file() else CHANGELOG_LOWER
 
-    bullets = []
-    if scope:
-        bullets.append(f"- **{scope}**")
-    bullets.extend([
-        "- **Binary Release Installers (`install.ps1`, `install.sh`)**: Modeled after GitMap, transitioned from legacy source compilation to official binary release downloads with SHA-256 verification against `checksums.txt`, persistent user PATH updates, and smart upgrade detection.",
-        "- **Quick Installers & Clean Uninstallers**: Added `install-quick.ps1`, `install-quick.sh`, `uninstall-quick.ps1`, and `uninstall-quick.sh` supporting fast interactive installation and complete uninstallation.",
-        "- **Release Workflow Contract Verification (`.github/workflows/release.yml`)**: Automated dry-run validation (`dist/install.sh --dry-run`, `dist/install.ps1 -DryRun`), release asset staging for quick scripts, and enhanced release notes.",
-    ])
-    bullets_md = "\n".join(bullets)
+    entry_bullets = []
+    if bullets:
+        entry_bullets.extend(bullets)
+    elif scope:
+        entry_bullets.append(f"- **{scope}**")
+    else:
+        entry_bullets.append(f"- **Release v{next_version}**")
+
+    bullets_md = "\n".join(entry_bullets)
 
     entry_header = f"""## v{next_version}
 
@@ -376,6 +376,40 @@ curl -fsSL https://github.com/{owner_repo}/releases/download/v{next_version}/ins
                     f.write(cl_content)
 
                 print(f"[*] Prepended changelog entry in {cl_target.name} -> v{next_version}")
+
+    # Generate dedicated release notes artifact for GitHub Release
+    release_dir = REPO_ROOT / ".ai-memory" / "release"
+    release_dir.mkdir(parents=True, exist_ok=True)
+    notes_file = release_dir / f"release-notes-v{next_version}.md"
+    notes_content = f"""## Quick Install v{next_version}
+
+### Windows (PowerShell)
+
+```powershell
+irm https://github.com/{owner_repo}/releases/download/v{next_version}/install.ps1 | iex
+```
+
+### Unix / Linux / macOS (Bash)
+
+```bash
+curl -fsSL https://github.com/{owner_repo}/releases/download/v{next_version}/install.sh | bash
+```
+
+---
+
+## What's Changed in v{next_version}
+
+### Added / Changed — {scope}
+
+{bullets_md}
+"""
+    if dry_run:
+        print(f"[DRY RUN] Would write release notes to {notes_file.relative_to(REPO_ROOT)}")
+    else:
+        with open(notes_file, "w", encoding="utf-8", newline="\n") as f:
+            f.write(notes_content)
+
+        print(f"[*] Generated release notes -> {notes_file.relative_to(REPO_ROOT)}")
 
     if SPEC19_CHANGELOG.is_file():
         with open(SPEC19_CHANGELOG, "r", encoding="utf-8") as f:
@@ -415,7 +449,7 @@ def run_repo_sync_if_available(dry_run=False):
         print(f"[!] Warning running npm run sync: {e}")
 
 
-def execute_bump(tier="minor", explicit_version=None, scope=None, dry_run=False):
+def execute_bump(tier="minor", explicit_version=None, scope=None, bullets=None, dry_run=False):
     """Main bump execution logic."""
     current_ver = read_canonical_version()
 
@@ -435,7 +469,7 @@ def execute_bump(tier="minor", explicit_version=None, scope=None, dry_run=False)
     update_package_json(next_ver, dry_run=dry_run)
     update_template_version(next_ver, dry_run=dry_run)
     update_readme_pins(current_ver, next_ver, dry_run=dry_run)
-    update_changelogs(next_ver, bump_scope, today_str, dry_run=dry_run)
+    update_changelogs(next_ver, bump_scope, today_str, bullets=bullets, dry_run=dry_run)
     run_repo_sync_if_available(dry_run=dry_run)
 
     print(f"[OK] Successfully bumped version to {next_ver}")
@@ -468,6 +502,20 @@ def parse_arguments():
         help="One-line description/scope of the release",
     )
     parser.add_argument(
+        "-b",
+        "--bullet",
+        dest="bullets",
+        action="append",
+        default=None,
+        help="Individual changelog bullet point (can specify multiple times)",
+    )
+    parser.add_argument(
+        "--bullets-file",
+        dest="bullets_file",
+        default=None,
+        help="Path to file containing markdown bullet points",
+    )
+    parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Simulate the bump without modifying files",
@@ -484,10 +532,21 @@ def main():
         sys.stderr.reconfigure(encoding="utf-8")
 
     args = parse_arguments()
+
+    bullets = args.bullets or []
+    if args.bullets_file:
+        bf_path = Path(args.bullets_file)
+        if bf_path.is_file():
+            lines = [l.strip() for l in bf_path.read_text(encoding="utf-8").splitlines() if l.strip()]
+            bullets.extend(lines)
+
+    resolved_bullets = bullets if bullets else None
+
     execute_bump(
         tier=args.tier,
         explicit_version=args.explicit_version,
         scope=args.scope,
+        bullets=resolved_bullets,
         dry_run=args.dry_run,
     )
 

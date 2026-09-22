@@ -1,3 +1,9 @@
+## v2.337.0 — 2026-09-22 (GitMap CI/CD runner parity, zero-storage workflows, and canonical prompts/skills sync)
+
+**Scope:** Version bump. GitMap CI/CD runner parity, zero-storage workflows, and canonical prompts/skills sync.
+
+---
+
 ## v2.336.0 — 2026-09-20 (movie detail page, thumbnail reuse in scan, and hybrid image resolution)
 
 **Scope:** Version bump. movie detail page, thumbnail reuse in scan, and hybrid image resolution.
