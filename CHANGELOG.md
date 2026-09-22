@@ -1,5 +1,26 @@
 # Changelog
 
+## v2.340.0
+
+### Added / Changed
+Implement movie cd with GitMap-style jump targets, clean path stdout, and shell mcd setup
+Implement movie alias (list, set, remove, show, suggest) for folder shortcuts
+Enhance movie ls with --folders card showing root folders, counts, quick jump, and web ui commands
+Enhance movie ui to launch scoped to specific folder, alias, or index from anywhere
+
+### Quick Install Movie CLI v2.340.0
+
+**Windows (PowerShell):**
+```powershell
+irm https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.340.0/install.ps1 | iex
+```
+
+**Linux / macOS (Bash):**
+```bash
+curl -fsSL https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.340.0/install.sh | bash
+```
+
+
 ## v2.339.0
 
 ### Added / Changed

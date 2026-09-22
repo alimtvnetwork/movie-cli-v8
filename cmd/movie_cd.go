@@ -1,10 +1,9 @@
-// movie_cd.go — movie cd [folder] — print scanned folder path for shell cd
+// movie_cd.go — movie cd [target] — GitMap-style quick navigation for folders and movies.
 package cmd
 
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -12,97 +11,101 @@ import (
 	"github.com/alimtvnetwork/movie-cli-v8/errlog"
 )
 
+var (
+	cdAliasFlag string
+	cdSetupFlag bool
+	cdListFlag  bool
+)
+
 var movieCdCmd = &cobra.Command{
-	Use:   "cd [folder-name]",
-	Short: "Print the path of a scanned folder for quick navigation",
-	Long: `Prints the full path of a previously scanned folder so you can navigate
-to it in your terminal.
+	Use:     "cd [folder-or-movie]",
+	Aliases: []string{"go"},
+	Short:   "Navigate to a scanned folder or movie directory",
+	Long: `Prints the full path of a scanned root folder or movie directory so you can
+navigate to it instantly in your terminal.
 
-Usage with shell:
-  cd $(movie cd Movies)          # Jump to the folder matching "Movies"
-  cd $(movie cd)                 # Jump to the most recently scanned folder
-
-Without arguments, lists all known scan folders with numbers for selection.
+Features:
+  • Match by folder name or derived alias (e.g., 'movies', 'tvshows')
+  • Match by movie title (e.g., 'Inception' jumps to its containing folder)
+  • Match by numeric index from 'movie cd' or 'movie ls'
+  • Explicit alias navigation via -A / --alias
+  • Shell integration via 'mcd' helper (see 'movie cd --setup')
 
 Examples:
-  movie cd                       List all scanned folders
-  movie cd Movies                Print path matching "Movies"
-  movie cd 1                     Print path of folder #1 from list`,
+  movie cd                       List all available scanned root folders
+  movie cd movies                Print path of the 'movies' root folder
+  movie cd 1                     Print path of folder #1
+  movie cd "Inception"           Print directory containing Inception
+  movie cd -A movies             Jump using explicit alias
+  movie cd --setup               Show shell 'mcd' function configuration`,
 	Args: cobra.MaximumNArgs(1),
 	Run:  runMovieCd,
 }
 
-func init() {}
+func init() {
+	movieCdCmd.Flags().StringVarP(&cdAliasFlag, "alias", "A", "", "jump by folder alias")
+	movieCdCmd.Flags().BoolVar(&cdSetupFlag, "setup", false, "display shell 'mcd' configuration")
+	movieCdCmd.Flags().BoolVar(&cdListFlag, "list", false, "list all scanned folders and targets")
+}
 
 func runMovieCd(cmd *cobra.Command, args []string) {
-	database, err := db.Open()
-	if err != nil {
-		errlog.Error(msgDatabaseError, err)
+	if cdSetupFlag {
+		printCdSetupInstructions()
+
 		return
 	}
+
+	database, err := db.Open()
+
+	if err != nil {
+		errlog.Error(msgDatabaseError, err)
+
+		return
+	}
+
 	defer database.Close()
 
-	folders, err := database.ListDistinctScanFolders()
+	query := ""
+
+	if len(args) > 0 {
+		query = args[0]
+	}
+
+	if query == "list" {
+		cdListFlag = true
+		query = ""
+	}
+
+	executeCdResolution(database, query, cdAliasFlag, cdListFlag)
+}
+
+func executeCdResolution(database *db.DB, query, alias string, isListRequested bool) {
+	if isListRequested {
+		suggestions := buildAllSuggestions(database)
+		printCdSuggestions(suggestions)
+
+		return
+	}
+
+	res, suggestions, err := resolveCdTarget(database, query, alias)
+
 	if err != nil {
-		errlog.Error(msgDatabaseError, err)
-		return
-	}
-
-	if len(folders) == 0 {
-		fmt.Fprintln(os.Stderr, "📭 No scanned folders found. Run 'movie scan <folder>' first.")
-		return
-	}
-
-	if len(args) == 0 {
-		listScanFolders(folders)
-		return
-	}
-
-	matchScanFolder(args[0], folders)
-}
-
-func listScanFolders(folders []string) {
-	fmt.Fprintln(os.Stderr, "📂 Scanned folders:")
-	fmt.Fprintln(os.Stderr, "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-	for i, f := range folders {
-		fmt.Fprintf(os.Stderr, "  %d. %s\n", i+1, f)
-	}
-	fmt.Fprintln(os.Stderr)
-	fmt.Fprintln(os.Stderr, "💡 Usage: cd $(movie cd <name-or-number>)")
-}
-
-func matchScanFolder(query string, folders []string) {
-	// Try as a number first
-	if num := 0; true {
-		_, scanErr := fmt.Sscanf(query, "%d", &num)
-		if scanErr == nil && num > 0 && num <= len(folders) {
-			fmt.Print(folders[num-1])
-			return
-		}
-	}
-
-	// Try as a substring match (case-insensitive)
-	queryLower := strings.ToLower(query)
-	var matches []string
-	for _, f := range folders {
-		if strings.Contains(strings.ToLower(f), queryLower) {
-			matches = append(matches, f)
-		}
-	}
-
-	switch len(matches) {
-	case 0:
-		fmt.Fprintf(os.Stderr, "❌ No scanned folder matches '%s'\n", query)
-		fmt.Fprintln(os.Stderr, "Run 'movie cd' to see all scanned folders.")
-		os.Exit(1)
-	case 1:
-		fmt.Print(matches[0])
-	default:
-		fmt.Fprintln(os.Stderr, "⚠️  Multiple matches:")
-		for i, m := range matches {
-			fmt.Fprintf(os.Stderr, "  %d. %s\n", i+1, m)
-		}
-		fmt.Fprintln(os.Stderr, "\n💡 Be more specific or use: cd $(movie cd <number>)")
+		fmt.Fprintf(os.Stderr, "❌ Navigation target not found: %v\n", err)
+		fmt.Fprintln(os.Stderr, "💡 Run 'movie cd' or 'movie ls --folders' to see available folders.")
 		os.Exit(1)
 	}
+
+	if res != nil {
+		printCdResult(res)
+
+		return
+	}
+
+	if len(suggestions) > 0 {
+		printCdSuggestions(suggestions)
+
+		return
+	}
+
+	fmt.Fprintln(os.Stderr, "📭 No scanned folders found. Run 'movie scan <folder>' first.")
 }

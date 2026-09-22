@@ -1,3 +1,9 @@
+## v2.340.0 — 2026-09-22 (Add movie cd navigation, folder aliasing, ls root folders, and web ui shortcuts)
+
+**Scope:** Version bump. Add movie cd navigation, folder aliasing, ls root folders, and web ui shortcuts.
+
+---
+
 ## v2.339.0 — 2026-09-22 (Structured appfault architecture, monadic Result containers, and response envelope)
 
 **Scope:** Version bump. Structured appfault architecture, monadic Result containers, and response envelope.

@@ -50,6 +50,13 @@ func (d *DB) createCoreTables() error {
 		UpdatedAt    TEXT NOT NULL DEFAULT (datetime('now'))
 	);
 
+	CREATE TABLE IF NOT EXISTS FolderAlias (
+		AliasId      INTEGER PRIMARY KEY AUTOINCREMENT,
+		AliasName    TEXT NOT NULL UNIQUE,
+		FolderPath   TEXT NOT NULL,
+		CreatedAt    TEXT NOT NULL DEFAULT (datetime('now'))
+	);
+
 	CREATE TABLE IF NOT EXISTS ScanHistory (
 		ScanHistoryId INTEGER PRIMARY KEY AUTOINCREMENT,
 		ScanFolderId  INTEGER NOT NULL,

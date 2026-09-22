@@ -31,7 +31,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:39",
+      "last_run_at": "2026-09-22T20:44:53",
       "needs_run": false
     },
     "cmd.TestExitCodeValues": {
@@ -47,7 +47,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:41",
+      "last_run_at": "2026-09-22T20:44:53",
       "needs_run": false
     },
     "cmd.TestExitLabels": {
@@ -63,7 +63,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:41",
+      "last_run_at": "2026-09-22T20:44:48",
       "needs_run": false
     },
     "cmd.TestExitWithCodeSilentOnSuccess": {
@@ -79,7 +79,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:41",
+      "last_run_at": "2026-09-22T20:44:50",
       "needs_run": false
     },
     "cmd.TestExitWithCodePropagatesNonZero": {
@@ -95,7 +95,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:43",
+      "last_run_at": "2026-09-22T20:44:55",
       "needs_run": false
     },
     "cmd.TestColorText": {
@@ -111,7 +111,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:43",
+      "last_run_at": "2026-09-22T20:44:50",
       "needs_run": false
     },
     "cmd.TestIsColorEnabled_NoColorEnv": {
@@ -127,7 +127,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:41",
+      "last_run_at": "2026-09-22T20:44:50",
       "needs_run": false
     },
     "cmd.TestIsColorEnabled_DumbTerminal": {
@@ -143,7 +143,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:38",
+      "last_run_at": "2026-09-22T20:44:50",
       "needs_run": false
     },
     "cmd.TestCountScopeSkipped": {
@@ -159,7 +159,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:42",
+      "last_run_at": "2026-09-22T20:44:50",
       "needs_run": false
     },
     "cmd.TestBuildConditionSQL_Simple": {
@@ -175,7 +175,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:41",
+      "last_run_at": "2026-09-22T20:44:52",
       "needs_run": false
     },
     "cmd.TestBuildConditionSQL_AndOr": {
@@ -191,7 +191,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:36",
+      "last_run_at": "2026-09-22T20:44:53",
       "needs_run": false
     },
     "cmd.TestBuildConditionSQL_Aliases": {
@@ -207,7 +207,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:40",
+      "last_run_at": "2026-09-22T20:44:46",
       "needs_run": false
     },
     "cmd.TestBuildConditionSQL_Genre": {
@@ -223,7 +223,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:38",
+      "last_run_at": "2026-09-22T20:44:51",
       "needs_run": false
     },
     "cmd.TestBuildConditionSQL_SizeSuffix": {
@@ -239,7 +239,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:40",
+      "last_run_at": "2026-09-22T20:44:50",
       "needs_run": false
     },
     "cmd.TestBuildConditionSQL_Errors": {
@@ -255,7 +255,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:36",
+      "last_run_at": "2026-09-22T20:44:55",
       "needs_run": false
     },
     "cmd.TestPopout_FlattensNestedMedia": {
@@ -271,7 +271,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:41",
+      "last_run_at": "2026-09-22T20:44:52",
       "needs_run": false
     },
     "cmd.TestPopout_DiscoverAllSubdirsExcludesTempDir": {
@@ -287,7 +287,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:42",
+      "last_run_at": "2026-09-22T20:44:50",
       "needs_run": false
     },
     "cmd.TestPopout_FolderHasMediaClassification": {
@@ -303,7 +303,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:40",
+      "last_run_at": "2026-09-22T20:44:52",
       "needs_run": false
     },
     "cmd.TestPopout_CompactsNonMediaFoldersIntoTemp": {
@@ -319,7 +319,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:44",
+      "last_run_at": "2026-09-22T20:44:48",
       "needs_run": false
     },
     "cmd.TestResolveTargetDir_DefaultsToCwdWhenNoArg": {
@@ -335,7 +335,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:41",
+      "last_run_at": "2026-09-22T20:44:55",
       "needs_run": false
     },
     "cmd.TestResolveTargetDir_ExpandsHomeWhenArgGiven": {
@@ -351,7 +351,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:37",
+      "last_run_at": "2026-09-22T20:44:54",
       "needs_run": false
     },
     "cmd.TestResolveTargetDir_EmptyStringArgDefaultsToCwd": {
@@ -367,7 +367,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:41",
+      "last_run_at": "2026-09-22T20:44:55",
       "needs_run": false
     },
     "cmd.TestNormalizeExistingThumb": {
@@ -383,7 +383,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:43",
+      "last_run_at": "2026-09-22T20:44:50",
       "needs_run": false
     },
     "cmd.TestExtractTmdbIDFromFilename": {
@@ -399,7 +399,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:41",
+      "last_run_at": "2026-09-22T20:44:53",
       "needs_run": false
     },
     "cmd.TestIsReportPath": {
@@ -415,7 +415,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:43",
+      "last_run_at": "2026-09-22T20:44:49",
       "needs_run": false
     },
     "cmd.TestHandleThumbnailsServed": {
@@ -427,11 +427,11 @@
       "target_file": "cmd/movie_rest_thumb.go",
       "target_func": "HandleThumbnailsServed",
       "code_hash": "a818c0892e1910bd",
-      "duration_sec": 0.02,
+      "duration_sec": 0.03,
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:36",
+      "last_run_at": "2026-09-22T20:44:50",
       "needs_run": false
     },
     "cmd.TestExtractThumbFileName": {
@@ -447,7 +447,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:36",
+      "last_run_at": "2026-09-22T20:44:48",
       "needs_run": false
     },
     "cmd.TestEnsureThumbnailInOutputDir": {
@@ -463,7 +463,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:43",
+      "last_run_at": "2026-09-22T20:44:51",
       "needs_run": false
     },
     "cmd.TestTryReuseExistingThumbnail": {
@@ -479,7 +479,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:39",
+      "last_run_at": "2026-09-22T20:44:53",
       "needs_run": false
     },
     "cmd.TestReadTmdbCredentials_FromConfig": {
@@ -491,11 +491,11 @@
       "target_file": "cmd/movie_tmdb.go",
       "target_func": "ReadTmdbCredentials",
       "code_hash": "945f709994cf8a60",
-      "duration_sec": 0.05,
+      "duration_sec": 0.07,
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:44",
+      "last_run_at": "2026-09-22T20:44:50",
       "needs_run": false
     },
     "cmd.TestEnsureValidTmdbClient_NoAuth": {
@@ -507,11 +507,11 @@
       "target_file": "cmd/movie_tmdb.go",
       "target_func": "EnsureValidTmdbClient",
       "code_hash": "945f709994cf8a60",
-      "duration_sec": 0.09,
+      "duration_sec": 0.1,
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:40",
+      "last_run_at": "2026-09-22T20:44:52",
       "needs_run": false
     },
     "cmd.TestReadTmdbCredentials_FromSnakeCaseConfig": {
@@ -523,11 +523,11 @@
       "target_file": "cmd/movie_tmdb.go",
       "target_func": "ReadTmdbCredentials",
       "code_hash": "945f709994cf8a60",
-      "duration_sec": 0.09,
+      "duration_sec": 0.11,
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:39",
+      "last_run_at": "2026-09-22T20:44:48",
       "needs_run": false
     },
     "cmd.TestSaveTmdbCredentialsToDB_SavesBothCases": {
@@ -543,7 +543,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:41",
+      "last_run_at": "2026-09-22T20:44:49",
       "needs_run": false
     },
     "cmd.TestPathInScope": {
@@ -559,7 +559,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:43",
+      "last_run_at": "2026-09-22T20:44:48",
       "needs_run": false
     },
     "cmd.TestActionInScopeReadsSnapshotPaths": {
@@ -575,7 +575,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:36",
+      "last_run_at": "2026-09-22T20:44:48",
       "needs_run": false
     },
     "cmd.TestFilterMovesAndActions": {
@@ -591,7 +591,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:41",
+      "last_run_at": "2026-09-22T20:44:54",
       "needs_run": false
     },
     "cmd.TestScopeFilterGlobs": {
@@ -607,7 +607,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:40",
+      "last_run_at": "2026-09-22T20:44:50",
       "needs_run": false
     },
     "cmd.TestScopeFilterGlobMatchesSnapshotPaths": {
@@ -623,7 +623,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:39",
+      "last_run_at": "2026-09-22T20:44:48",
       "needs_run": false
     },
     "cmd.TestPreviewExecutionFilterParity": {
@@ -639,7 +639,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:38",
+      "last_run_at": "2026-09-22T20:44:46",
       "needs_run": false
     },
     "cmd.TestScanLimitsAreUnified": {
@@ -655,7 +655,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:39",
+      "last_run_at": "2026-09-22T20:44:46",
       "needs_run": false
     },
     "cmd.TestE2EUndoRedoMove": {
@@ -671,7 +671,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:43",
+      "last_run_at": "2026-09-22T20:44:50",
       "needs_run": false
     },
     "cmd.TestE2EUndoRedoActionByID": {
@@ -687,7 +687,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:40",
+      "last_run_at": "2026-09-22T20:44:50",
       "needs_run": false
     },
     "db.TestInsertAndGetMedia": {
@@ -703,7 +703,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:37",
+      "last_run_at": "2026-09-22T20:44:48",
       "needs_run": false
     },
     "db.TestInsertMediaAllowsMissingTmdbId": {
@@ -719,7 +719,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:43",
+      "last_run_at": "2026-09-22T20:44:46",
       "needs_run": false
     },
     "db.TestUpdateMediaByTmdbID": {
@@ -735,7 +735,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:38",
+      "last_run_at": "2026-09-22T20:44:52",
       "needs_run": false
     },
     "db.TestUpdateMediaPath": {
@@ -751,7 +751,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:43",
+      "last_run_at": "2026-09-22T20:44:54",
       "needs_run": false
     },
     "db.TestListMedia": {
@@ -767,7 +767,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:40",
+      "last_run_at": "2026-09-22T20:44:48",
       "needs_run": false
     },
     "db.TestSearchMedia": {
@@ -783,7 +783,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:37",
+      "last_run_at": "2026-09-22T20:44:53",
       "needs_run": false
     },
     "db.TestCountMedia": {
@@ -799,7 +799,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:36",
+      "last_run_at": "2026-09-22T20:44:45",
       "needs_run": false
     },
     "db.TestDeleteMedia": {
@@ -815,7 +815,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:40",
+      "last_run_at": "2026-09-22T20:44:46",
       "needs_run": false
     },
     "db.TestConfigSetGet": {
@@ -831,7 +831,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:39",
+      "last_run_at": "2026-09-22T20:44:46",
       "needs_run": false
     },
     "db.TestTags": {
@@ -847,7 +847,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:43",
+      "last_run_at": "2026-09-22T20:44:46",
       "needs_run": false
     },
     "db.TestMoveHistory": {
@@ -863,7 +863,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:43",
+      "last_run_at": "2026-09-22T20:44:48",
       "needs_run": false
     },
     "db.TestWatchlist": {
@@ -879,7 +879,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:38",
+      "last_run_at": "2026-09-22T20:44:49",
       "needs_run": false
     },
     "db.TestWatchlistUpsert": {
@@ -895,7 +895,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:41",
+      "last_run_at": "2026-09-22T20:44:50",
       "needs_run": false
     },
     "db.TestFileSizeStats": {
@@ -911,7 +911,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:41",
+      "last_run_at": "2026-09-22T20:44:47",
       "needs_run": false
     },
     "db.TestMigrate": {
@@ -927,7 +927,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:41",
+      "last_run_at": "2026-09-22T20:44:48",
       "needs_run": false
     },
     "db.TestDefaultConfig": {
@@ -943,7 +943,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:38",
+      "last_run_at": "2026-09-22T20:44:52",
       "needs_run": false
     },
     "db.TestAppVersionInConfig": {
@@ -959,7 +959,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:39",
+      "last_run_at": "2026-09-22T20:44:54",
       "needs_run": false
     },
     "db.TestScanHistory": {
@@ -971,11 +971,11 @@
       "target_file": "db/open.go",
       "target_func": "ScanHistory",
       "code_hash": "036a754f56aefb53",
-      "duration_sec": 0.02,
+      "duration_sec": 0.01,
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:42",
+      "last_run_at": "2026-09-22T20:44:50",
       "needs_run": false
     },
     "db.TestTopGenres": {
@@ -991,7 +991,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:41",
+      "last_run_at": "2026-09-22T20:44:49",
       "needs_run": false
     },
     "db.TestFileActionSeeded": {
@@ -1007,7 +1007,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:42",
+      "last_run_at": "2026-09-22T20:44:50",
       "needs_run": false
     },
     "db.TestViewsExist": {
@@ -1023,7 +1023,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:37",
+      "last_run_at": "2026-09-22T20:44:53",
       "needs_run": false
     },
     "doctor.TestExpandScanPath": {
@@ -1039,7 +1039,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:36",
+      "last_run_at": "2026-09-22T20:44:45",
       "needs_run": false
     },
     "doctor.TestCheckPathMismatch": {
@@ -1055,7 +1055,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:42",
+      "last_run_at": "2026-09-22T20:44:54",
       "needs_run": false
     },
     "doctor.TestCheckVersionDriftMissingSource": {
@@ -1071,7 +1071,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:42",
+      "last_run_at": "2026-09-22T20:44:55",
       "needs_run": false
     },
     "doctor.TestHasSourceBinary": {
@@ -1087,7 +1087,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:38",
+      "last_run_at": "2026-09-22T20:44:45",
       "needs_run": false
     },
     "doctor.TestDefaultDeployDir": {
@@ -1103,7 +1103,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:38",
+      "last_run_at": "2026-09-22T20:44:51",
       "needs_run": false
     },
     "tmdb.TestVerifyAuth_MissingAuth": {
@@ -1119,7 +1119,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:39",
+      "last_run_at": "2026-09-22T20:44:49",
       "needs_run": false
     },
     "tmdb.TestVerifyAuth_ValidAuth": {
@@ -1135,7 +1135,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:39",
+      "last_run_at": "2026-09-22T20:44:48",
       "needs_run": false
     },
     "tmdb.TestVerifyAuth_InvalidAuth": {
@@ -1151,7 +1151,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:37",
+      "last_run_at": "2026-09-22T20:44:52",
       "needs_run": false
     },
     "tmdb.TestVerifyAuth_ForbiddenAuth": {
@@ -1167,7 +1167,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:39",
+      "last_run_at": "2026-09-22T20:44:51",
       "needs_run": false
     },
     "updater.TestIsValidRepoRequiresV5Module": {
@@ -1183,7 +1183,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:42",
+      "last_run_at": "2026-09-22T20:44:52",
       "needs_run": false
     },
     "updater.TestIsValidRepoRejectsOldModulePath": {
@@ -1199,7 +1199,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:38",
+      "last_run_at": "2026-09-22T20:44:53",
       "needs_run": false
     },
     "updater.TestNormalizeRepoPathTrimsQuotes": {
@@ -1215,7 +1215,7 @@
       "tier": "fast",
       "is_slow": false,
       "last_status": "passed",
-      "last_run_at": "2026-09-22T19:50:37",
+      "last_run_at": "2026-09-22T20:44:54",
       "needs_run": false
     },
     "scripts/tests.test_ampersand_with_spaces_becomes_double_hyphen": {

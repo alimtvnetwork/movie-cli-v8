@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"syscall"
@@ -23,17 +24,25 @@ var (
 )
 
 var movieUiCmd = &cobra.Command{
-	Use:     "ui",
+	Use:     "ui [folder-or-alias-or-number]",
 	Aliases: []string{"dashboard", "gui", "web"},
 	Short:   "Launch the interactive movie library web UI",
 	Long: `Starts the local HTTP server and automatically opens the browser
 to the interactive movie-cli dashboard.
 
+You can launch the web UI scoped to a specific scanned folder from anywhere:
+  movie ui                      # Launch UI for entire library
+  movie ui movies               # Launch UI scoped to 'movies' folder
+  movie ui tvshows              # Launch UI scoped to 'tvshows' folder
+  movie ui 1                    # Launch UI scoped to folder #1
+  movie ui "D:\Downloads"       # Launch UI for specified directory
+
 Examples:
-  movie ui               # Starts on port 8086 and opens default browser
-  movie ui --port 9000   # Starts on port 9000
-  movie ui --no-open     # Starts server without launching browser`,
-	Run: runMovieUI,
+  movie ui                      # Starts on port 8086 and opens default browser
+  movie ui --port 9000          # Starts on port 9000
+  movie ui --no-open            # Starts server without launching browser`,
+	Args: cobra.MaximumNArgs(1),
+	Run:  runMovieUI,
 }
 
 func init() {
@@ -53,17 +62,51 @@ func runMovieUI(cmd *cobra.Command, args []string) {
 
 	defer database.Close()
 
+	scopedTarget := resolveUIFolderTarget(database, args)
+
 	initRestLogger(database)
 	mux := buildRESTMux(database)
 
-	targetURL := fmt.Sprintf("http://%s:%d", uiHost, uiPort)
-	printUIBanner(targetURL, database)
+	baseURL := fmt.Sprintf("http://%s:%d", uiHost, uiPort)
+	targetURL := baseURL
+
+	if scopedTarget != nil {
+		targetURL = fmt.Sprintf("%s?folder=%s", baseURL, url.QueryEscape(scopedTarget.TargetDirectory))
+	}
+
+	printUIBanner(targetURL, database, scopedTarget)
 
 	if !uiNoOpen {
 		go openBrowser(targetURL)
 	}
 
 	startHTTPServer(mux)
+}
+
+func resolveUIFolderTarget(database *db.DB, args []string) *CdTargetResult {
+	if len(args) == 0 {
+		return nil
+	}
+
+	targetRes, suggestions, resErr := resolveCdTarget(database, args[0], "")
+
+	if resErr != nil {
+		fmt.Fprintf(os.Stderr, "❌ Target not found: %v\n", resErr)
+		fmt.Fprintln(os.Stderr, "💡 Run 'movie cd' or 'movie ls --folders' to see available folders.")
+		os.Exit(1)
+	}
+
+	if targetRes != nil {
+		return targetRes
+	}
+
+	if len(suggestions) > 0 {
+		fmt.Fprintln(os.Stderr, "⚠️ Ambiguous folder query. Available matches:")
+		printCdSuggestions(suggestions)
+		os.Exit(1)
+	}
+
+	return nil
 }
 
 func startHTTPServer(mux http.Handler) {
@@ -94,7 +137,7 @@ func startHTTPServer(mux http.Handler) {
 	}
 }
 
-func printUIBanner(targetURL string, database *db.DB) {
+func printUIBanner(targetURL string, database *db.DB, scoped *CdTargetResult) {
 	isColor := isColorEnabled()
 	bullet := colorText("●", ansiCyan, isColor)
 	status := database.GetSplitDBStatus()
@@ -105,6 +148,16 @@ func printUIBanner(targetURL string, database *db.DB) {
 	fmt.Println(colorText("  └──────────────────────────────────────────────────────────┘", ansiCyan, isColor))
 	fmt.Println()
 	fmt.Printf("  %s %-16s %s\n", bullet, colorText("Dashboard URL:", ansiDim, isColor), colorText(targetURL, ansiCyan, isColor))
+
+	if scoped != nil {
+		fmt.Printf("  %s %-16s %s (%s, %d items)\n",
+			bullet,
+			colorText("Scoped Folder:", ansiDim, isColor),
+			colorText(scoped.TargetDirectory, ansiCyan, isColor),
+			scoped.MatchName,
+			scoped.ItemCount)
+	}
+
 	fmt.Printf("  %s %-16s %s\n", bullet, colorText("Bind Address:", ansiDim, isColor), colorText(fmt.Sprintf("%s:%d", uiHost, uiPort), ansiWhite, isColor))
 	fmt.Printf("  %s %-16s %s\n", bullet, colorText("Process PID:", ansiDim, isColor), colorText(fmt.Sprintf("%d", os.Getpid()), ansiWhite, isColor))
 	fmt.Printf("  %s %-16s %s (%s)\n", bullet, colorText("Primary DB:", ansiDim, isColor), colorText("movie.db", ansiWhite, isColor), status.MasterTier.SizeFormatted)

@@ -18,6 +18,7 @@ var (
 	lsFormat  string
 	lsAll     bool
 	lsMissing bool
+	lsFolders bool
 )
 
 var movieLsCmd = &cobra.Command{
@@ -34,6 +35,7 @@ Filter behavior (mutually exclusive — pick at most one):
   --missing   Only items WITHOUT a file path (metadata-only / never scanned
               or whose original file is gone). Useful to spot orphaned
               entries or rows that need a rescan.
+  -f, --folders Only show scanned root folders summary with jump shortcuts.
 
 If both --all and --missing are passed, --missing wins (more specific filter).
 
@@ -53,6 +55,8 @@ func init() {
 		"include every item, even metadata-only entries with no file path")
 	movieLsCmd.Flags().BoolVar(&lsMissing, "missing", false,
 		"only show items WITHOUT a file path (metadata-only / unscanned)")
+	movieLsCmd.Flags().BoolVarP(&lsFolders, "folders", "f", false,
+		"display scanned root folders with quick jump and UI shortcuts")
 }
 
 // lsJSONItem represents a single media item in JSON output.
@@ -77,11 +81,20 @@ type lsJSONItem struct {
 
 func runMovieLs(cmd *cobra.Command, args []string) {
 	database, err := db.Open()
+
 	if err != nil {
 		errlog.Error(msgDatabaseError, err)
+
 		return
 	}
+
 	defer database.Close()
+
+	if lsFolders {
+		runMovieLsFolders(database)
+
+		return
+	}
 
 	switch lsFormat {
 	case string(db.OutputFormatJSON):
@@ -214,26 +227,6 @@ func printLsPage(database *db.DB, media []db.Media, pg LsPage) {
 	fmt.Println()
 	fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 	fmt.Print("  [N] Next  [P] Previous  [Q] Quit  [1-9] View details → ")
-}
-
-func printScanFolders(database *db.DB) {
-	scanFolders, _ := database.ListDistinctScanFolders()
-	if len(scanFolders) == 0 {
-		return
-	}
-	fmt.Print("  📂 Scanned: ")
-	for i, f := range scanFolders {
-		if i > 0 {
-			fmt.Print(", ")
-		}
-		fmt.Print(f)
-		if i >= 2 && len(scanFolders) > 3 {
-			fmt.Printf(" (+%d more)", len(scanFolders)-3)
-			break
-		}
-	}
-	fmt.Println()
-	fmt.Println()
 }
 
 func printLsMediaRow(num int, m *db.Media) {
