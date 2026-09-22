@@ -1,3 +1,9 @@
+## v2.338.0 — 2026-09-22 (Automated gofmt formatting on bump, release notes generator, and GitMap database ignore)
+
+**Scope:** Version bump. Automated gofmt formatting on bump, release notes generator, and GitMap database ignore.
+
+---
+
 ## v2.337.0 — 2026-09-22 (GitMap CI/CD runner parity, zero-storage workflows, and canonical prompts/skills sync)
 
 **Scope:** Version bump. GitMap CI/CD runner parity, zero-storage workflows, and canonical prompts/skills sync.
