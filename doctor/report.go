@@ -183,8 +183,10 @@ func componentNameFor(id string) string {
 		return "scan-dir"
 	case "rest-port":
 		return "rest-port"
-	case "split-db":
-		return "split-db"
+	case "split-db:master", "split-db":
+		return "db:master"
+	case "split-db:cache":
+		return "db:cache"
 	default:
 		if id != "" {
 			return id

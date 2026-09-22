@@ -16,10 +16,11 @@ import (
 )
 
 const (
-	idConfigKeys   = "config-keys"
-	idSourceFolder = "source-folder"
-	idRestPort     = "rest-port"
-	idSplitDB      = "split-db"
+	idConfigKeys    = "config-keys"
+	idSourceFolder  = "source-folder"
+	idRestPort      = "rest-port"
+	idSplitDBMaster = "split-db:master"
+	idSplitDBCache  = "split-db:cache"
 
 	doctorRestPort       = 7777
 	requiredKeyTmdb      = "TmdbApiKey"
@@ -30,25 +31,61 @@ const (
 
 // runEnvChecks appends config/source/port findings to the report.
 func runEnvChecks(report *Report) {
-	report.Findings = append(report.Findings, checkDatabaseSplitDB())
+	report.Findings = append(report.Findings, checkDatabaseSplitDB()...)
 	report.Findings = append(report.Findings, checkConfigKeys())
 	report.Findings = append(report.Findings, checkSourceFolder())
 	report.Findings = append(report.Findings, checkRestPort())
 }
 
-func checkDatabaseSplitDB() Finding {
+func checkDatabaseSplitDB() []Finding {
 	database, err := db.Open()
 
 	if err != nil {
-		return finding(idSplitDB, "SQLite Split-DB storage",
-			SeverityErr, fmt.Sprintf("cannot open database: %v", err),
-			"Check file permissions on data directory", false)
+		return []Finding{
+			finding(idSplitDBMaster, "Primary Library DB (movie.db)",
+				SeverityErr, fmt.Sprintf("cannot open database: %v", err),
+				"Check file permissions on data directory", false),
+		}
 	}
 
 	defer database.Close()
 
-	return finding(idSplitDB, "SQLite Split-DB storage",
-		SeverityOK, fmt.Sprintf("movie.db & cache.db ready (%s)", database.BasePath), "", false)
+	status := database.GetSplitDBStatus()
+
+	masterSev := SeverityOK
+	masterIntegrity := status.MasterTier.Integrity
+
+	if masterIntegrity == "" {
+		masterIntegrity = "ok"
+	}
+
+	if masterIntegrity != "ok" {
+		masterSev = SeverityErr
+	}
+
+	masterDetail := fmt.Sprintf("movie.db (wal mode, integrity: %s, %d tables, %s)",
+		masterIntegrity, status.MasterTier.TableCount, status.MasterTier.SizeFormatted)
+
+	cacheSev := SeverityOK
+	cacheIntegrity := status.CacheTier.Integrity
+
+	if cacheIntegrity == "" {
+		cacheIntegrity = "ok"
+	}
+
+	if cacheIntegrity != "ok" {
+		cacheSev = SeverityErr
+	}
+
+	cacheDetail := fmt.Sprintf("cache.db (wal mode, integrity: %s, %d tables, %s)",
+		cacheIntegrity, status.CacheTier.TableCount, status.CacheTier.SizeFormatted)
+
+	return []Finding{
+		finding(idSplitDBMaster, "Primary Library DB (movie.db)",
+			masterSev, masterDetail, "", false),
+		finding(idSplitDBCache, "Lookup & Search Cache DB (cache.db)",
+			cacheSev, cacheDetail, "", false),
+	}
 }
 
 func checkConfigKeys() Finding {

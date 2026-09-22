@@ -3,9 +3,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
-	"runtime"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -26,16 +23,17 @@ type helpGroup struct {
 func getHelpGroups() []helpGroup {
 	return []helpGroup{
 		{
-			Title: "Core Commands",
+			Title: "── Core Media Operations ──",
 			Commands: []helpCommand{
 				{"movie scan [folder]", "Scan folder, match TMDb, save metadata & HTML report"},
+				{"movie report [folder]", "Generate library summary report and HTML dashboard"},
 				{"movie ls", "List indexed movies and TV series"},
 				{"movie info <title>", "Query TMDb and inspect media metadata"},
 				{"movie search <query>", "Search TMDb for movies or TV series"},
 			},
 		},
 		{
-			Title: "Library Operations",
+			Title: "── Library Management & Files ──",
 			Commands: []helpCommand{
 				{"movie ui", "Launch web dashboard and open in browser"},
 				{"movie move", "Move organized media to destination directories"},
@@ -47,7 +45,7 @@ func getHelpGroups() []helpGroup {
 			},
 		},
 		{
-			Title: "Discovery & Play",
+			Title: "── Discovery, Taxonomy & Play ──",
 			Commands: []helpCommand{
 				{"movie play <title>", "Play media item in default player"},
 				{"movie watch", "Watch directory for incoming media files"},
@@ -56,12 +54,12 @@ func getHelpGroups() []helpGroup {
 			},
 		},
 		{
-			Title: "System & Maintenance",
+			Title: "── Storage, REST API & Admin ──",
 			Commands: []helpCommand{
 				{"movie rest", "Start headless REST API service"},
 				{"movie reset", "Safely wipe database, caches, and output folders"},
 				{"movie config", "Configure TMDb API key and CLI preferences"},
-				{"movie db", "Inspect SQLite database statistics"},
+				{"movie db", "Inspect SQLite multi-tier database statistics"},
 				{"movie stats", "View comprehensive library metrics"},
 				{"movie logs", "Inspect system and error logs"},
 				{"movie doctor", "Diagnose environment and network dependencies"},
@@ -75,52 +73,35 @@ func renderRootHelp(c *cobra.Command) string {
 	isColor := isColorEnabled()
 	var b strings.Builder
 
-	exePath, _ := os.Executable()
-	exePath, _ = filepath.EvalSymlinks(exePath)
-
-	if exePath == "" {
-		exePath = "movie"
-	}
-
-	dataDir := filepath.Join(filepath.Dir(exePath), "data")
-	masterDB := filepath.Join(dataDir, "movie.db")
-	cacheDB := filepath.Join(dataDir, "cache.db")
-
 	b.WriteString(colorText(fmt.Sprintf("\nmovie-cli %s", version.Short()), ansiCyan, isColor))
 	b.WriteString(" — Organize, enrich, and enjoy your movie collection\n\n")
 
 	b.WriteString(colorText("Usage:\n", ansiCyan, isColor))
 	b.WriteString("  " + colorText("movie", ansiGreen, isColor) + " [command] [flags]\n\n")
 
+	renderHelpGroups(&b, isColor)
+	renderFlagsSection(&b, isColor)
+	renderBinaryCard(&b, isColor)
+
+	return b.String()
+}
+
+func renderHelpGroups(b *strings.Builder, isColor bool) {
 	for _, g := range getHelpGroups() {
-		b.WriteString(colorText(g.Title+":\n", ansiCyan, isColor))
+		b.WriteString(colorText("  "+g.Title+"\n", ansiCyan, isColor))
 
 		for _, cmd := range g.Commands {
-			cmdStr := fmt.Sprintf("  %-28s", cmd.Name)
+			cmdStr := fmt.Sprintf("    %-26s", cmd.Name)
 			b.WriteString(colorText(cmdStr, ansiGreen, isColor))
 			b.WriteString(" " + colorText(cmd.Desc, ansiDim, isColor) + "\n")
 		}
 
 		b.WriteString("\n")
 	}
+}
 
-	b.WriteString(colorText("Flags:\n", ansiCyan, isColor))
-	b.WriteString("  " + colorText("-h, --help", ansiYellow, isColor) + "      " + colorText("Help for movie", ansiDim, isColor) + "\n")
-	b.WriteString("  " + colorText("-v, --version", ansiYellow, isColor) + "   " + colorText("Version for movie", ansiDim, isColor) + "\n\n")
-
-	b.WriteString(colorText("  ────────────────────────────────────────────────────────────\n", ansiDim, isColor))
-	b.WriteString(colorText("  movie-cli binary\n", ansiCyan, isColor))
-	b.WriteString(fmt.Sprintf("  %s %-15s %s\n", colorText("●", ansiCyan, isColor), colorText("Name:", ansiDim, isColor), "movie-cli"))
-	b.WriteString(fmt.Sprintf("  %s %-15s %s\n", colorText("●", ansiCyan, isColor), colorText("Git URL:", ansiDim, isColor), "https://github.com/alimtvnetwork/movie-cli-v8"))
-	b.WriteString(fmt.Sprintf("  %s %-15s %s\n", colorText("●", ansiCyan, isColor), colorText("Version:", ansiDim, isColor), version.Short()))
-	b.WriteString(fmt.Sprintf("  %s %-15s %s\n", colorText("●", ansiCyan, isColor), colorText("Commit SHA:", ansiDim, isColor), version.Commit))
-	b.WriteString(fmt.Sprintf("  %s %-15s %s\n", colorText("●", ansiCyan, isColor), colorText("Database:", ansiDim, isColor), masterDB))
-	b.WriteString(fmt.Sprintf("  %s %-15s %s\n", colorText("●", ansiCyan, isColor), colorText("Cache DB:", ansiDim, isColor), cacheDB))
-	b.WriteString(fmt.Sprintf("  %s %-15s %s\n", colorText("●", ansiCyan, isColor), colorText("Architecture:", ansiDim, isColor), fmt.Sprintf("%s/%s (%s)", runtime.GOOS, runtime.GOARCH, runtime.Version())))
-	b.WriteString(fmt.Sprintf("  %s %-15s %s\n", colorText("●", ansiCyan, isColor), colorText("Built:", ansiDim, isColor), version.BuildDate))
-	b.WriteString(colorText("  ────────────────────────────────────────────────────────────\n\n", ansiDim, isColor))
-
-	b.WriteString("Documentation: " + colorText("https://github.com/alimtvnetwork/movie-cli-v8", ansiWhite, isColor) + "\n")
-
-	return b.String()
+func renderFlagsSection(b *strings.Builder, isColor bool) {
+	b.WriteString(colorText("  ── Global Options ──\n", ansiCyan, isColor))
+	b.WriteString("    " + colorText("-h, --help", ansiYellow, isColor) + "                 " + colorText("Show help for command", ansiDim, isColor) + "\n")
+	b.WriteString("    " + colorText("-v, --version", ansiYellow, isColor) + "              " + colorText("Print version and exit", ansiDim, isColor) + "\n\n")
 }

@@ -24,6 +24,7 @@ type SplitDBTierInfo struct {
 	SizeFormatted string
 	JournalMode   string
 	Purpose       string
+	Integrity     string
 	SizeBytes     int64
 	TableCount    int
 }
@@ -145,6 +146,11 @@ func queryTierInfo(conn *sql.DB, name, tierType, path, purpose string) SplitDBTi
 		var count int
 		if err := conn.QueryRow("SELECT count(*) FROM sqlite_master WHERE type='table';").Scan(&count); err == nil {
 			info.TableCount = count
+		}
+
+		var integrity string
+		if err := conn.QueryRow("PRAGMA integrity_check;").Scan(&integrity); err == nil {
+			info.Integrity = integrity
 		}
 	}
 

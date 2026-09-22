@@ -76,6 +76,7 @@ func init() {
 		movieInfoCmd,
 		moviePlayCmd,
 		movieStatsCmd,
+		movieReportCmd,
 		movieRenameCmd,
 		movieConfigCmd,
 		movieExportCmd,

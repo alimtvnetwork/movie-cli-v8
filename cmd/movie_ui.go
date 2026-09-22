@@ -44,27 +44,33 @@ func init() {
 
 func runMovieUI(cmd *cobra.Command, args []string) {
 	database, err := db.Open()
+
 	if err != nil {
 		errlog.Error(msgDatabaseError, err)
+
 		return
 	}
+
 	defer database.Close()
 
 	initRestLogger(database)
 	mux := buildRESTMux(database)
 
 	targetURL := fmt.Sprintf("http://%s:%d", uiHost, uiPort)
-	printUIBanner(targetURL)
+	printUIBanner(targetURL, database)
 
 	if !uiNoOpen {
 		go openBrowser(targetURL)
 	}
 
-	handler := logMiddleware(mux)
+	startHTTPServer(mux)
+}
+
+func startHTTPServer(mux http.Handler) {
 	addr := fmt.Sprintf("%s:%d", uiHost, uiPort)
 	server := &http.Server{
 		Addr:    addr,
-		Handler: handler,
+		Handler: logMiddleware(mux),
 	}
 
 	stopChan := make(chan os.Signal, 1)
@@ -77,7 +83,8 @@ func runMovieUI(cmd *cobra.Command, args []string) {
 	}()
 
 	<-stopChan
-	fmt.Println("\n  🛑 Shutting down web UI...")
+	isColor := isColorEnabled()
+	fmt.Printf("\n  %s %s\n\n", colorText("🛑", ansiYellow, isColor), colorText("Shutting down web UI server gracefully...", ansiDim, isColor))
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -87,12 +94,21 @@ func runMovieUI(cmd *cobra.Command, args []string) {
 	}
 }
 
-func printUIBanner(url string) {
+func printUIBanner(targetURL string, database *db.DB) {
+	isColor := isColorEnabled()
+	bullet := colorText("●", ansiCyan, isColor)
+	status := database.GetSplitDBStatus()
+
 	fmt.Println()
-	fmt.Println("  ╔═══════════════════════════════════════════════════════════════╗")
-	fmt.Println("  ║              🎬 movie-cli Interactive Web UI                  ║")
-	fmt.Println("  ╚═══════════════════════════════════════════════════════════════╝")
-	fmt.Printf("   🌐 Dashboard running at: %s\n", url)
-	fmt.Println("   💡 Press Ctrl+C to stop the server")
+	fmt.Println(colorText("  ┌──────────────────────────────────────────────────────────┐", ansiCyan, isColor))
+	fmt.Println(colorText("  │   🎬 MOVIE CLI — Interactive Web Dashboard               │", ansiCyan, isColor))
+	fmt.Println(colorText("  └──────────────────────────────────────────────────────────┘", ansiCyan, isColor))
+	fmt.Println()
+	fmt.Printf("  %s %-16s %s\n", bullet, colorText("Dashboard URL:", ansiDim, isColor), colorText(targetURL, ansiCyan, isColor))
+	fmt.Printf("  %s %-16s %s\n", bullet, colorText("Bind Address:", ansiDim, isColor), colorText(fmt.Sprintf("%s:%d", uiHost, uiPort), ansiWhite, isColor))
+	fmt.Printf("  %s %-16s %s\n", bullet, colorText("Process PID:", ansiDim, isColor), colorText(fmt.Sprintf("%d", os.Getpid()), ansiWhite, isColor))
+	fmt.Printf("  %s %-16s %s (%s)\n", bullet, colorText("Primary DB:", ansiDim, isColor), colorText("movie.db", ansiWhite, isColor), status.MasterTier.SizeFormatted)
+	fmt.Printf("  %s %-16s %s (%s)\n", bullet, colorText("Cache DB:", ansiDim, isColor), colorText("cache.db", ansiWhite, isColor), status.CacheTier.SizeFormatted)
+	fmt.Printf("  %s %-16s %s\n", bullet, colorText("Stop Server:", ansiDim, isColor), colorText("Ctrl+C", ansiYellow, isColor))
 	fmt.Println()
 }
