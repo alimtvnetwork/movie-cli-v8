@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     One-liner binary installer for movie CLI on Windows.
 
@@ -392,82 +392,80 @@ function Remove-FromPath([string]$dir) {
 }
 
 function Write-InstallSummary([string]$version, [string]$binPath, [string]$installDir, [hashtable]$pathResult, [bool]$isNoPath, [string]$prevVersion = "") {
+    $userData = Join-Path $env:USERPROFILE ".movie"
+    $dbPath = Join-Path $userData "data\movie.db"
+    $cacheDbPath = Join-Path $userData "data\cache.db"
+
     Write-Host ""
-    Write-Host "  -----------------------------------------------" -ForegroundColor DarkGray
-    Write-Host "  movie install summary" -ForegroundColor White
-    Write-Host "  -----------------------------------------------" -ForegroundColor DarkGray
+    Write-Host "  ────────────────────────────────────────────────────────────" -ForegroundColor DarkGray
+    Write-Host "  Installation Summary" -ForegroundColor Cyan
     if ($prevVersion -and $prevVersion -ne $version) {
-        Write-Host "    Version    : $version (upgraded from $prevVersion)"
+        Write-Host "  ● Version:        $version " -ForegroundColor White -NoNewline
+        Write-Host "(upgraded from $prevVersion)" -ForegroundColor Green
     } else {
-        Write-Host "    Version    : $version"
+        Write-Host "  ● Version:        $version" -ForegroundColor White
     }
-    Write-Host "    Binary     : $binPath"
-    Write-Host "    Install Dir: $installDir"
+    Write-Host "  ● Binary:         $binPath" -ForegroundColor White
+    Write-Host "  ● Install Dir:    $installDir" -ForegroundColor White
+    Write-Host "  ● Data Folder:    $userData" -ForegroundColor White
+    Write-Host "  ● Library Store:  $dbPath (SQLite Split-DB)" -ForegroundColor White
+    Write-Host "  ● Cache Store:    $cacheDbPath (SQLite WAL mode)" -ForegroundColor White
 
     if ($isNoPath) {
-        Write-Host "    PATH       : skipped (-NoPath)"
+        Write-Host "  ● PATH Status:    skipped (-NoPath)" -ForegroundColor Yellow
+        Write-Host "  ────────────────────────────────────────────────────────────" -ForegroundColor DarkGray
         return
     }
 
-    Write-Host "    PATH target: $($pathResult.Target) ($($pathResult.Status))"
-    Write-Host "    Session    : refreshed for current PowerShell session"
-
-    Write-Host ""
-    Write-Host "  Profiles modified:" -ForegroundColor White
-    Write-Host "    - User PATH (registry)  : CMD, new PowerShell windows"
-    Write-Host "    - Current session       : active PowerShell session"
-
-    Write-Host ""
-    Write-Host "  If movie is not found in a new terminal, run:" -ForegroundColor Yellow
-    Write-Host ""
-    Write-Host "    PowerShell:  `$env:PATH = `"$installDir;`$env:PATH`"" -ForegroundColor Cyan
-    Write-Host "    CMD:         set PATH=$installDir;%PATH%" -ForegroundColor Cyan
-    Write-Host ""
+    Write-Host "  ● PATH Status:    active in current session & User PATH" -ForegroundColor Green
+    Write-Host "  ● PATH Target:    $($pathResult.Target) ($($pathResult.Status))" -ForegroundColor DarkGray
+    Write-Host "  ────────────────────────────────────────────────────────────" -ForegroundColor DarkGray
 }
 
 function Invoke-InstallVerification([string]$binPath, [string]$installDir, [bool]$isNoPath) {
     $userData = Join-Path $env:USERPROFILE ".movie"
+    $dbDir = Join-Path $userData "data"
 
     Write-Host ""
-    Write-Step "Verifying installation..."
+    Write-Host "  System Diagnostics:" -ForegroundColor Cyan
 
     # 1. Version
     if (Test-Path $binPath) {
         try {
             $verLine = (& $binPath version 2>&1 | Out-String).Trim().Split("`n")[0]
-            Write-Host ("    PASS  Version: {0}" -f $verLine) -ForegroundColor Green
+            Write-Host ("    [ok]   version      {0}" -f $verLine) -ForegroundColor Green
         }
         catch {
-            Write-Host ("    WARN  Could not run {0} version: {1}" -f $binPath, $_) -ForegroundColor Yellow
+            Write-Host ("    [warn] version      could not run {0}: {1}" -f $binPath, $_) -ForegroundColor Yellow
         }
     }
     else {
-        Write-Host ("    WARN  Binary missing: {0}" -f $binPath) -ForegroundColor Yellow
+        Write-Host ("    [warn] binary       missing at {0}" -f $binPath) -ForegroundColor Yellow
     }
 
     # 2. PATH active in this session
     $resolved = Get-Command $BinaryName -ErrorAction SilentlyContinue
     if ($resolved) {
-        Write-Host ("    PASS  PATH active: {0} -> {1}" -f $BinaryName, $resolved.Source) -ForegroundColor Green
+        Write-Host ("    [ok]   PATH         active -> {0}" -f $resolved.Source) -ForegroundColor Green
     }
     elseif ($isNoPath) {
-        Write-Host ("    WARN  PATH skipped (-NoPath); invoke with full path: {0}" -f $binPath) -ForegroundColor Yellow
+        Write-Host ("    [warn] PATH         skipped (-NoPath); invoke with full path: {0}" -f $binPath) -ForegroundColor Yellow
     }
     else {
-        Write-Host ("    WARN  {0} not on PATH yet - open a new terminal." -f $BinaryName) -ForegroundColor Yellow
+        Write-Host ("    [warn] PATH         {0} not on PATH yet - open a new terminal." -f $BinaryName) -ForegroundColor Yellow
     }
 
     # 3. Data folder
-    if (Test-Path $userData) {
-        Write-Host ("    PASS  Data folder exists: {0}" -f $userData) -ForegroundColor Green
+    if (Test-Path $dbDir) {
+        Write-Host ("    [ok]   data-store   ready ({0})" -f $dbDir) -ForegroundColor Green
     }
     else {
         try {
-            New-Item -ItemType Directory -Path $userData -Force | Out-Null
-            Write-Host ("    PASS  Data folder created: {0}" -f $userData) -ForegroundColor Green
+            New-Item -ItemType Directory -Path $dbDir -Force | Out-Null
+            Write-Host ("    [ok]   data-store   initialized ({0})" -f $dbDir) -ForegroundColor Green
         }
         catch {
-            Write-Host ("    WARN  Could not create data folder: {0}" -f $userData) -ForegroundColor Yellow
+            Write-Host ("    [warn] data-store   could not initialize {0}" -f $dbDir) -ForegroundColor Yellow
         }
     }
 }
@@ -552,18 +550,19 @@ if (Test-Path $binPath) {
 }
 
 Write-Host ""
-Write-Host "  +=============================================+" -ForegroundColor Cyan
-Write-Host "  |  movie CLI Installer                        |" -ForegroundColor Cyan
-Write-Host "  +=============================================+" -ForegroundColor Cyan
+Write-Host "  ┌──────────────────────────────────────────────────────────┐" -ForegroundColor Cyan
+Write-Host "  │   🎬 MOVIE CLI — Autonomous Media Library Manager        │" -ForegroundColor Cyan
+Write-Host "  └──────────────────────────────────────────────────────────┘" -ForegroundColor Cyan
 Write-Host ""
 if ($previousVersion -and $previousVersion -ne $resolvedVersion) {
-    Write-Host "  movie installer: upgrading $previousVersion -> $resolvedVersion" -ForegroundColor White
+    Write-Host "  ● Action:         Upgrading $previousVersion -> $resolvedVersion" -ForegroundColor Yellow
 } elseif ($previousVersion) {
-    Write-Host "  movie installer: reinstalling $resolvedVersion" -ForegroundColor White
+    Write-Host "  ● Action:         Reinstalling $resolvedVersion" -ForegroundColor White
 } else {
-    Write-Host "  movie installer: installing $resolvedVersion (clean install)" -ForegroundColor White
+    Write-Host "  ● Action:         Clean install of $resolvedVersion" -ForegroundColor White
 }
-Write-Host "  github.com/$Repo" -ForegroundColor DarkGray
+Write-Host "  ● Architecture:   $resolvedArch" -ForegroundColor White
+Write-Host "  ● Repository:     github.com/$Repo" -ForegroundColor DarkGray
 Write-Host ""
 
 $asset = Get-Asset $resolvedVersion $resolvedArch
@@ -593,11 +592,23 @@ Write-InstallSummary $installedVersion $binPath $resolvedDir $pathResult $NoPath
 Invoke-InstallVerification $binPath $resolvedDir $NoPath.IsPresent
 
 Write-Host ""
-Write-Host "  Quick start:" -ForegroundColor Cyan
-Write-Host "    movie scan <folder>   - Scan media directory and enrich metadata" -ForegroundColor White
-Write-Host "    movie ui              - Open web dashboard in browser" -ForegroundColor White
-Write-Host "    movie doctor          - Check environment & health" -ForegroundColor White
-Write-Host "    movie help            - View all available commands" -ForegroundColor White
+Write-Host "  ────────────────────────────────────────────────────────────" -ForegroundColor DarkGray
+Write-Host "  Quick Start Commands:" -ForegroundColor Cyan
+Write-Host "    movie scan <folder>   " -ForegroundColor Yellow -NoNewline
+Write-Host "Scan folder, enrich metadata & generate web report" -ForegroundColor White
+Write-Host "    movie ls              " -ForegroundColor Yellow -NoNewline
+Write-Host "List indexed movies and TV series in library" -ForegroundColor White
+Write-Host "    movie info <title>    " -ForegroundColor Yellow -NoNewline
+Write-Host "Query TMDb and inspect media metadata" -ForegroundColor White
+Write-Host "    movie ui              " -ForegroundColor Yellow -NoNewline
+Write-Host "Launch local web dashboard in browser" -ForegroundColor White
+Write-Host "    movie doctor          " -ForegroundColor Yellow -NoNewline
+Write-Host "Diagnose environment and database health" -ForegroundColor White
+Write-Host "    movie db              " -ForegroundColor Yellow -NoNewline
+Write-Host "Inspect multi-tier Split-DB statistics" -ForegroundColor White
+Write-Host "    movie help            " -ForegroundColor Yellow -NoNewline
+Write-Host "Discover full command suite" -ForegroundColor White
+Write-Host "  ────────────────────────────────────────────────────────────" -ForegroundColor DarkGray
 Write-Host ""
-Write-OK "Done! Run 'movie --help' to get started."
+Write-OK "Installation complete! Run 'movie doctor' or 'movie --help' to get started."
 Write-Host ""

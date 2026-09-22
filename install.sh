@@ -280,17 +280,18 @@ if [ -x "$INSTALL_DIR/$BINARY_NAME" ]; then
 fi
 
 echo ""
-printf "  ${CYAN}+=============================================+${NC}\n"
-printf "  ${CYAN}|  movie CLI Installer                        |${NC}\n"
-printf "  ${CYAN}+=============================================+${NC}\n\n"
+printf "  ${CYAN}┌──────────────────────────────────────────────────────────┐${NC}\n"
+printf "  ${CYAN}│   🎬 MOVIE CLI — Autonomous Media Library Manager        │${NC}\n"
+printf "  ${CYAN}└──────────────────────────────────────────────────────────┘${NC}\n\n"
 if [ -n "$PREV_VERSION" ] && [ "$PREV_VERSION" != "$VERSION" ]; then
-    printf "  ${BOLD}movie installer: upgrading %s -> %s${NC}\n" "$PREV_VERSION" "$VERSION"
+    printf "  ${YELLOW}● Action:${NC}         Upgrading %s -> %s\n" "$PREV_VERSION" "$VERSION"
 elif [ -n "$PREV_VERSION" ]; then
-    printf "  ${BOLD}movie installer: reinstalling %s${NC}\n" "$VERSION"
+    printf "  ${BOLD}● Action:${NC}         Reinstalling %s\n" "$VERSION"
 else
-    printf "  ${BOLD}movie installer: installing %s (clean install)${NC}\n" "$VERSION"
+    printf "  ${BOLD}● Action:${NC}         Clean install of %s\n" "$VERSION"
 fi
-printf "  ${GRAY}github.com/%s${NC}\n\n" "$REPO"
+printf "  ${BOLD}● Architecture:${NC}   %s/%s\n" "$OS" "$ARCH"
+printf "  ${GRAY}● Repository:${NC}     github.com/%s\n\n" "$REPO"
 
 step "Target version: $VERSION ($OS/$ARCH)"
 step "Install destination: $INSTALL_DIR"
@@ -354,57 +355,78 @@ if [ "$NO_PATH" -eq 0 ]; then
     esac
 fi
 
-echo ""
-printf "  ${GRAY}-----------------------------------------------${NC}\n"
-printf "  ${BOLD}movie install summary${NC}\n"
-printf "  ${GRAY}-----------------------------------------------${NC}\n"
-if [ -n "$PREV_VERSION" ] && [ "$PREV_VERSION" != "$VERSION" ]; then
-    printf "    Version    : %s (upgraded from %s)\n" "$VERSION" "$PREV_VERSION"
-else
-    printf "    Version    : %s\n" "$VERSION"
-fi
-printf "    Binary     : %s/%s\n" "$INSTALL_DIR" "$BINARY_NAME"
-printf "    Install Dir: %s\n" "$INSTALL_DIR"
-if [ "$NO_PATH" -eq 1 ]; then
-    printf "    PATH       : skipped (--no-path)\n"
-else
-    printf "    PATH       : configured in shell profiles\n"
-fi
+USER_DATA="$HOME/.movie"
+DATA_DIR="$USER_DATA/data"
+DB_PATH="$DATA_DIR/movie.db"
+CACHE_DB_PATH="$DATA_DIR/cache.db"
 
 echo ""
-step "Verifying installation..."
+printf "  ${GRAY}────────────────────────────────────────────────────────────${NC}\n"
+printf "  ${CYAN}Installation Summary${NC}\n"
+if [ -n "$PREV_VERSION" ] && [ "$PREV_VERSION" != "$VERSION" ]; then
+    printf "  ${BOLD}● Version:        ${NC}%s ${GREEN}(upgraded from %s)${NC}\n" "$VERSION" "$PREV_VERSION"
+else
+    printf "  ${BOLD}● Version:        ${NC}%s\n" "$VERSION"
+fi
+printf "  ${BOLD}● Binary:         ${NC}%s/%s\n" "$INSTALL_DIR" "$BINARY_NAME"
+printf "  ${BOLD}● Install Dir:    ${NC}%s\n" "$INSTALL_DIR"
+printf "  ${BOLD}● Data Folder:    ${NC}%s\n" "$USER_DATA"
+printf "  ${BOLD}● Library Store:  ${NC}%s (SQLite Split-DB)\n" "$DB_PATH"
+printf "  ${BOLD}● Cache Store:    ${NC}%s (SQLite WAL mode)\n" "$CACHE_DB_PATH"
+
+if [ "$NO_PATH" -eq 1 ]; then
+    printf "  ${BOLD}● PATH Status:    ${NC}${YELLOW}skipped (--no-path)${NC}\n"
+else
+    case ":$PATH:" in
+        *":$INSTALL_DIR:"*)
+            printf "  ${BOLD}● PATH Status:    ${NC}${GREEN}active in current session & shell profiles${NC}\n"
+            ;;
+        *)
+            printf "  ${BOLD}● PATH Status:    ${NC}${YELLOW}configured in shell profiles (restart terminal to take effect)${NC}\n"
+            ;;
+    esac
+fi
+printf "  ${GRAY}────────────────────────────────────────────────────────────${NC}\n"
+
+echo ""
+printf "  ${CYAN}System Diagnostics:${NC}\n"
 if [ -x "$INSTALL_DIR/$BINARY_NAME" ]; then
     VER_OUT="$("$INSTALL_DIR/$BINARY_NAME" version 2>&1 | head -1 || true)"
-    printf "    ${GREEN}PASS${NC}  Version: %s\n" "$VER_OUT"
+    printf "    ${GREEN}[ok]   version      ${NC}%s\n" "$VER_OUT"
 else
-    printf "    ${YELLOW}WARN${NC}  Binary missing: %s/%s\n" "$INSTALL_DIR" "$BINARY_NAME"
+    printf "    ${YELLOW}[warn] binary       ${NC}missing at %s/%s\n" "$INSTALL_DIR" "$BINARY_NAME"
 fi
 
 if command -v "$BINARY_NAME" >/dev/null 2>&1; then
     ACTIVE_CMD="$(command -v "$BINARY_NAME")"
-    printf "    ${GREEN}PASS${NC}  PATH active: %s -> %s\n" "$BINARY_NAME" "$ACTIVE_CMD"
+    printf "    ${GREEN}[ok]   PATH         ${NC}active -> %s\n" "$ACTIVE_CMD"
 elif [ "$NO_PATH" -eq 1 ]; then
-    printf "    ${YELLOW}WARN${NC}  PATH skipped (--no-path); invoke with full path: %s/%s\n" "$INSTALL_DIR" "$BINARY_NAME"
+    printf "    ${YELLOW}[warn] PATH         ${NC}skipped (--no-path); invoke with full path: %s/%s\n" "$INSTALL_DIR" "$BINARY_NAME"
 else
-    printf "    ${YELLOW}WARN${NC}  %s not on PATH yet - open a new terminal.\n" "$BINARY_NAME"
+    printf "    ${YELLOW}[warn] PATH         ${NC}%s not on PATH yet - open a new terminal.\n" "$BINARY_NAME"
 fi
 
-USER_DATA="$HOME/.movie"
-if [ -d "$USER_DATA" ]; then
-    printf "    ${GREEN}PASS${NC}  Data folder exists: %s\n" "$USER_DATA"
+if [ -d "$DATA_DIR" ]; then
+    printf "    ${GREEN}[ok]   data-store   ${NC}ready (%s)\n" "$DATA_DIR"
 else
-    if mkdir -p "$USER_DATA" 2>/dev/null; then
-        printf "    ${GREEN}PASS${NC}  Data folder created: %s\n" "$USER_DATA"
+    if mkdir -p "$DATA_DIR" 2>/dev/null; then
+        printf "    ${GREEN}[ok]   data-store   ${NC}initialized (%s)\n" "$DATA_DIR"
     else
-        printf "    ${YELLOW}WARN${NC}  Could not create data folder: %s\n" "$USER_DATA"
+        printf "    ${YELLOW}[warn] data-store   ${NC}could not initialize %s\n" "$DATA_DIR"
     fi
 fi
 
 echo ""
-printf "  ${CYAN}Quick start:${NC}\n"
-printf "    movie scan <folder>   - Scan media directory and enrich metadata\n"
-printf "    movie ui              - Open web dashboard in browser\n"
-printf "    movie doctor          - Check environment & health\n"
-printf "    movie help            - View all available commands\n\n"
-ok "Done! Run 'movie --help' to get started."
+printf "  ${GRAY}────────────────────────────────────────────────────────────${NC}\n"
+printf "  ${CYAN}Quick Start Commands:${NC}\n"
+printf "    ${YELLOW}%-22s${NC} %s\n" "movie scan <folder>" "Scan folder, enrich metadata & generate web report"
+printf "    ${YELLOW}%-22s${NC} %s\n" "movie ls" "List indexed movies and TV series in library"
+printf "    ${YELLOW}%-22s${NC} %s\n" "movie info <title>" "Query TMDb and inspect media metadata"
+printf "    ${YELLOW}%-22s${NC} %s\n" "movie ui" "Launch local web dashboard in browser"
+printf "    ${YELLOW}%-22s${NC} %s\n" "movie doctor" "Diagnose environment and database health"
+printf "    ${YELLOW}%-22s${NC} %s\n" "movie db" "Inspect multi-tier Split-DB statistics"
+printf "    ${YELLOW}%-22s${NC} %s\n" "movie help" "Discover full command suite"
+printf "  ${GRAY}────────────────────────────────────────────────────────────${NC}\n"
+echo ""
+ok "Installation complete! Run 'movie doctor' or 'movie --help' to get started."
 echo ""

@@ -22,14 +22,19 @@ func Preflight() (*Report, error) {
 }
 
 func printPreflightBanner(r *Report) {
+	isColor := isDoctorColor()
+
 	fmt.Println("==> Preflight checks (movie doctor)")
 	fmt.Println("  --------------------------------------------------")
+
 	for _, f := range r.Findings {
 		if f.Severity == SeverityOK {
 			continue
 		}
-		printFinding(f)
+
+		printFinding(f, isColor)
 	}
+
 	fmt.Println("  --------------------------------------------------")
 	printPreflightFooter(r)
 }

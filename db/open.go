@@ -13,22 +13,27 @@ import (
 
 const dbFile = "movie.db"
 
-// DB wraps the sql.DB connection.
+// DB wraps the sql.DB connection for primary library storage and split cache storage.
 type DB struct {
 	*sql.DB
+	CacheDB  *sql.DB
 	BasePath string // path to data directory
 }
 
 // exeDir returns the directory where the running binary is located.
 func exeDir() (string, error) {
 	exe, err := os.Executable()
+
 	if err != nil {
 		return "", appfault.Wrap("cannot locate executable", err)
 	}
+
 	exe, err = filepath.EvalSymlinks(exe)
+
 	if err != nil {
 		return "", appfault.Wrap("cannot resolve symlinks for executable", err)
 	}
+
 	return filepath.Dir(exe), nil
 }
 
@@ -36,27 +41,59 @@ func exeDir() (string, error) {
 // The app version is stored in Config on every startup.
 func Open() (*DB, error) {
 	binDir, dirErr := exeDir()
+
 	if dirErr != nil {
 		return nil, dirErr
 	}
 
 	base := filepath.Join(binDir, "data")
+
 	if err := createDataDirs(base); err != nil {
 		return nil, err
 	}
 
 	conn, err := openAndConfigureDB(base)
+
 	if err != nil {
 		return nil, err
 	}
 
-	d := &DB{DB: conn, BasePath: base}
+	cacheConn, _ := openAndConfigureCacheDB(base)
+
+	d := &DB{DB: conn, CacheDB: cacheConn, BasePath: base}
+
 	if err := d.migrateSchema(); err != nil {
-		conn.Close()
+		_ = d.Close()
+
 		return nil, appfault.Wrap("migration failed", err)
 	}
 
+	if cacheConn != nil {
+		_ = d.initCacheSchema()
+	}
+
 	return d, nil
+}
+
+// Close closes both the master database and the cache database.
+func (d *DB) Close() error {
+	var firstErr error
+
+	if d.DB != nil {
+		if err := d.DB.Close(); err != nil {
+			firstErr = err
+		}
+	}
+
+	if d.CacheDB != nil {
+		if err := d.CacheDB.Close(); err != nil {
+			if firstErr == nil {
+				firstErr = err
+			}
+		}
+	}
+
+	return firstErr
 }
 
 func createDataDirs(base string) error {

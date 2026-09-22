@@ -10,23 +10,28 @@ import (
 
 // printMediaDetailTable outputs a media item as a formatted key-value table.
 func printMediaDetailTable(m *db.Media) {
-	labelWidth := 12
+	labelWidth := 14
 	valueWidth := 55
+	isColor := isColorEnabled()
 
 	fmt.Println()
-	fmt.Printf("  %-*s │ %-*s\n", labelWidth, "Field", valueWidth, "Value")
-	fmt.Printf("  %s─┼─%s\n",
-		strings.Repeat("─", labelWidth),
-		strings.Repeat("─", valueWidth))
+	fmt.Printf("  ┌%s┬%s┐\n", strings.Repeat("─", labelWidth+2), strings.Repeat("─", valueWidth+2))
+
+	fieldHdr := colorText(fmt.Sprintf(" %-*s ", labelWidth, "Field"), ansiCyan, isColor)
+	valHdr := colorText(fmt.Sprintf(" %-*s ", valueWidth, "Value"), ansiCyan, isColor)
+	fmt.Printf("  │%s│%s│\n", fieldHdr, valHdr)
+
+	fmt.Printf("  ├%s┼%s┤\n", strings.Repeat("─", labelWidth+2), strings.Repeat("─", valueWidth+2))
 
 	rows := buildDetailTableRows(m, valueWidth)
+
 	for _, r := range rows {
-		fmt.Printf("  %-*s │ %-*s\n", labelWidth, r.label, valueWidth, r.value)
+		lbl := colorText(fmt.Sprintf(" %-*s ", labelWidth, r.label), ansiDim, isColor)
+		val := fmt.Sprintf(" %-*s ", valueWidth, r.value)
+		fmt.Printf("  │%s│%s│\n", lbl, val)
 	}
 
-	fmt.Printf("  %s─┴─%s\n",
-		strings.Repeat("─", labelWidth),
-		strings.Repeat("─", valueWidth))
+	fmt.Printf("  └%s┴%s┘\n", strings.Repeat("─", labelWidth+2), strings.Repeat("─", valueWidth+2))
 	fmt.Println()
 }
 

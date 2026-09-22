@@ -3,6 +3,9 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -72,6 +75,17 @@ func renderRootHelp(c *cobra.Command) string {
 	isColor := isColorEnabled()
 	var b strings.Builder
 
+	exePath, _ := os.Executable()
+	exePath, _ = filepath.EvalSymlinks(exePath)
+
+	if exePath == "" {
+		exePath = "movie"
+	}
+
+	dataDir := filepath.Join(filepath.Dir(exePath), "data")
+	masterDB := filepath.Join(dataDir, "movie.db")
+	cacheDB := filepath.Join(dataDir, "cache.db")
+
 	b.WriteString(colorText(fmt.Sprintf("\nmovie-cli %s", version.Short()), ansiCyan, isColor))
 	b.WriteString(" — Organize, enrich, and enjoy your movie collection\n\n")
 
@@ -80,17 +94,31 @@ func renderRootHelp(c *cobra.Command) string {
 
 	for _, g := range getHelpGroups() {
 		b.WriteString(colorText(g.Title+":\n", ansiCyan, isColor))
+
 		for _, cmd := range g.Commands {
 			cmdStr := fmt.Sprintf("  %-28s", cmd.Name)
 			b.WriteString(colorText(cmdStr, ansiGreen, isColor))
 			b.WriteString(" " + colorText(cmd.Desc, ansiDim, isColor) + "\n")
 		}
+
 		b.WriteString("\n")
 	}
 
 	b.WriteString(colorText("Flags:\n", ansiCyan, isColor))
 	b.WriteString("  " + colorText("-h, --help", ansiYellow, isColor) + "      " + colorText("Help for movie", ansiDim, isColor) + "\n")
 	b.WriteString("  " + colorText("-v, --version", ansiYellow, isColor) + "   " + colorText("Version for movie", ansiDim, isColor) + "\n\n")
+
+	b.WriteString(colorText("  ────────────────────────────────────────────────────────────\n", ansiDim, isColor))
+	b.WriteString(colorText("  movie-cli binary\n", ansiCyan, isColor))
+	b.WriteString(fmt.Sprintf("  %s %-15s %s\n", colorText("●", ansiCyan, isColor), colorText("Name:", ansiDim, isColor), "movie-cli"))
+	b.WriteString(fmt.Sprintf("  %s %-15s %s\n", colorText("●", ansiCyan, isColor), colorText("Git URL:", ansiDim, isColor), "https://github.com/alimtvnetwork/movie-cli-v8"))
+	b.WriteString(fmt.Sprintf("  %s %-15s %s\n", colorText("●", ansiCyan, isColor), colorText("Version:", ansiDim, isColor), version.Short()))
+	b.WriteString(fmt.Sprintf("  %s %-15s %s\n", colorText("●", ansiCyan, isColor), colorText("Commit SHA:", ansiDim, isColor), version.Commit))
+	b.WriteString(fmt.Sprintf("  %s %-15s %s\n", colorText("●", ansiCyan, isColor), colorText("Database:", ansiDim, isColor), masterDB))
+	b.WriteString(fmt.Sprintf("  %s %-15s %s\n", colorText("●", ansiCyan, isColor), colorText("Cache DB:", ansiDim, isColor), cacheDB))
+	b.WriteString(fmt.Sprintf("  %s %-15s %s\n", colorText("●", ansiCyan, isColor), colorText("Architecture:", ansiDim, isColor), fmt.Sprintf("%s/%s (%s)", runtime.GOOS, runtime.GOARCH, runtime.Version())))
+	b.WriteString(fmt.Sprintf("  %s %-15s %s\n", colorText("●", ansiCyan, isColor), colorText("Built:", ansiDim, isColor), version.BuildDate))
+	b.WriteString(colorText("  ────────────────────────────────────────────────────────────\n\n", ansiDim, isColor))
 
 	b.WriteString("Documentation: " + colorText("https://github.com/alimtvnetwork/movie-cli-v8", ansiWhite, isColor) + "\n")
 

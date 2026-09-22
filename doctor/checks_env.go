@@ -19,6 +19,7 @@ const (
 	idConfigKeys   = "config-keys"
 	idSourceFolder = "source-folder"
 	idRestPort     = "rest-port"
+	idSplitDB      = "split-db"
 
 	doctorRestPort       = 7777
 	requiredKeyTmdb      = "TmdbApiKey"
@@ -29,9 +30,25 @@ const (
 
 // runEnvChecks appends config/source/port findings to the report.
 func runEnvChecks(report *Report) {
+	report.Findings = append(report.Findings, checkDatabaseSplitDB())
 	report.Findings = append(report.Findings, checkConfigKeys())
 	report.Findings = append(report.Findings, checkSourceFolder())
 	report.Findings = append(report.Findings, checkRestPort())
+}
+
+func checkDatabaseSplitDB() Finding {
+	database, err := db.Open()
+
+	if err != nil {
+		return finding(idSplitDB, "SQLite Split-DB storage",
+			SeverityErr, fmt.Sprintf("cannot open database: %v", err),
+			"Check file permissions on data directory", false)
+	}
+
+	defer database.Close()
+
+	return finding(idSplitDB, "SQLite Split-DB storage",
+		SeverityOK, fmt.Sprintf("movie.db & cache.db ready (%s)", database.BasePath), "", false)
 }
 
 func checkConfigKeys() Finding {

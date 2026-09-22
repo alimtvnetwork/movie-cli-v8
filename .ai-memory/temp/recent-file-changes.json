@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-09-22T01:00:42Z",
+  "updated_at": "2026-09-22T01:52:33Z",
   "files": [
     ".ai-memory/plans/completed/01-delete-old-folders.md",
     ".ai-memory/plans/completed/02-migrate-new-folders.md",
@@ -13,6 +13,10 @@
     "D:/work/wp-exam/src/quiz/components/QuizEditor.tsx",
     "D:/work/wp-exam/src/quiz/store/useQuizStore.ts",
     "D:/work/wp-exam/wp-exam.php",
+    "cmd/help_categories.go",
+    "cmd/movie_db.go",
+    "cmd/movie_info_table.go",
+    "cmd/movie_ls_table.go",
     "cmd/movie_rescan_failed.go",
     "cmd/movie_scan.go",
     "cmd/movie_scan_loop.go",
@@ -22,8 +26,16 @@
     "cmd/movie_scan_progress.go",
     "cmd/path_scope.go",
     "cmd/types.go",
+    "cmd/version.go",
     "d:/work/wp-exam/02-spec/25-app-spec-audit/01-audit-report.md",
     "d:/work/wp-exam/quiz-plugin.php",
+    "db/imdb_lookup_cache.go",
+    "db/imdb_lookup_cache_admin.go",
+    "db/open.go",
+    "db/split_db.go",
+    "doctor/checks_env.go",
+    "doctor/preflight.go",
+    "doctor/report.go",
     "tmdb/client.go",
     "tmdb/fallback.go"
   ],
@@ -40,6 +52,9 @@
     "cmd/path_scope_test.go",
     "cmd/preview_parity_test.go",
     "cmd/undo_redo_e2e_test.go",
+    "db/media_test.go",
+    "db/open_test.go",
+    "doctor/checks_test.go",
     "tmdb/client_test.go"
   ]
 }

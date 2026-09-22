@@ -1,87 +1,195 @@
-// report.go — pretty-printer for the doctor report.
-// Output uses the v2.123.0 indent scheme: 0/1/2/3 spaces with bracketed tags.
+// report.go — pretty-printer for the doctor report following GitMap UI standards.
 package doctor
 
 import (
 	"fmt"
+	"os"
 	"strings"
 )
 
 const (
-	tagOK   = "[ OK ]"
-	tagWarn = "[WARN]"
-	tagErr  = "[ERR ]"
+	ansiReset  = "\033[0m"
+	ansiBold   = "\033[1m"
+	ansiGreen  = "\033[1;32m"
+	ansiYellow = "\033[1;33m"
+	ansiRed    = "\033[1;31m"
+	ansiCyan   = "\033[1;36m"
+	ansiDim    = "\033[2m"
 )
+
+func isDoctorColor() bool {
+	if os.Getenv("NO_COLOR") != "" {
+		return false
+	}
+
+	if os.Getenv("TERM") == "dumb" {
+		return false
+	}
+
+	return true
+}
+
+func colorDoc(text, colorCode string, isColor bool) string {
+	if isColor {
+		return colorCode + text + ansiReset
+	}
+
+	return text
+}
 
 // Print writes the human-readable report to stdout.
 func (r *Report) Print() {
-	fmt.Println("==> movie doctor")
-	fmt.Println("  --------------------------------------------------")
-	printPathSummary(r)
-	fmt.Println("  --------------------------------------------------")
+	isColor := isDoctorColor()
+
+	fmt.Println()
+	fmt.Println(colorDoc("  ┌──────────────────────────────────────────────────────────┐", ansiDim, isColor))
+	fmt.Println(colorDoc("  │   🎬 MOVIE CLI — Environment & System Diagnostics        │", ansiCyan, isColor))
+	fmt.Println(colorDoc("  └──────────────────────────────────────────────────────────┘", ansiDim, isColor))
+	fmt.Println()
+
 	for _, f := range r.Findings {
-		printFinding(f)
+		printFinding(f, isColor)
 	}
-	printFooter(r)
+
+	printRepoSummary(r, isColor)
+	printFooter(r, isColor)
 }
 
-func printPathSummary(r *Report) {
-	fmt.Printf("    deploy source : %s\n", orDash(r.Source))
-	fmt.Printf("    active binary : %s\n", orDash(r.Target))
-	fmt.Printf("    deploy dir    : %s\n", orDash(r.DeployDir))
-}
+func printFinding(f Finding, isColor bool) {
+	tag := tagFor(f.Severity, isColor)
+	compName := componentNameFor(f.ID)
+	compFormatted := fmt.Sprintf("%-12s", compName)
 
-func printFinding(f Finding) {
-	tag := tagFor(f.Severity)
-	fmt.Printf("    %s %s\n", tag, f.Title)
+	if isColor {
+		compFormatted = ansiCyan + compFormatted + ansiReset
+	}
+
+	summary := resolveFindingSummary(f)
+
+	fmt.Printf("  %s %s %s\n", tag, compFormatted, summary)
+
 	if f.Detail != "" {
-		for _, line := range strings.Split(f.Detail, "\n") {
-			fmt.Printf("      %s\n", line)
+		if f.Severity != SeverityOK {
+			for _, line := range strings.Split(f.Detail, "\n") {
+				trimmed := strings.TrimSpace(line)
+
+				if trimmed != "" {
+					fmt.Printf("               %s\n", trimmed)
+				}
+			}
 		}
 	}
-	if f.FixHint != "" && f.Severity != SeverityOK {
-		fmt.Printf("      hint: %s\n", f.FixHint)
+
+	if f.FixHint != "" {
+		if f.Severity != SeverityOK {
+			hintStr := fmt.Sprintf("hint: %s", f.FixHint)
+
+			if isColor {
+				hintStr = ansiYellow + hintStr + ansiReset
+			}
+
+			fmt.Printf("               %s\n", hintStr)
+		}
 	}
 }
 
-func printFooter(r *Report) {
-	fmt.Println("  --------------------------------------------------")
-	printRepoSummary(r)
+func resolveFindingSummary(f Finding) string {
+	if f.Detail != "" {
+		if f.Severity == SeverityOK {
+			lines := strings.Split(f.Detail, "\n")
+
+			return strings.TrimSpace(lines[0])
+		}
+	}
+
+	return f.Title
+}
+
+func printFooter(r *Report, isColor bool) {
+	fmt.Println()
+
 	if r.HasErrors() {
-		fmt.Println("  Result: errors found. Run `movie doctor --fix` to attempt repair.")
+		msg := colorDoc("Result: errors found. Run `movie doctor --fix` to attempt repair.", ansiRed, isColor)
+		fmt.Printf("  %s\n\n", msg)
+
 		return
 	}
+
 	if r.HasFixable() {
-		fmt.Println("  Result: warnings found. Run `movie doctor --fix` to clean up.")
+		msg := colorDoc("Result: warnings found. Run `movie doctor --fix` to clean up.", ansiYellow, isColor)
+		fmt.Printf("  %s\n\n", msg)
+
 		return
 	}
-	fmt.Println("  Result: all good.")
+
+	msg := colorDoc("All systems nominal.", ansiGreen, isColor)
+	fmt.Printf("  %s\n\n", msg)
 }
 
-// printRepoSummary writes the one-line repo staleness summary so users see
-// at a glance whether to run the recovery commands.
-func printRepoSummary(r *Report) {
-	tag := tagOK
-	if r.Repo.IsGitRepo && !(r.Repo.IsCurrent && r.Repo.IsClean) {
-		tag = tagWarn
+func printRepoSummary(r *Report, isColor bool) {
+	tag := tagFor(SeverityOK, isColor)
+	isCleanRepo := r.Repo.IsCurrent && r.Repo.IsClean
+
+	if r.Repo.IsGitRepo {
+		if !isCleanRepo {
+			tag = tagFor(SeverityWarn, isColor)
+		}
 	}
-	fmt.Printf("  %s Repo: %s\n", tag, r.Repo.Summary)
+
+	compFormatted := fmt.Sprintf("%-12s", "repo")
+
+	if isColor {
+		compFormatted = ansiCyan + compFormatted + ansiReset
+	}
+
+	fmt.Printf("  %s %s %s\n", tag, compFormatted, r.Repo.Summary)
 }
 
-func tagFor(sev Severity) string {
+func tagFor(sev Severity, isColor bool) string {
+	if !isColor {
+		switch sev {
+		case SeverityOK:
+			return "[ok]  "
+		case SeverityErr:
+			return "[err] "
+		default:
+			return "[warn]"
+		}
+	}
+
 	switch sev {
 	case SeverityOK:
-		return tagOK
+		return ansiGreen + "[ok]  " + ansiReset
 	case SeverityErr:
-		return tagErr
+		return ansiRed + "[err] " + ansiReset
 	default:
-		return tagWarn
+		return ansiYellow + "[warn]" + ansiReset
 	}
 }
 
-func orDash(v string) string {
-	if v == "" {
-		return "-"
+func componentNameFor(id string) string {
+	switch id {
+	case "path-mismatch":
+		return "deploy"
+	case "deploy-in-path":
+		return "PATH"
+	case "stale-worker", "stale-workers":
+		return "workers"
+	case "version-drift":
+		return "version"
+	case "config-keys":
+		return "tmdb-key"
+	case "source-folder":
+		return "scan-dir"
+	case "rest-port":
+		return "rest-port"
+	case "split-db":
+		return "split-db"
+	default:
+		if id != "" {
+			return id
+		}
+
+		return "system"
 	}
-	return v
 }

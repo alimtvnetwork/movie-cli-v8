@@ -48,18 +48,46 @@ func imdbLookupKey(cleanTitle string, year int) string {
 // GetImdbLookup returns any unexpired cached result for the title/year.
 // Found=false means the caller should perform a fresh web lookup.
 func (d *DB) GetImdbLookup(cleanTitle string, year int) (ImdbLookupResult, error) {
-	row := d.QueryRow(
+	conn := d.cacheConn()
+	key := imdbLookupKey(cleanTitle, year)
+
+	row := conn.QueryRow(
 		`SELECT ImdbId, IsHit, LookedUpAt, TmdbId, MediaType FROM ImdbLookupCache WHERE LookupKey = ?`,
-		imdbLookupKey(cleanTitle, year),
+		key,
 	)
 
 	var imdbID, lookedUpAt, mediaType string
 	var tmdbID int
 	var isHit bool
-	if err := row.Scan(&imdbID, &isHit, &lookedUpAt, &tmdbID, &mediaType); err != nil {
+
+	err := row.Scan(&imdbID, &isHit, &lookedUpAt, &tmdbID, &mediaType)
+
+	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
+			if d.CacheDB != nil {
+				fallbackRow := d.DB.QueryRow(
+					`SELECT ImdbId, IsHit, LookedUpAt, TmdbId, MediaType FROM ImdbLookupCache WHERE LookupKey = ?`,
+					key,
+				)
+
+				if fallbackErr := fallbackRow.Scan(&imdbID, &isHit, &lookedUpAt, &tmdbID, &mediaType); fallbackErr == nil {
+					if !isCacheEntryExpired(lookedUpAt, isHit) {
+						_ = d.SetImdbLookup(cleanTitle, year, imdbID, tmdbID, mediaType)
+
+						return ImdbLookupResult{
+							ImdbID:    imdbID,
+							MediaType: mediaType,
+							TmdbID:    tmdbID,
+							IsHit:     isHit,
+							Found:     true,
+						}, nil
+					}
+				}
+			}
+
 			return ImdbLookupResult{}, nil
 		}
+
 		return ImdbLookupResult{}, err
 	}
 
@@ -80,11 +108,12 @@ func (d *DB) GetImdbLookup(cleanTitle string, year int) (ImdbLookupResult, error
 // Pass tmdbID=0 / mediaType="" when the IMDb id has been resolved but the
 // TMDb /find lookup hasn't run yet (or returned nothing).
 func (d *DB) SetImdbLookup(cleanTitle string, year int, imdbID string, tmdbID int, mediaType string) error {
+	conn := d.cacheConn()
 	key := imdbLookupKey(cleanTitle, year)
 	isHit := imdbID != ""
 	now := time.Now().UTC().Format(time.RFC3339)
 
-	_, err := d.Exec(`
+	_, err := conn.Exec(`
 		INSERT INTO ImdbLookupCache (LookupKey, CleanTitle, Year, ImdbId, IsHit, LookedUpAt, TmdbId, MediaType)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(LookupKey) DO UPDATE SET
@@ -96,6 +125,7 @@ func (d *DB) SetImdbLookup(cleanTitle string, year int, imdbID string, tmdbID in
 			TmdbId     = excluded.TmdbId,
 			MediaType  = excluded.MediaType
 	`, key, cleanTitle, year, imdbID, isHit, now, tmdbID, mediaType)
+
 	return err
 }
 

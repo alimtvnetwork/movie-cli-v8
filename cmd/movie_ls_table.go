@@ -15,7 +15,7 @@ const (
 	colTitle    = 40
 	colYear     = 6
 	colType     = 8
-	colRating   = 6
+	colRating   = 8
 	colGenre    = 25
 	colDirector = 20
 )
@@ -24,6 +24,7 @@ const (
 func runMovieLsTable(database *db.DB) {
 	mode := resolveLsFilterMode()
 	allMedia, err := database.ListMediaFiltered(0, 100000, mode)
+
 	if err != nil {
 		errlog.Error(msgDatabaseError, err)
 		return
@@ -36,18 +37,27 @@ func runMovieLsTable(database *db.DB) {
 
 	fmt.Println()
 	printLsTableHeader()
+
 	for i := range allMedia {
 		printLsTableRow(i+1, &allMedia[i])
 	}
+
 	printLsTableDivider("┴")
 	fmt.Printf("\n  Total: %d items\n\n", len(allMedia))
 }
 
 func printLsTableHeader() {
+	isColor := isColorEnabled()
+
 	fmt.Printf("  %-*s │ %-*s │ %-*s │ %-*s │ %-*s │ %-*s │ %-*s\n",
-		colNum, "#", colTitle, "Title", colYear, "Year",
-		colType, "Type", colRating, "Rating", colGenre, "Genre",
-		colDirector, "Director")
+		colNum, colorText("#", ansiCyan, isColor),
+		colTitle, colorText("Title", ansiCyan, isColor),
+		colYear, colorText("Year", ansiCyan, isColor),
+		colType, colorText("Type", ansiCyan, isColor),
+		colRating, colorText("Rating", ansiCyan, isColor),
+		colGenre, colorText("Genre", ansiCyan, isColor),
+		colDirector, colorText("Director", ansiCyan, isColor))
+
 	printLsTableDivider("┼")
 }
 
@@ -65,6 +75,7 @@ func printLsTableDivider(joint string) {
 func printLsTableRow(num int, m *db.Media) {
 	title := truncate(m.CleanTitle, colTitle)
 	yearStr := ""
+
 	if m.Year > 0 {
 		yearStr = fmt.Sprintf("%d", m.Year)
 	}
@@ -81,12 +92,14 @@ func printLsTableRow(num int, m *db.Media) {
 
 func formatRating(tmdbRating, imdbRating float64) string {
 	if tmdbRating > 0 {
-		return fmt.Sprintf("%.1f", tmdbRating)
+		return fmt.Sprintf("⭐ %.1f", tmdbRating)
 	}
+
 	if imdbRating > 0 {
-		return fmt.Sprintf("%.1f", imdbRating)
+		return fmt.Sprintf("⭐ %.1f", imdbRating)
 	}
-	return "N/A"
+
+	return "  -  "
 }
 
 // truncate shortens a string to maxLen, adding "…" if needed.
