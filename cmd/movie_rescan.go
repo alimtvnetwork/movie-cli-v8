@@ -10,7 +10,6 @@ import (
 
 	"github.com/alimtvnetwork/movie-cli-v8/db"
 	"github.com/alimtvnetwork/movie-cli-v8/errlog"
-	"github.com/alimtvnetwork/movie-cli-v8/tmdb"
 )
 
 // regenerateReports rebuilds HTML report and summary.json for every scan
@@ -75,10 +74,14 @@ func countByType(items []db.Media) (int, int) {
 	return movieCount, tvCount
 }
 
-var rescanAll bool
-var rescanLimit int
-var rescanNoCache bool
-var rescanKeepLogs bool
+var (
+	rescanAll      bool
+	rescanLimit    int
+	rescanNoCache  bool
+	rescanKeepLogs bool
+	rescanWorkers  int
+	rescanThreads  int
+)
 
 var movieRescanCmd = &cobra.Command{
 	Use:   "rescan",
@@ -93,7 +96,8 @@ Examples:
   movie rescan              Re-fetch only entries with missing data
   movie rescan --all        Re-fetch TMDb data for ALL entries
   movie rescan --limit 50   Process at most 50 entries
-  movie rescan --no-cache   Bypass the IMDb cache for this run only`,
+  movie rescan --no-cache   Bypass the IMDb cache for this run only
+  movie rescan -w 4 -t 4    Run with 4 workers × 4 threads (16 concurrent)`,
 	Run: runMovieRescan,
 }
 
@@ -106,6 +110,10 @@ func init() {
 		"bypass the IMDb lookup cache for this run (forces fresh DuckDuckGo + /find)")
 	movieRescanCmd.Flags().BoolVar(&rescanKeepLogs, "keep-logs", false,
 		"keep the previous run's logs instead of wiping .movie-output/logs/ on start")
+	movieRescanCmd.Flags().IntVarP(&rescanWorkers, "workers", "w", 0,
+		"parallel workers for TMDb rescan (0 = auto: NumCPU*2, capped at 32)")
+	movieRescanCmd.Flags().IntVarP(&rescanThreads, "threads", "t", DefaultThreadsPerWorker,
+		"threads per worker for parallel TMDb rescan (default: 4)")
 }
 
 func runMovieRescan(cmd *cobra.Command, args []string) {
@@ -141,7 +149,10 @@ func runMovieRescan(cmd *cobra.Command, args []string) {
 
 	client := newTmdbClientFromCreds(creds)
 	attachImdbCacheUnless(client, database, rescanNoCache, "rescan")
-	updated, failed := processRescanEntries(database, client, entries)
+
+	workers := resolveWorkers(rescanWorkers, database)
+	threads := resolveThreads(rescanThreads, database)
+	updated, failed := processRescanEntries(database, client, entries, workers, threads)
 	printRescanResult(updated, failed, len(entries))
 
 	if updated > 0 {
@@ -169,26 +180,6 @@ func applyRescanLimit(entries []db.Media) []db.Media {
 		return entries[:rescanLimit]
 	}
 	return entries
-}
-
-func processRescanEntries(database *db.DB, client *tmdb.Client, entries []db.Media) (int, int) {
-	fmt.Printf("\n🔄 Rescanning %d entries for TMDb metadata...\n\n", len(entries))
-	updated, failed := 0, 0
-	for i := range entries {
-		fmt.Printf("  %d/%d  %s", i+1, len(entries), entries[i].CleanTitle)
-		if entries[i].Year > 0 {
-			fmt.Printf(" (%d)", entries[i].Year)
-		}
-
-		if rescanMediaEntry(database, client, &entries[i]) {
-			fmt.Printf("  ✅ ⭐%.1f %s\n", entries[i].TmdbRating, entries[i].Genre)
-			updated++
-			continue
-		}
-		fmt.Printf("  ❌ failed\n")
-		failed++
-	}
-	return updated, failed
 }
 
 func printRescanResult(updated, failed, total int) {

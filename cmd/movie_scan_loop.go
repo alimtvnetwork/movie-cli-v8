@@ -28,39 +28,59 @@ func runMainScanLoop(ctx *ScanContext, videoFiles []videoFile, cfg ScanLoopConfi
 		existingPaths[existingMedia[i].OriginalFilePath] = &existingMedia[i]
 	}
 
-	newFiles := splitNewFromExisting(ctx, videoFiles, existingPaths, cfg)
-	dispatchNewFilesParallel(ctx, newFiles)
+	workers := resolveWorkerCount(ctx.Database)
+	threads := resolveThreadsPerWorker(ctx.Database)
+
+	newFiles, rescanJobs := splitFilesForScan(ctx, videoFiles, existingPaths, cfg)
+
+	if len(rescanJobs) > 0 {
+		runParallelRescanScan(ctx, rescanJobs, workers, threads, cfg)
+	}
+
+	if len(newFiles) > 0 {
+		runParallelNewFileScan(ctx, newFiles, workers, threads)
+	}
+
 	emitJsonItemsIfNeeded(ctx, existingPaths, cfg)
+
 	return removed
 }
 
-// splitNewFromExisting handles existing-media rescans serially and returns
-// the slice of files that need fresh enrichment via the worker pool.
-func splitNewFromExisting(ctx *ScanContext, videoFiles []videoFile,
-	existingPaths map[string]*db.Media, cfg ScanLoopConfig) []videoFile {
+// splitFilesForScan divides video files into new files, rescan jobs, and complete existing media.
+func splitFilesForScan(ctx *ScanContext, videoFiles []videoFile,
+	existingPaths map[string]*db.Media, cfg ScanLoopConfig) ([]videoFile, []rescanFileJob) {
 	newFiles := make([]videoFile, 0, len(videoFiles))
+	rescanJobs := make([]rescanFileJob, 0)
+
 	for _, vf := range videoFiles {
 		em, found := existingPaths[vf.FullPath]
 		if !found || scanForce {
 			newFiles = append(newFiles, vf)
+
 			continue
 		}
-		processExistingMedia(ctx, ProcessExistingInput{
-			EM: em, VF: vf, Client: cfg.Client, Database: ctx.Database,
-			Opts:    ScanOutputOpts{OutputFormatOpts: OutputFormatOpts{IsTableOutput: cfg.IsTableOutput, IsJsonOutput: cfg.IsJsonOutput}},
-			BatchID: cfg.BatchID, HasTMDb: cfg.HasTMDb,
+
+		needsRescan := cfg.HasTMDb && mediaNeedsRescan(em)
+		if needsRescan {
+			preSnapshot, _ := db.MediaToJSON(em)
+			rescanJobs = append(rescanJobs, rescanFileJob{
+				Media:       em,
+				VF:          vf,
+				PreSnapshot: preSnapshot,
+			})
+
+			continue
+		}
+
+		handleSkippedMediaDirect(ctx, em, ScanOutputOpts{
+			OutputFormatOpts: OutputFormatOpts{
+				IsTableOutput: cfg.IsTableOutput,
+				IsJsonOutput:  cfg.IsJsonOutput,
+			},
 		})
 	}
-	return newFiles
-}
 
-// dispatchNewFilesParallel runs new-file enrichment through the worker pool.
-func dispatchNewFilesParallel(ctx *ScanContext, newFiles []videoFile) {
-	if len(newFiles) == 0 {
-		return
-	}
-	workers := resolveWorkerCount(ctx.Database)
-	runParallelNewFileScan(ctx, newFiles, workers)
+	return newFiles, rescanJobs
 }
 
 // emitJsonItemsIfNeeded appends per-file JSON entries after all processing.
@@ -120,76 +140,26 @@ func snapshotRemovedMedia(database *db.DB, media []*db.Media, scanBatchID string
 	}
 }
 
-func processExistingMedia(ctx *ScanContext, input ProcessExistingInput) {
+func handleSkippedMediaDirect(ctx *ScanContext, em *db.Media, opts ScanOutputOpts) {
 	ctx.TotalFiles++
-
-	needsRescan := input.HasTMDb && mediaNeedsRescan(input.EM)
-	if needsRescan {
-		handleRescan(ctx, HandleRescanInput{
-			EM: input.EM, Client: input.Client, Database: input.Database,
-			Opts: input.Opts, BatchID: input.BatchID,
-		})
-	}
-	if !needsRescan {
-		handleSkippedMedia(ctx, input.EM, input.Opts)
-	}
-
-	ensureThumbnailInOutputDir(ctx.OutputDir, input.Database.BasePath, input.EM.ThumbnailPath)
-
-	ctx.ScannedItems = append(ctx.ScannedItems, *input.EM)
-	if input.EM.Type == string(db.MediaTypeMovie) {
-		ctx.MovieCount++
-		return
-	}
-	ctx.TVCount++
-}
-
-func handleRescan(ctx *ScanContext, input HandleRescanInput) {
-	preSnapshot, _ := db.MediaToJSON(input.EM)
-	if !rescanMediaEntry(input.Database, input.Client, input.EM) {
-		ctx.Skipped++
-		if !input.Opts.IsTableOutput && !input.Opts.IsJsonOutput {
-			printRescanFailed(ctx.TotalFiles, input.EM)
-		}
-		return
-	}
-	detail := fmt.Sprintf("Rescan updated: %s", input.EM.CleanTitle)
-	_, _ = input.Database.InsertActionSimple(db.ActionSimpleInput{
-		FileAction: db.FileActionRescanUpdate, MediaID: input.EM.ID,
-		Snapshot: preSnapshot, Detail: detail, BatchID: input.BatchID,
-	})
-	if input.Opts.IsTableOutput {
-		printScanTableRow(buildMediaTableRow(ctx.TotalFiles, input.EM, "rescanned"))
-		return
-	}
-	if !input.Opts.IsJsonOutput {
-		printRescanSuccess(ctx.TotalFiles, input.EM)
-	}
-}
-
-func printRescanSuccess(idx int, em *db.Media) {
-	typeIcon := db.TypeIcon(em.Type)
-	fmt.Printf("\n  %d. %s %s", idx, typeIcon, em.CleanTitle)
-	if em.Year > 0 {
-		fmt.Printf(" (%d)", em.Year)
-	}
-	fmt.Printf(" [%s]\n", em.Type)
-	fmt.Printf("     🔄 Rescanned — ⭐%.1f %s\n", em.TmdbRating, em.Genre)
-}
-
-func printRescanFailed(idx int, em *db.Media) {
-	fmt.Printf("\n  %d. %s", idx, em.CleanTitle)
-	fmt.Printf(" [%s]\n", em.Type)
-	fmt.Println("     ⚠️  Rescan failed — kept existing data")
-}
-
-func handleSkippedMedia(ctx *ScanContext, em *db.Media, opts ScanOutputOpts) {
 	ctx.Skipped++
+
 	if opts.IsTableOutput {
 		printScanTableRow(buildMediaTableRow(ctx.TotalFiles, em, "existing"))
 	} else if !opts.IsJsonOutput {
 		printSkippedText(ctx.TotalFiles, em)
 	}
+
+	ensureThumbnailInOutputDir(ctx.OutputDir, ctx.Database.BasePath, em.ThumbnailPath)
+
+	ctx.ScannedItems = append(ctx.ScannedItems, *em)
+	if em.Type == string(db.MediaTypeMovie) {
+		ctx.MovieCount++
+
+		return
+	}
+
+	ctx.TVCount++
 }
 
 // printSkippedText prints a plain-text line for a skipped (already-in-db) media item.
@@ -202,4 +172,21 @@ func printSkippedText(index int, em *db.Media) {
 
 	fmt.Printf("\n  %d. %s %s%s [%s]\n", index, typeIcon, em.CleanTitle, yearSuffix, em.Type)
 	fmt.Println("     ⏩ Already in database")
+}
+
+func printRescanSuccess(idx int, em *db.Media) {
+	typeIcon := db.TypeIcon(em.Type)
+	fmt.Printf("\n  %d. %s %s", idx, typeIcon, em.CleanTitle)
+	if em.Year > 0 {
+		fmt.Printf(" (%d)", em.Year)
+	}
+
+	fmt.Printf(" [%s]\n", em.Type)
+	fmt.Printf("     🔄 Rescanned — ⭐%.1f %s\n", em.TmdbRating, em.Genre)
+}
+
+func printRescanFailed(idx int, em *db.Media) {
+	fmt.Printf("\n  %d. %s", idx, em.CleanTitle)
+	fmt.Printf(" [%s]\n", em.Type)
+	fmt.Println("     ⚠️  Rescan failed — kept existing data")
 }

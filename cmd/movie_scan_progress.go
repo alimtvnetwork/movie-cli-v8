@@ -17,46 +17,102 @@ import (
 // PreviewTitleLimit is how many titles to list in batch announcements.
 const PreviewTitleLimit = 5
 
-// shouldSuppressProgress returns true for machine-readable output formats.
-func shouldSuppressProgress(ctx *ScanContext) bool {
+// isProgressSuppressed returns true for machine-readable output formats.
+func isProgressSuppressed(ctx *ScanContext) bool {
 	if ctx == nil {
 		return true
 	}
+
 	if ctx.IsTableOutput {
 		return true
 	}
+
 	return scanFormat == "json"
 }
 
 // announceBatchStart prints the initial batch dispatch line.
-func announceBatchStart(ctx *ScanContext, files []videoFile, workers int) {
-	if shouldSuppressProgress(ctx) {
+func announceBatchStart(ctx *ScanContext, files []videoFile, workers, threads int) {
+	if isProgressSuppressed(ctx) {
 		return
 	}
+
+	totalConcurrent := workers * threads
 	n := len(files)
-	if n > workers {
-		n = workers
+	if n > totalConcurrent {
+		n = totalConcurrent
 	}
-	fmt.Printf("\n🚀 Processing batch of %d (%d worker%s): %s\n",
-		n, workers, pluralS(workers), previewVideoTitles(files[:n]))
+
+	fmt.Printf("\n🚀 Processing batch of %d (%d worker%s × %d thread%s = %d concurrent): %s\n",
+		n, workers, pluralS(workers), threads, pluralS(threads), totalConcurrent, previewVideoTitles(files[:n]))
 }
 
 // announceMidBatchTopUp prints when more files enter the queue mid-flight.
 func announceMidBatchTopUp(ctx *ScanContext, remaining []videoFile, workers int) {
-	if shouldSuppressProgress(ctx) {
+	if isProgressSuppressed(ctx) {
 		return
 	}
+
 	if len(remaining) == 0 {
 		return
 	}
+
 	fmt.Printf("➕ %d more queued: %s\n",
 		len(remaining), previewVideoTitles(remaining))
 	_ = workers
 }
 
+// announceRescanBatchStart prints the batch dispatch line for rescanning existing items.
+func announceRescanBatchStart(ctx *ScanContext, jobs []rescanFileJob, workers, threads int) {
+	if isProgressSuppressed(ctx) {
+		return
+	}
+
+	totalConcurrent := workers * threads
+	n := len(jobs)
+	if n > totalConcurrent {
+		n = totalConcurrent
+	}
+
+	fmt.Printf("\n🔄 Rescanning batch of %d (%d worker%s × %d thread%s = %d concurrent): %s\n",
+		n, workers, pluralS(workers), threads, pluralS(threads), totalConcurrent, previewRescanTitles(jobs[:n]))
+}
+
+// announceMidBatchRescanTopUp prints when more rescan items enter the queue.
+func announceMidBatchRescanTopUp(ctx *ScanContext, remaining []rescanFileJob, workers int) {
+	if isProgressSuppressed(ctx) {
+		return
+	}
+
+	if len(remaining) == 0 {
+		return
+	}
+
+	fmt.Printf("➕ %d more rescan queued: %s\n",
+		len(remaining), previewRescanTitles(remaining))
+	_ = workers
+}
+
+func previewRescanTitles(jobs []rescanFileJob) string {
+	limit := PreviewTitleLimit
+	if len(jobs) < limit {
+		limit = len(jobs)
+	}
+
+	names := make([]string, 0, limit)
+	for i := 0; i < limit; i++ {
+		names = append(names, trimForPreview(jobs[i].Media.CleanTitle))
+	}
+
+	if len(jobs) > limit {
+		names = append(names, fmt.Sprintf("…(+%d more)", len(jobs)-limit))
+	}
+
+	return strings.Join(names, ", ")
+}
+
 // announceWorkerCompletion prints a single completion line.
 func announceWorkerCompletion(ctx *ScanContext, idx, total int, ef enrichedFile) {
-	if shouldSuppressProgress(ctx) {
+	if isProgressSuppressed(ctx) {
 		return
 	}
 
@@ -75,12 +131,14 @@ func announceWorkerCompletion(ctx *ScanContext, idx, total int, ef enrichedFile)
 
 // announceBatchSummary prints the parallel-batch wrap-up line.
 func announceBatchSummary(ctx *ScanContext, completed int) {
-	if shouldSuppressProgress(ctx) {
+	if isProgressSuppressed(ctx) {
 		return
 	}
+
 	if completed == 0 {
 		return
 	}
+
 	fmt.Printf("\n✅ Batch complete: %d file%s processed in parallel\n",
 		completed, pluralS(completed))
 }

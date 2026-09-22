@@ -49,15 +49,15 @@ func isMediaStale(updatedAt string) bool {
 	return true
 }
 
-// rescanMediaEntry re-fetches TMDb metadata for a single media entry.
-// Returns true if the entry was updated successfully.
-func rescanMediaEntry(database *db.DB, client *tmdb.Client, m *db.Media) bool {
+// resolveRescanFromTMDb executes the read-only network search and detail hydration from TMDb (thread-safe).
+func resolveRescanFromTMDb(client *tmdb.Client, m *db.Media) bool {
 	searchTitle := m.CleanTitle
 	if m.Year > 0 {
 		yearStr := strconv.Itoa(m.Year)
 		re := regexp.MustCompile(`\s+` + regexp.QuoteMeta(yearStr) + `$`)
 		searchTitle = re.ReplaceAllString(searchTitle, "")
 	}
+
 	searchQuery := searchTitle
 	if m.Year > 0 {
 		searchQuery += " " + strconv.Itoa(m.Year)
@@ -66,8 +66,10 @@ func rescanMediaEntry(database *db.DB, client *tmdb.Client, m *db.Media) bool {
 	tmdbResults, tmdbErr := client.SearchWithFallback(searchTitle, m.Year)
 	if tmdbErr != nil {
 		errlog.Warn("rescan TMDb search failed for '%s': %v", searchQuery, tmdbErr)
+
 		return false
 	}
+
 	if len(tmdbResults) == 0 {
 		return false
 	}
@@ -82,11 +84,17 @@ func rescanMediaEntry(database *db.DB, client *tmdb.Client, m *db.Media) bool {
 	m.Type = resolveMediaType(best.MediaType)
 	fetchDetailsByType(client, best.ID, m)
 
+	return true
+}
+
+// persistRescanEntry writes the updated media and relations to SQLite (main-thread serializer).
+func persistRescanEntry(database *db.DB, m *db.Media) bool {
 	if !updateRescanEntry(database, m) {
 		return false
 	}
 
 	linkRescanRelations(database, m)
+
 	return true
 }
 

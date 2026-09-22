@@ -12,9 +12,13 @@ import (
 	"github.com/alimtvnetwork/movie-cli-v8/errlog"
 )
 
-var rescanFailedLimit int
-var rescanFailedNoCache bool
-var rescanFailedKeepLogs bool
+var (
+	rescanFailedLimit    int
+	rescanFailedNoCache  bool
+	rescanFailedKeepLogs bool
+	rescanFailedWorkers  int
+	rescanFailedThreads  int
+)
 
 var movieRescanFailedCmd = &cobra.Command{
 	Use:   "rescan-failed",
@@ -29,7 +33,8 @@ TMDb lookup using the full SearchWithFallback chain:
 Examples:
   movie rescan-failed              Re-fetch every row missing TmdbId
   movie rescan-failed --limit 50   Process at most 50 entries
-  movie rescan-failed --no-cache   Bypass the IMDb cache for this run only`,
+  movie rescan-failed --no-cache   Bypass the IMDb cache for this run only
+  movie rescan-failed -w 4 -t 4    Run with 4 workers × 4 threads (16 concurrent)`,
 	Run: runMovieRescanFailed,
 }
 
@@ -40,6 +45,10 @@ func init() {
 		"bypass the IMDb lookup cache for this run (forces fresh DuckDuckGo + /find)")
 	movieRescanFailedCmd.Flags().BoolVar(&rescanFailedKeepLogs, "keep-logs", false,
 		"keep the previous run's logs instead of wiping .movie-output/logs/ on start")
+	movieRescanFailedCmd.Flags().IntVarP(&rescanFailedWorkers, "workers", "w", 0,
+		"parallel workers for TMDb rescan (0 = auto: NumCPU*2, capped at 32)")
+	movieRescanFailedCmd.Flags().IntVarP(&rescanFailedThreads, "threads", "t", DefaultThreadsPerWorker,
+		"threads per worker for parallel TMDb rescan (default: 4)")
 }
 
 func runMovieRescanFailed(cmd *cobra.Command, args []string) {
@@ -72,7 +81,10 @@ func runMovieRescanFailed(cmd *cobra.Command, args []string) {
 
 	client := newTmdbClientFromCreds(creds)
 	attachImdbCacheUnless(client, database, rescanFailedNoCache, "rescan-failed")
-	updated, failed := processRescanEntries(database, client, entries)
+
+	workers := resolveWorkers(rescanFailedWorkers, database)
+	threads := resolveThreads(rescanFailedThreads, database)
+	updated, failed := processRescanEntries(database, client, entries, workers, threads)
 	printRescanFailedResult(updated, failed, len(entries))
 
 	if updated > 0 {
