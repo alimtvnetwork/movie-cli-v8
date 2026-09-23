@@ -91,6 +91,8 @@ func init() {
 		movieResetCmd,
 		movieLogsCmd,
 		movieCdCmd,
+		movieOpenCmd,
+		movieSetupCmd,
 		movieAliasCmd,
 		movieRescanCmd,
 		movieRescanFailedCmd,

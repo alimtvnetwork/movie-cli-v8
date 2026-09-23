@@ -24,9 +24,19 @@ func isTerminalInput() bool {
 	return isTerm
 }
 
-func printCdResult(res *CdTargetResult) {
+func printCdResult(res *CdTargetResult, isOpenRequested bool) {
 	if res == nil {
 		return
+	}
+
+	writeHandoffPath(res.TargetDirectory)
+
+	if isOpenRequested {
+		if err := openDirectoryInOS(res.TargetDirectory); err != nil {
+			fmt.Fprintf(os.Stderr, "⚠️ Failed to open file manager: %v\n", err)
+		} else {
+			fmt.Fprintf(os.Stderr, "📂 Opened %s in File Explorer\n", res.MatchName)
+		}
 	}
 
 	isTerm := isTerminalOutput()
@@ -91,30 +101,30 @@ func printCdSuggestions(suggestions []CdSuggestion) {
 	fmt.Fprintln(os.Stderr, "────────────────────────────────────────────────────────────────────────────")
 	fmt.Fprintln(os.Stderr, "💡 Shortcuts:")
 	fmt.Fprintln(os.Stderr, "  mcd <name|#|alias>       Jump to target folder directly")
+	fmt.Fprintln(os.Stderr, "  movie start <name|#|dir> Open in File Explorer and jump")
 	fmt.Fprintln(os.Stderr, "  movie ui <name|#|alias>  Open Web UI for target folder")
-	fmt.Fprintln(os.Stderr, "  movie cd --setup         Install shell 'mcd' function")
+	fmt.Fprintln(os.Stderr, "  movie setup              Configure shell navigation functions")
 }
 
 func printCdSetupInstructions() {
-	fmt.Println("🔧 Shell Navigation Setup ('mcd' shortcut)")
+	fmt.Println("🔧 Shell Navigation Setup ('movie cd' & 'mcd')")
 	fmt.Println("────────────────────────────────────────────────────────────────────────────")
-	fmt.Println("Since CLI processes cannot change their parent shell directory directly,")
-	fmt.Println("add this helper to your shell profile:")
+	fmt.Println("To install shell integration automatically, run:")
+	fmt.Println()
+	fmt.Println("  movie setup")
+	fmt.Println()
+	fmt.Println("Or add the helper manually to your shell profile:")
 	fmt.Println()
 	fmt.Println("  PowerShell ($PROFILE):")
-	fmt.Println("    function mcd { $p = (movie cd @args); if ($p) { Set-Location $p } }")
+	fmt.Println("    function mcd { $p = (movie cd @args); if ($p) { Set-Location -LiteralPath $p } }")
 	fmt.Println()
 	fmt.Println("  Bash / Zsh (~/.bashrc or ~/.zshrc):")
 	fmt.Println("    mcd() { p=\"$(movie cd \"$@\")\"; [ -n \"$p\" ] && cd \"$p\"; }")
 	fmt.Println()
-	fmt.Println("  Fish (~/.config/fish/functions/mcd.fish):")
-	fmt.Println("    function mcd; set -l p (movie cd $argv); and test -n \"$p\"; and cd $p; end")
-	fmt.Println()
 	fmt.Println("Examples after setup:")
-	fmt.Println("  mcd movies         Jump directly to Movies folder")
-	fmt.Println("  mcd tvshows        Jump directly to TV Shows folder")
-	fmt.Println("  mcd 1              Jump to folder #1")
-	fmt.Println("  mcd Inception      Jump to containing folder of Inception")
+	fmt.Println("  movie cd movies    Jump directly to Movies folder")
+	fmt.Println("  mcd movies         Short alias to jump directly")
+	fmt.Println("  movie start movie  Open in File Explorer and jump")
 }
 
 func promptCdSelection(suggestions []CdSuggestion) *CdSuggestion {

@@ -422,13 +422,11 @@ else
     fi
 fi
 
-# Shell quick navigation helper (mcd)
-for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
-    if [ -f "$rc" ] && ! grep -q 'mcd()' "$rc" 2>/dev/null; then
-        printf '\n# movie-cli quick navigation helper\nmcd() { p="$("%s" cd "$@")"; [ -n "$p" ] && cd "$p"; }\n' "$INSTALL_DIR/$BINARY_NAME" >> "$rc" 2>/dev/null || true
-        printf "    ${GREEN}[ok]   shell-func   ${NC}'mcd' shortcut added to %s\n" "$rc"
-    fi
-done
+# Shell quick navigation helper (movie cd, mcd)
+if [ -x "$INSTALL_DIR/$BINARY_NAME" ]; then
+    "$INSTALL_DIR/$BINARY_NAME" setup >/dev/null 2>&1 || true
+    printf "    ${GREEN}[ok]   shell-func   ${NC}movie & mcd shortcuts installed in shell profiles\n"
+fi
 
 if [ "${MOVIE_UPDATING:-0}" != "1" ] && [ -x "$INSTALL_DIR/$BINARY_NAME" ]; then
     echo ""

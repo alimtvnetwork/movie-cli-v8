@@ -33,6 +33,7 @@ dist-ssr
 release-assets
 .gitmap/backup/
 .gitmap/data/
+/data/
 
 # Test reports, coverage, and artifacts
 *.test-report.*

@@ -473,35 +473,13 @@ function Invoke-InstallVerification([string]$binPath, [string]$installDir, [bool
             Write-Host ("    [warn] data-store   could not initialize {0}" -f $dbDir) -ForegroundColor Yellow
         }
     }
-
-    # 4. Shell quick navigation helper (mcd)
-    if ($PROFILE) {
+    # 4. Shell quick navigation helper (movie cd, mcd)
+    if (Test-Path $binPath) {
         try {
-            $profileDir = Split-Path -Parent $PROFILE
-            if (-not (Test-Path $profileDir)) {
-                New-Item -ItemType Directory -Path $profileDir -Force | Out-Null
-            }
-            $mcdFunc = @"
-
-# movie-cli quick navigation helper
-function mcd {
-    `$p = (& "$binPath" cd @args)
-    if (`$p) { Set-Location `$p }
-}
-"@
-            $hasMcd = $false
-            if (Test-Path $PROFILE) {
-                $content = Get-Content $PROFILE -Raw -ErrorAction SilentlyContinue
-                if ($content -match 'function mcd') { $hasMcd = $true }
-            }
-            if (-not $hasMcd) {
-                Add-Content -Path $PROFILE -Value $mcdFunc -Encoding UTF8 -Force
-                Write-Host ("    [ok]   shell-func   mcd shortcut installed in {0}" -f $PROFILE) -ForegroundColor Green
-            } else {
-                Write-Host ("    [ok]   shell-func   mcd shortcut ready in {0}" -f $PROFILE) -ForegroundColor Green
-            }
+            & $binPath setup | Out-Null
+            Write-Host ("    [ok]   shell-func   movie & mcd shortcuts installed in shell profiles") -ForegroundColor Green
         } catch {
-            Write-Host ("    [info] shell-func   run 'movie cd --setup' to configure 'mcd'") -ForegroundColor DarkGray
+            Write-Host ("    [info] shell-func   run 'movie setup' to configure shell integration") -ForegroundColor DarkGray
         }
     }
 }

@@ -3,6 +3,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -37,6 +38,28 @@ func resolveCdTarget(database *db.DB, query string, alias string) (*CdTargetResu
 
 	if trimmed == "" {
 		return nil, buildAllSuggestions(database), nil
+	}
+
+	if trimmed == "." {
+		cwd, _ := os.Getwd()
+
+		return &CdTargetResult{
+			TargetDirectory: cwd,
+			MatchName:       filepath.Base(cwd),
+			MatchType:       "current-directory",
+		}, nil, nil
+	}
+
+	if fi, statErr := os.Stat(trimmed); statErr == nil {
+		if fi.IsDir() {
+			absPath, _ := filepath.Abs(trimmed)
+
+			return &CdTargetResult{
+				TargetDirectory: absPath,
+				MatchName:       filepath.Base(absPath),
+				MatchType:       "directory",
+			}, nil, nil
+		}
 	}
 
 	if num, err := strconv.Atoi(trimmed); err == nil && num > 0 {
