@@ -1,5 +1,23 @@
 # Changelog
 
+## v2.343.0
+
+### Added / Changed
+- **Root folder safeguards, quarantine into temp-remove, and exit confirmation**
+
+### Quick Install Movie CLI v2.343.0
+
+**Windows (PowerShell):**
+```powershell
+irm https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.343.0/install.ps1 | iex
+```
+
+**Linux / macOS (Bash):**
+```bash
+curl -fsSL https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.343.0/install.sh | bash
+```
+
+
 ## v2.342.0
 
 ### Added / Changed

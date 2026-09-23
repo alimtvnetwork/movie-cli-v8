@@ -1,3 +1,9 @@
+## v2.343.0 — 2026-09-23 (Root folder safeguards, quarantine into temp-remove, and exit confirmation)
+
+**Scope:** Version bump. Root folder safeguards, quarantine into temp-remove, and exit confirmation.
+
+---
+
 ## v2.342.0 — 2026-09-23 (Shell wrapper auto-navigation, movie open/start command, and cd --start support)
 
 **Scope:** Version bump. Shell wrapper auto-navigation, movie open/start command, and cd --start support.
