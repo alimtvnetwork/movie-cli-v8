@@ -39,6 +39,7 @@ Documented application errors with root cause analysis, solutions, and preventio
 |------|---------|
 | [2026-04-02-url-error-casing-fix.md](./03-04-02-url-error-casing-fix.md) | URLError renamed to UrlError — inconsistent casing fix |
 | [error-management-file-path-and-missing-file-code-red-rule.md](./02-error-management-file-path-and-missing-file-code-red-rule.md) | 🔴 Code Red: Mandatory file path and failure reason in all file/path error logs |
+| [04-root-folder-deletion-and-quarantine-architecture.md](./04-root-folder-deletion-and-quarantine-architecture.md) | 🔴 Critical Post-Mortem: Scan root protection, temp-remove quarantine, and high-volume contingency safeguard |
 
 ---
 

@@ -2,6 +2,26 @@
 
 Items in this file MUST NEVER be suggested, recommended, asked about, or built again.
 
+## Scan Root Folder Removal and Direct Movie Deletion — TOTAL BAN
+
+🔴 **NEVER remove, unlink, delete, or wipe a scan root folder (the folder where scanning starts) or any ancestor directory.**
+
+🔴 **NEVER execute direct unlinked/hard deletions of movies. Direct deletion is completely forbidden.**
+
+### Mandatory Contingency Safeguards
+1. **Registered Scan Root Protection:** Any directory registered in `ScanFolder` or any parent/ancestor directory of a scan root is strictly protected. The removal engine (`cmd/safeguard_removal.go`) hard-rejects any attempt to delete scan roots or system roots.
+2. **Two-Stage Temporary Deletion Quarantine (`temp-remove`):** All movie removal operations (CLI and Web UI) MUST move files to a temporary quarantine directory inside the scan root:
+   `<scanRoot>/temp-remove/<timestamp>_<id>_<title>/`
+   Direct `os.RemoveAll` or unlinking is completely forbidden.
+3. **Terminal Verification & Approval:** Quarantined items are NOT permanently purged until the user inspects the final list of names in the terminal upon server shutdown or CLI confirmation, and explicitly authorizes permanent purge.
+4. **High-Volume Contingency Rule (>15 Movies or >30 GB):** If the queued deletion exceeds **15 items** OR exceeds **30 gigabytes**, an additional strict confirmation is mandatory:
+   - The terminal displays a random movie title selected from the queued items.
+   - The user MUST type this exact random movie title in the terminal to authorize permanent deletion.
+   - Generic confirmation phrases (`CONFIRM`, `y`, `yes`) are strictly rejected for high-volume removals.
+   - If the user presses Enter or cancels, all files remain safely preserved in `temp-remove` and can be restored using `movie undo`.
+
+---
+
 ## 02-spec/19-main-worker-service implementation — TOTAL BAN
 
 🔴 **NEVER write, scaffold, propose, or suggest implementation code for `02-spec/19-main-worker-service/` (the Main-Worker Service).**

@@ -65,3 +65,9 @@ To survive massive checklists and complex codebases, you MUST operate using thes
 - **Parameter Structs:** Banned loose >2-3 parameters; use *Params structs.
 - **Vertical Line Gaps:** Mandatory blank lines before if, after }, before return, and around multiline struct calls.
 - **5-8 Files Micro-Batching:** All refactors broken into bounded subtasks.
+
+## 9. Media & Folder Removal Safeguards (TOTAL BAN on Root Removal & Direct Deletions)
+- **Scan Root Deletion BAN:** NEVER delete, unlink, or wipe a scan root folder (where scanning starts) or any of its ancestors.
+- **Direct Deletion BAN:** Direct hard unlinking of movies is strictly forbidden. All removals MUST move files to a temporary quarantine directory (`<scanRoot>/temp-remove/`).
+- **Terminal Confirmation Mandate:** Items in quarantine can only be permanently purged with explicit terminal verification upon exit.
+- **High-Volume Contingency Safeguard:** When queued deletions exceed 15 movies or 30 GB, generic confirmation is rejected and the user MUST type the exact random movie title displayed in the terminal prompt.

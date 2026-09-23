@@ -170,3 +170,37 @@ func TestPurgeQuarantineTasks(t *testing.T) {
 		t.Errorf("expected task status %q, got %q", db.TaskPurged, updatedTask.Status)
 	}
 }
+
+func TestCalculateQuarantineSizeBytesAndFormatting(t *testing.T) {
+	tempBase := t.TempDir()
+	taskDir1 := filepath.Join(tempBase, "task1")
+	taskDir2 := filepath.Join(tempBase, "task2")
+	_ = os.MkdirAll(taskDir1, 0o755)
+	_ = os.MkdirAll(taskDir2, 0o755)
+
+	_ = os.WriteFile(filepath.Join(taskDir1, "movie1.mkv"), make([]byte, 1024), 0o644)
+	_ = os.WriteFile(filepath.Join(taskDir2, "movie2.mkv"), make([]byte, 2048), 0o644)
+
+	tasks := []db.TaskRecord{
+		{QuarantinePath: taskDir1},
+		{QuarantinePath: taskDir2},
+	}
+
+	size := calculateQuarantineSizeBytes(tasks)
+
+	if size != 3072 {
+		t.Errorf("expected 3072 bytes, got %d", size)
+	}
+
+	formatted := formatBytes(size)
+
+	if formatted != "3.0 KB" {
+		t.Errorf("expected '3.0 KB', got %q", formatted)
+	}
+
+	formattedLarge := formatBytes(35 * 1024 * 1024 * 1024)
+
+	if formattedLarge != "35.0 GB" {
+		t.Errorf("expected '35.0 GB', got %q", formattedLarge)
+	}
+}

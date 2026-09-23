@@ -170,6 +170,10 @@ func promptPendingQuarantinePurge(database *db.DB) {
 	fmt.Println("  ╰────────────────────────────────────────────────────────────────────────────╯")
 	fmt.Println("  The following movies were approved for removal and moved to quarantine:")
 
+	totalBytes := calculateQuarantineSizeBytes(tasks)
+	totalGB := float64(totalBytes) / (1024 * 1024 * 1024)
+	isHighVolume := len(tasks) > 15 || totalGB >= 30.0
+
 	var sampleTitle string
 
 	if len(tasks) > 0 {
@@ -183,9 +187,20 @@ func promptPendingQuarantinePurge(database *db.DB) {
 	}
 
 	fmt.Println()
+	fmt.Printf("  Summary: %d movies queued (Total: %s)\n", len(tasks), formatBytes(totalBytes))
 	fmt.Println("  ⚠️  Permanent deletion is NON-REVERSIBLE.")
-	fmt.Printf("  To permanently delete all items in temp-remove, type %q (or 'CONFIRM')\n", sampleTitle)
-	fmt.Print("  [or press Enter to keep them safely in quarantine]: ")
+
+	if isHighVolume {
+		fmt.Println()
+		fmt.Println("  🚨 HIGH-VOLUME / LARGE DELETION SAFEGUARD TRIGGERED (> 15 items or > 30 GB)")
+		fmt.Println("     To prevent accidental data loss, 'CONFIRM' is NOT permitted.")
+		fmt.Printf("     You MUST type the exact movie title below to authorize permanent deletion:\n\n")
+		fmt.Printf("         >>> %s <<<\n\n", sampleTitle)
+		fmt.Print("  Enter title exactly as shown [or press Enter to preserve safely]: ")
+	} else {
+		fmt.Printf("  To permanently delete all items in temp-remove, type %q (or 'CONFIRM')\n", sampleTitle)
+		fmt.Print("  [or press Enter to keep them safely in quarantine]: ")
+	}
 
 	scanner := bufio.NewScanner(os.Stdin)
 	hasScanned := scanner.Scan()
@@ -197,7 +212,13 @@ func promptPendingQuarantinePurge(database *db.DB) {
 	}
 
 	input := strings.TrimSpace(scanner.Text())
-	isConfirmed := strings.EqualFold(input, sampleTitle) || strings.EqualFold(input, "CONFIRM")
+	var isConfirmed bool
+
+	if isHighVolume {
+		isConfirmed = strings.EqualFold(input, sampleTitle)
+	} else {
+		isConfirmed = strings.EqualFold(input, sampleTitle) || strings.EqualFold(input, "CONFIRM")
+	}
 
 	if isConfirmed {
 		purgedCount := purgeQuarantineTasks(database, tasks)
@@ -207,6 +228,51 @@ func promptPendingQuarantinePurge(database *db.DB) {
 		fmt.Println("     You can review or restore them anytime using: movie undo")
 		fmt.Println()
 	}
+}
+
+// calculateQuarantineSizeBytes calculates the total disk size of all quarantined tasks.
+func calculateQuarantineSizeBytes(tasks []db.TaskRecord) int64 {
+	var totalBytes int64
+
+	for i := range tasks {
+		t := &tasks[i]
+
+		if len(t.QuarantinePath) > 0 {
+			_ = filepath.Walk(t.QuarantinePath, func(_ string, info os.FileInfo, err error) error {
+				if err == nil {
+					if info != nil {
+						hasInfo := !info.IsDir()
+
+						if hasInfo {
+							totalBytes += info.Size()
+						}
+					}
+				}
+
+				return nil
+			})
+		}
+	}
+
+	return totalBytes
+}
+
+// formatBytes returns human-readable byte size formatting.
+func formatBytes(bytes int64) string {
+	const unit = 1024
+
+	if bytes < unit {
+		return fmt.Sprintf("%d B", bytes)
+	}
+
+	div, exp := int64(unit), 0
+
+	for n := bytes / unit; n >= unit; n /= unit {
+		div *= unit
+		exp++
+	}
+
+	return fmt.Sprintf("%.1f %cB", float64(bytes)/float64(div), "KMGTPE"[exp])
 }
 
 // purgeQuarantineTasks permanently removes items from temp-remove and updates task records.
