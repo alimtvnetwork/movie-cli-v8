@@ -80,7 +80,7 @@ func runMovieUI(cmd *cobra.Command, args []string) {
 		go openBrowser(targetURL)
 	}
 
-	startHTTPServer(mux)
+	startHTTPServer(mux, database)
 }
 
 func resolveUIFolderTarget(database *db.DB, args []string) *CdTargetResult {
@@ -109,7 +109,7 @@ func resolveUIFolderTarget(database *db.DB, args []string) *CdTargetResult {
 	return nil
 }
 
-func startHTTPServer(mux http.Handler) {
+func startHTTPServer(mux http.Handler, database *db.DB) {
 	addr := fmt.Sprintf("%s:%d", uiHost, uiPort)
 	server := &http.Server{
 		Addr:    addr,
@@ -135,6 +135,8 @@ func startHTTPServer(mux http.Handler) {
 	if shutErr := server.Shutdown(shutdownCtx); shutErr != nil {
 		errlog.Warn("Server shutdown warning: %v", shutErr)
 	}
+
+	promptPendingQuarantinePurge(database)
 }
 
 func printUIBanner(targetURL string, database *db.DB, scoped *CdTargetResult) {

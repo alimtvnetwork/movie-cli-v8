@@ -13,7 +13,6 @@ import (
 
 	"github.com/alimtvnetwork/movie-cli-v8/db"
 	"github.com/alimtvnetwork/movie-cli-v8/pkg/appfault"
-	"github.com/alimtvnetwork/movie-cli-v8/pkg/trashbin"
 )
 
 type stagedCreateRequest struct {
@@ -54,17 +53,28 @@ func handleStagedCreate(database *db.DB, w http.ResponseWriter, r *http.Request)
 	var sourcePath string
 	var snapshot string
 	var nullMediaID sql.NullInt64
+	var itemTitle string
 
 	if req.MediaID > 0 {
 		nullMediaID = sql.NullInt64{Int64: req.MediaID, Valid: true}
 		media, fetchErr := database.GetMediaByID(req.MediaID)
+
 		if fetchErr == nil {
 			if media != nil {
-				sourcePath = media.CurrentFilePath
-				if req.DeleteFolder {
-					if media.CurrentFilePath != "" {
-						sourcePath = filepath.Dir(media.CurrentFilePath)
+				itemTitle = media.Title
+
+				if actionType == db.StagedDelete {
+					targetInfo, resolveErr := resolveMediaRemovalTarget(media, database)
+
+					if resolveErr != nil {
+						writeRestError(w, http.StatusBadRequest, "SAFEGUARD_VIOLATION", resolveErr.Error())
+
+						return
 					}
+
+					sourcePath = targetInfo.TargetPath
+				} else {
+					sourcePath = media.CurrentFilePath
 				}
 
 				snapBytes, _ := json.Marshal(media)
@@ -77,6 +87,14 @@ func handleStagedCreate(database *db.DB, w http.ResponseWriter, r *http.Request)
 		sourcePath = req.SourcePath
 	}
 
+	if actionType == db.StagedDelete {
+		if valErr := validateRemovalTarget(sourcePath, database); valErr != nil {
+			writeRestError(w, http.StatusBadRequest, "SAFEGUARD_VIOLATION", valErr.Error())
+
+			return
+		}
+	}
+
 	rec := &db.StagedActionRecord{
 		ActionType:      actionType,
 		MediaId:         nullMediaID,
@@ -87,12 +105,27 @@ func handleStagedCreate(database *db.DB, w http.ResponseWriter, r *http.Request)
 	}
 
 	insertedID, insErr := database.InsertStagedAction(rec)
+
 	if insErr != nil {
 		writeRestError(w, http.StatusInternalServerError, "STAGED_INSERT_FAILED", insErr.Error())
+
 		return
 	}
 
 	rec.StagedActionId = insertedID
+
+	if actionType == db.StagedDelete {
+		taskRec := &db.TaskRecord{
+			TaskType:   db.TaskTypeDeleteStage,
+			MediaId:    nullMediaID,
+			SourcePath: sourcePath,
+			Status:     db.TaskPending,
+			ItemTitle:  itemTitle,
+			Payload:    snapshot,
+		}
+		_, _ = database.InsertTask(taskRec)
+	}
+
 	writeRestJSON(w, http.StatusCreated, rec)
 }
 
@@ -187,28 +220,7 @@ func handleStagedApplySingle(database *db.DB, w http.ResponseWriter, id int64) {
 func applySingleStagedRecord(database *db.DB, rec *db.StagedActionRecord, batchID string) error {
 	switch rec.ActionType {
 	case db.StagedDelete:
-		if rec.SourcePath != "" {
-			if _, statErr := os.Stat(rec.SourcePath); statErr == nil {
-				if trashErr := trashbin.MoveToTrash(rec.SourcePath); trashErr != nil {
-					return appfault.Wrapf(trashErr, "move %s to trash", rec.SourcePath)
-				}
-			}
-		}
-
-		if rec.MediaId.Valid {
-			if softErr := database.SoftDeleteMedia(rec.MediaId.Int64); softErr != nil {
-				return appfault.Wrapf(softErr, "soft delete media #%d", rec.MediaId.Int64)
-			}
-			_, _ = database.InsertActionSimple(db.ActionSimpleInput{
-				FileAction: db.FileActionDelete,
-				MediaID:    rec.MediaId.Int64,
-				Snapshot:   rec.MediaSnapshot,
-				Detail:     "moved to trash via staged apply",
-				BatchID:    batchID,
-			})
-		}
-
-		return nil
+		return executeQuarantineRemoval(database, rec, batchID)
 
 	case db.StagedMove, db.StagedRename:
 		if rec.SourcePath == "" || rec.DestinationPath == "" {

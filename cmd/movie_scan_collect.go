@@ -47,7 +47,7 @@ func collectRecursive(scanDir string, maxDepth int) []videoFile {
 
 func handleRecursiveDir(d os.DirEntry, path string, opts RecursiveWalkOpts) error {
 	base := d.Name()
-	if base == ".movie-output" || (strings.HasPrefix(base, ".") && base != ".") {
+	if base == ".movie-output" || base == "temp-remove" || (strings.HasPrefix(base, ".") && base != ".") {
 		return filepath.SkipDir
 	}
 	if opts.MaxDepth > 0 {

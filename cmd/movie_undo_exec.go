@@ -77,14 +77,36 @@ func undoDelete(database *db.DB, a *db.ActionRecord) error {
 		return appfault.New("no snapshot available for action %d — cannot restore", a.ActionHistoryId)
 	}
 	// Soft-delete path: if the original row still exists with IsDeleted=1,
-	// just flip it back to Active instead of inserting a duplicate.
+	// check if quarantined in temp-remove, otherwise flip back to Active.
 	if a.MediaId.Valid {
-		if existing, getErr := database.GetMediaByID(a.MediaId.Int64); getErr == nil && existing != nil {
-			if restoreErr := database.RestoreMedia(a.MediaId.Int64); restoreErr != nil {
-				return appfault.Wrap("restore soft-deleted media", restoreErr)
+		task, taskErr := database.GetQuarantinedTaskByMediaID(a.MediaId.Int64)
+
+		if taskErr == nil {
+			if task != nil {
+				if restoreErr := restoreQuarantinedTask(database, task); restoreErr != nil {
+					return appfault.Wrap("restore quarantined task", restoreErr)
+				}
+
+				if existing, getErr := database.GetMediaByID(a.MediaId.Int64); getErr == nil {
+					if existing != nil {
+						regenSidecarFor(existing)
+					}
+				}
+
+				return database.MarkActionReverted(a.ActionHistoryId)
 			}
-			regenSidecarFor(existing)
-			return database.MarkActionReverted(a.ActionHistoryId)
+		}
+
+		if existing, getErr := database.GetMediaByID(a.MediaId.Int64); getErr == nil {
+			if existing != nil {
+				if restoreErr := database.RestoreMedia(a.MediaId.Int64); restoreErr != nil {
+					return appfault.Wrap("restore soft-deleted media", restoreErr)
+				}
+
+				regenSidecarFor(existing)
+
+				return database.MarkActionReverted(a.ActionHistoryId)
+			}
 		}
 	}
 	media, err := db.MediaFromJSON(a.MediaSnapshot)

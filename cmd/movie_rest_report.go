@@ -4,7 +4,6 @@ package cmd
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"html/template"
 	"net/http"
 	"strconv"
@@ -13,7 +12,6 @@ import (
 
 	"github.com/alimtvnetwork/movie-cli-v8/db"
 	"github.com/alimtvnetwork/movie-cli-v8/errlog"
-	"github.com/alimtvnetwork/movie-cli-v8/pkg/trashbin"
 	"github.com/alimtvnetwork/movie-cli-v8/templates"
 )
 
@@ -60,46 +58,48 @@ func handleMediaDelete(w http.ResponseWriter, r *http.Request, database *db.DB, 
 		return
 	}
 
-	isImmediate := r.URL.Query().Get("immediate") == "true" || r.URL.Query().Get("immediate") == "1"
+	targetInfo, resolveErr := resolveMediaRemovalTarget(media, database)
 
-	if isImmediate {
-		filePath := media.CurrentFilePath
-
-		if filePath == "" {
-			filePath = media.OriginalFilePath
-		}
-
-		if filePath != "" {
-			_ = trashbin.MoveToTrash(filePath)
-		}
-
-		_ = database.SoftDeleteMedia(id)
-		removeRmSidecar(media)
-
-		snap, _ := db.MediaToJSON(media)
-		_, _ = database.InsertActionSimple(db.ActionSimpleInput{
-			FileAction: db.FileActionDelete,
-			MediaID:    media.ID,
-			Snapshot:   snap,
-			Detail:     fmt.Sprintf("Moved to trash via Web UI: %s (%d)", media.Title, media.Year),
-		})
-
-		writeJSON(w, map[string]interface{}{
-			"status":  "deleted",
-			"id":      id,
-			"title":   media.Title,
-			"message": "Moved to OS trash bin and removed from library",
-		})
+	if resolveErr != nil {
+		writeRestError(w, http.StatusBadRequest, "SAFEGUARD_VIOLATION", resolveErr.Error())
 
 		return
 	}
 
 	snapBytes, _ := json.Marshal(media)
+	snap := string(snapBytes)
+	isImmediate := r.URL.Query().Get("immediate") == "true" || r.URL.Query().Get("immediate") == "1"
+
+	if isImmediate {
+		rec := &db.StagedActionRecord{
+			ActionType:    db.StagedDelete,
+			MediaId:       sql.NullInt64{Int64: id, Valid: true},
+			SourcePath:    targetInfo.TargetPath,
+			MediaSnapshot: snap,
+			Status:        db.StatusPending,
+		}
+
+		if qErr := executeQuarantineRemoval(database, rec, "immediate_webui"); qErr != nil {
+			writeRestError(w, http.StatusInternalServerError, "QUARANTINE_FAILED", qErr.Error())
+
+			return
+		}
+
+		writeJSON(w, map[string]interface{}{
+			"status":  "quarantined",
+			"id":      id,
+			"title":   media.Title,
+			"message": "Moved to temp-remove quarantine and removed from active library",
+		})
+
+		return
+	}
+
 	rec := &db.StagedActionRecord{
 		ActionType:    db.StagedDelete,
 		MediaId:       sql.NullInt64{Int64: id, Valid: true},
-		SourcePath:    media.CurrentFilePath,
-		MediaSnapshot: string(snapBytes),
+		SourcePath:    targetInfo.TargetPath,
+		MediaSnapshot: snap,
 		Status:        db.StatusPending,
 	}
 
@@ -111,10 +111,20 @@ func handleMediaDelete(w http.ResponseWriter, r *http.Request, database *db.DB, 
 		return
 	}
 
+	taskRec := &db.TaskRecord{
+		TaskType:   db.TaskTypeDeleteStage,
+		MediaId:    sql.NullInt64{Int64: id, Valid: true},
+		SourcePath: targetInfo.TargetPath,
+		Status:     db.TaskPending,
+		ItemTitle:  media.Title,
+		Payload:    snap,
+	}
+	_, _ = database.InsertTask(taskRec)
+
 	writeJSON(w, map[string]interface{}{
 		"status":           "staged_delete",
 		"staged_action_id": stagedID,
-		"message":          "Media deletion staged. Review and click Accept All to move to trash.",
+		"message":          "Media deletion staged. Review and click Accept All to move to temp-remove.",
 	})
 }
 

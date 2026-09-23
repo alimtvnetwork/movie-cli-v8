@@ -655,8 +655,7 @@
               <button onclick="markWatched({{.ID}}, this)" class="action-btn watched-btn" title="Mark as watched">👁</button>
               <button onclick="showSimilar({{.ID}}, '{{.Title}}')" class="action-btn similar-btn" title="Find similar">🔍</button>
               <button onclick="undoStagedAction({{.ID}}, this)" class="action-btn undo-btn" title="Undo / Unstage">↩</button>
-              <button onclick="deleteFolder({{.ID}}, this)" class="action-btn delete-folder-btn" title="Delete Folder (Move to Trash)">📁🗑</button>
-              <button onclick="deleteMedia({{.ID}}, this)" class="action-btn delete" title="Remove File">🗑</button>
+              <button onclick="deleteMedia({{.ID}}, this)" class="action-btn delete" title="Remove">🗑</button>
             </div>
           </div>
         </div>
@@ -719,11 +718,8 @@
               <a id="detailTrailerLink" class="detail-btn trailer-btn" href="#" target="_blank" rel="noopener" style="display:none">
                 <span>▶</span> Trailer
               </a>
-              <button id="detailDeleteFolderBtn" class="detail-btn delete-btn" onclick="deleteFolderFromDetail()">
-                <span>📁🗑</span> Trash Folder
-              </button>
               <button id="detailDeleteBtn" class="detail-btn delete-btn" onclick="deleteFromDetail()">
-                <span>🗑</span> Trash File
+                <span>🗑</span> Remove
               </button>
             </div>
           </div>
@@ -1160,7 +1156,6 @@ function cardTemplate(c) {
         '<button onclick="markWatched(' + c.id + ', this)" class="action-btn watched-btn' + watchedBtn + '" title="Mark as watched">👁</button>' +
         '<button onclick="showSimilar(' + c.id + ', \'' + esc(c.title) + '\')" class="action-btn similar-btn" title="Find similar">🔍</button>' +
         '<button onclick="undoStagedAction(' + c.id + ', this)" class="action-btn undo-btn" title="Undo / Unstage">↩</button>' +
-        '<button onclick="deleteFolder(' + c.id + ', this)" class="action-btn delete-folder-btn" title="Delete Folder (Move to Trash)">📁🗑</button>' +
         '<button onclick="deleteMedia(' + c.id + ', this)" class="action-btn delete" title="Remove">🗑</button>' +
       '</div>' +
     '</div>' +
@@ -1474,9 +1469,7 @@ async function deleteFromDetail() {
 }
 
 async function deleteFolderFromDetail() {
-  if (!currentDetailItem) return;
-  var cardBtn = document.querySelector('.card[data-id="' + currentDetailItem.id + '"] .delete-folder-btn');
-  await deleteFolder(currentDetailItem.id, cardBtn || document.getElementById('detailDeleteFolderBtn'));
+  await deleteFromDetail();
 }
 
 // --- Filters & Sort ---
@@ -1763,29 +1756,28 @@ function renderStagedBar() {
 async function deleteMedia(id, btn) {
   if (restRequired()) return;
   var title = MEDIA_STORE[id] ? MEDIA_STORE[id].title : ('Item #' + id);
-  if (!confirm('Move "' + title + '" to your OS Recycle Bin / Trash immediately? This removes it from your library.')) return;
+  if (!confirm('Stage "' + title + '" for removal? (Item will be moved to temp-remove quarantine when you click Accept All)')) return;
   try {
-    var r = await fetch(API_BASE + '/api/media/' + id + '?immediate=true', { method: 'DELETE' });
+    var r = await fetch(API_BASE + '/api/staged', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action_type: 'delete',
+        media_id: id
+      })
+    });
     if (!r.ok) {
-      var errText = await r.text();
-      showToast('Deletion failed: ' + errText, true);
+      var errData = await r.json().catch(function() { return {}; });
+      var msg = errData.message || (await r.text());
+      showToast('Action failed: ' + msg, true);
       return;
     }
     var card = btn ? btn.closest('.card') : document.querySelector('.card[data-id="' + id + '"]');
     if (card) {
-      card.style.transition = 'all 0.3s ease';
-      card.style.opacity = '0';
-      card.style.transform = 'scale(0.9)';
-      setTimeout(function() {
-        card.remove();
-        updateResultsInfo();
-      }, 300);
+      card.classList.add('staged-delete');
     }
-    delete MEDIA_STORE[id];
-    showToast('Moved to OS Trash Bin and removed from library');
-    if (currentDetailItem && currentDetailItem.id === id) {
-      navigateToCatalog();
-    }
+    showToast('Staged "' + title + '" for removal. Click "Accept All" in top bar to move to quarantine.');
+    await loadStagedActions();
   } catch(e) {
     showToast('Network error: ' + e.message, true);
   }
@@ -1793,53 +1785,31 @@ async function deleteMedia(id, btn) {
 
 async function deleteVersionFile(id, title) {
   if (restRequired()) return;
-  if (!confirm('Move version "' + title + '" to your OS Recycle Bin / Trash?')) return;
-  try {
-    var r = await fetch(API_BASE + '/api/media/' + id + '?immediate=true', { method: 'DELETE' });
-    if (!r.ok) {
-      var errText = await r.text();
-      showToast('Deletion failed: ' + errText, true);
-      return;
-    }
-    showToast('Version moved to Trash');
-    var card = document.querySelector('.card[data-id="' + id + '"]');
-    if (card) card.remove();
-    delete MEDIA_STORE[id];
-    if (currentDetailItem) {
-      showDetailView(currentDetailItem.id);
-    }
-  } catch(e) {
-    showToast('Network error: ' + e.message, true);
-  }
-}
-
-async function deleteFolder(id, btn) {
-  if (restRequired()) return;
-  if (!confirm('Stage removal of this media\'s parent folder? (Files will NOT be deleted until you click Accept All)')) return;
+  if (!confirm('Stage version "' + title + '" for removal?')) return;
   try {
     var r = await fetch(API_BASE + '/api/staged', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         action_type: 'delete',
-        media_id: id,
-        delete_folder: true
+        media_id: id
       })
     });
     if (!r.ok) {
-      var errText = await r.text();
-      showToast('Action failed: ' + errText, true);
+      var errData = await r.json().catch(function() { return {}; });
+      var msg = errData.message || (await r.text());
+      showToast('Action failed: ' + msg, true);
       return;
     }
-    var card = btn ? btn.closest('.card') : document.querySelector('.card[data-id="' + id + '"]');
-    if (card) {
-      card.classList.add('staged-delete');
-    }
-    showToast('Folder marked for trash (staged). Click Accept All to execute.');
+    showToast('Version staged for removal. Click "Accept All" in top bar to move to quarantine.');
     await loadStagedActions();
   } catch(e) {
     showToast('Network error: ' + e.message, true);
   }
+}
+
+async function deleteFolder(id, btn) {
+  await deleteMedia(id, btn);
 }
 
 async function undoStagedAction(mediaId, btn) {
@@ -1878,7 +1848,7 @@ async function discardAllStaged() {
 
 async function acceptAllStaged() {
   if (restRequired()) return;
-  if (!confirm('Accept and apply all staged changes? Files will be safely moved to your Trash Bin.')) return;
+  if (!confirm('Accept and apply all staged changes? Files will be safely moved to temp-remove quarantine.')) return;
   try {
     var r = await fetch(API_BASE + '/api/staged/apply', { method: 'POST' });
     if (!r.ok) {
@@ -1887,7 +1857,7 @@ async function acceptAllStaged() {
       return;
     }
     var res = await r.json();
-    showToast('Applied ' + res.applied + ' changes (moved to trash)!');
+    showToast('Applied ' + res.applied + ' changes (moved to temp-remove quarantine)!');
     stagedActions = [];
     renderStagedBar();
     if (typeof refreshDashboardList === 'function' && dashboardMode) {
