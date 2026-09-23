@@ -1,3 +1,9 @@
+## v2.342.0 — 2026-09-23 (Shell wrapper auto-navigation, movie open/start command, and cd --start support)
+
+**Scope:** Version bump. Shell wrapper auto-navigation, movie open/start command, and cd --start support.
+
+---
+
 ## v2.341.0 — 2026-09-22 (Installer mcd auto-setup, interactive jump picker, and table root folders)
 
 **Scope:** Version bump. Installer mcd auto-setup, interactive jump picker, and table root folders.

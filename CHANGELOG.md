@@ -1,5 +1,23 @@
 # Changelog
 
+## v2.342.0
+
+### Added / Changed
+- **Shell wrapper auto-navigation, movie open/start command, and cd --start support**
+
+### Quick Install Movie CLI v2.342.0
+
+**Windows (PowerShell):**
+```powershell
+irm https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.342.0/install.ps1 | iex
+```
+
+**Linux / macOS (Bash):**
+```bash
+curl -fsSL https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.342.0/install.sh | bash
+```
+
+
 ## v2.341.0
 
 ### Added / Changed
