@@ -38,10 +38,8 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 # Canonical version files
 VERSION_JSON = REPO_ROOT / "version.json"
 PACKAGE_JSON = REPO_ROOT / "package.json"
-VERSION_INFO_GO = REPO_ROOT / "version" / "info.go"
 README_MD = REPO_ROOT / "readme.md"
 CHANGELOG_MD = REPO_ROOT / "changelog.md"
-CHANGELOG_UPPER = REPO_ROOT / "CHANGELOG.md"
 
 # Known bump scripts
 NODE_BUMP_SCRIPT = REPO_ROOT / "scripts" / "bump-version.mjs"
@@ -207,7 +205,7 @@ def create_and_checkout_release_branch(next_version, dry_run=False):
     return branch_name
 
 
-def execute_version_bump(next_version, scope, bullets=None, bullets_file=None, dry_run=False):
+def execute_version_bump(next_version, scope, dry_run=False):
     """Step 2: Executes the version bump on the release branch via scripts or standalone fallback."""
     if dry_run:
         print(f"[DRY RUN] Would bump version to {next_version} (scope: {scope})")
@@ -218,15 +216,7 @@ def execute_version_bump(next_version, scope, bullets=None, bullets_file=None, d
     # Check 1: AI Scripts bump script (pure Python)
     if AI_BUMP_SCRIPT.is_file():
         print(f"[*] Invoking AI Python bump script: {AI_BUMP_SCRIPT.relative_to(REPO_ROOT)}")
-        cmd = [sys.executable, str(AI_BUMP_SCRIPT), "--version", next_version, "--scope", scope]
-
-        if bullets_file:
-            cmd.extend(["--bullets-file", str(bullets_file)])
-        elif bullets:
-            for b in bullets:
-                cmd.extend(["--bullet", b])
-
-        res = run_cmd(cmd, check=False)
+        res = run_cmd([sys.executable, str(AI_BUMP_SCRIPT), "--version", next_version, "--scope", scope], check=False)
         if res.returncode == 0:
             return
 
@@ -282,54 +272,59 @@ def execute_version_bump(next_version, scope, bullets=None, bullets_file=None, d
                 f.write(cl_content)
 
 
+def build_release_notes_file(next_version, scope):
+    """Builds release notes file with mandatory Quick Install one-liners."""
+    v_string = f"v{next_version}"
+    try:
+        url = get_git_output("config", "--get", "remote.origin.url")
+        m = re.search(r'github\.com[:/]([^/]+/[^/.]+)', url)
+        raw_slug = m.group(1) if m else "alimtvnetwork/coding-guidelines-v24"
+        repo_slug = raw_slug[:-4] if raw_slug.endswith(".git") else raw_slug
+    except Exception:
+        repo_slug = "alimtvnetwork/coding-guidelines-v24"
+
+    notes_dir = REPO_ROOT / ".ai-memory" / "release"
+    notes_dir.mkdir(parents=True, exist_ok=True)
+    notes_path = notes_dir / f"release-notes-{v_string}.md"
+
+    lines = [
+        f"## Quick Install {v_string}\n",
+        "### Windows (PowerShell)\n",
+        "```powershell",
+        f'Invoke-WebRequest -Uri https://raw.githubusercontent.com/{repo_slug}/{v_string}/install.ps1 -OutFile install.ps1; .\\install.ps1 -TargetDir ".ai-memory/prompts" -Version "{v_string}"',
+        "```\n",
+        "### Unix / Linux / macOS (Bash)\n",
+        "```bash",
+        f'curl -sL https://raw.githubusercontent.com/{repo_slug}/{v_string}/install.sh | bash -s -- ".ai-memory/prompts" "{v_string}"',
+        "```\n",
+        "---\n",
+        f"## What's Changed in {v_string}\n",
+        f"### Added\n- {scope}\n",
+    ]
+    notes_path.write_text("\n".join(lines), encoding="utf-8")
+    print(f"[*] Generated release notes at {notes_path.relative_to(REPO_ROOT)}")
+    return notes_path
+
+
 def stage_and_commit_release(next_version, scope, dry_run=False):
     """Step 3: Stages release files and commits on the release branch."""
     commit_msg = f"release: v{next_version} {scope}"
 
     if dry_run:
         print(f"[DRY RUN] Would stage changes and commit on release branch: '{commit_msg}'")
-        return "dryrun_commit_sha"
+        return "dryrun_commit_sha", None
 
-    # Stage release-specific and sync-regenerated files
-    release_candidates = [
-        VERSION_JSON,
-        PACKAGE_JSON,
-        VERSION_INFO_GO,
-        CHANGELOG_MD,
-        CHANGELOG_UPPER,
-        README_MD,
-        NODE_BUMP_SCRIPT,
-        PYTHON_BUMP_SCRIPT,
-        AI_BUMP_SCRIPT,
-        REPO_ROOT / ".ai-memory" / "release",
-        REPO_ROOT / ".ai-memory" / "test-inventory.json",
-        REPO_ROOT / "public" / "health-score.json",
-        REPO_ROOT / "src" / "data" / "specTree.json",
-        REPO_ROOT / "02-spec" / "19-main-worker-service" / "98-changelog.md",
-        REPO_ROOT / "reports" / "spec-verification" / "coverage.md",
-        REPO_ROOT / "deploy-manifest.json",
-        REPO_ROOT / "init.ps1",
-        REPO_ROOT / "init.sh",
-        REPO_ROOT / "run.sh",
-        REPO_ROOT / "install.ps1",
-        REPO_ROOT / "install.sh",
-        REPO_ROOT / "install-quick.ps1",
-        REPO_ROOT / "install-quick.sh",
-        REPO_ROOT / "uninstall-quick.ps1",
-        REPO_ROOT / "uninstall-quick.sh",
-        REPO_ROOT / ".github" / "scripts" / "smoke-installer.py",
-    ]
-    for vf in release_candidates:
-        if vf.exists():
-            run_cmd(["git", "add", str(vf)])
-    run_cmd(["git", "add", "-u"])
+    notes_path = build_release_notes_file(next_version, scope)
+
+    # Stage all modified and generated release files
+    run_cmd(["git", "add", "-A"])
 
     # Commit
     run_cmd(["git", "commit", "-m", commit_msg])
     commit_sha = get_git_output("rev-parse", "HEAD")
     print(f"[*] Step 3: Committed release changes on release branch: {commit_sha[:8]} ('{commit_msg}')")
 
-    return commit_sha
+    return commit_sha, notes_path
 
 
 def create_release_tag(next_version, commit_sha, dry_run=False):
@@ -375,41 +370,22 @@ def push_release(release_branch, tag_name, main_branch="main", dry_run=False):
     run_cmd(["git", "push", "origin", tag_name])
 
 
-def publish_github_release(next_version, dry_run=False):
-    """Step 6: Publishes GitHub release via gh CLI using release notes file."""
-    tag_name = f"v{next_version}"
-    notes_file = REPO_ROOT / ".ai-memory" / "release" / f"release-notes-{tag_name}.md"
-
-    if not notes_file.is_file():
-        notes_file = REPO_ROOT / ".ai-memory" / "release" / f"release-notes-v{next_version}.md"
-
+def create_github_release(tag_name, notes_path, dry_run=False):
+    """Publishes a GitHub release using gh release create with mandatory notes file."""
+    if dry_run or not notes_path or not notes_path.is_file():
+        return
     try:
-        check_gh = run_cmd(["gh", "--version"], check=False)
-
-        if check_gh.returncode != 0:
-            print("[*] GitHub CLI (gh) not found or not in PATH. Skipping GitHub release publication.")
-
-            return
-
-        print(f"[*] Step 6: Publishing GitHub release for {tag_name}...")
-        gh_cmd = ["gh", "release", "create", tag_name, "--title", tag_name]
-
-        if notes_file.is_file():
-            gh_cmd.extend(["--notes-file", str(notes_file)])
-
-        gh_cmd.append("--generate-notes")
-
-        if dry_run:
-            print(f"[DRY RUN] Would execute: {' '.join(gh_cmd)}")
-
-            return
-
-        create_res = run_cmd(gh_cmd, check=False)
-
-        if create_res.returncode == 0:
-            print(f"[OK] Successfully published GitHub release: {tag_name}")
+        print(f"[*] Publishing GitHub Release for {tag_name} with notes from {notes_path.relative_to(REPO_ROOT)}...")
+        res = run_cmd([
+            "gh", "release", "create", tag_name,
+            "--title", tag_name,
+            "--notes-file", str(notes_path),
+            "--generate-notes"
+        ], check=False)
+        if res.returncode == 0:
+            print(f"[OK] GitHub Release {tag_name} successfully published.")
         else:
-            print(f"[!] Warning: GitHub release publication output: {create_res.stderr}")
+            print(f"[!] Warning publishing GitHub release: {res.stderr.strip()}")
     except Exception as e:
         print(f"[!] Warning publishing GitHub release: {e}")
 
@@ -451,7 +427,7 @@ def verify_pre_release_quality_gates(dry_run=False, skip_tests=False):
         raise RuntimeError("Pre-release quality gates / unit tests failed! Releases are forbidden on failing tests.")
 
 
-def orchestrate_release(tier="minor", explicit_version=None, scope=None, bullets=None, bullets_file=None, dry_run=False, push=True, skip_tests=False):
+def orchestrate_release(tier="minor", explicit_version=None, scope=None, dry_run=False, push=True, skip_tests=False):
     """Executes the complete 5-step release orchestration flow."""
     # 1. Capture starting branch
     original_branch = get_current_branch()
@@ -479,10 +455,10 @@ def orchestrate_release(tier="minor", explicit_version=None, scope=None, bullets
         create_and_checkout_release_branch(next_ver, dry_run=dry_run)
 
         # STEP 2: Bump version on the release branch using script
-        execute_version_bump(next_ver, default_scope, bullets=bullets, bullets_file=bullets_file, dry_run=dry_run)
+        execute_version_bump(next_ver, default_scope, dry_run=dry_run)
 
         # STEP 3: Commit bump changes in the release branch
-        commit_sha = stage_and_commit_release(next_ver, default_scope, dry_run=dry_run)
+        commit_sha, notes_path = stage_and_commit_release(next_ver, default_scope, dry_run=dry_run)
 
         # STEP 4: Create annotated tag on that release commit
         create_release_tag(next_ver, commit_sha, dry_run=dry_run)
@@ -490,16 +466,10 @@ def orchestrate_release(tier="minor", explicit_version=None, scope=None, bullets
         # STEP 5: Put that commit back to the main branch (and push)
         merge_release_to_main(release_branch, main_branch=main_branch, dry_run=dry_run)
 
-        is_push_enabled = False
-        if push:
-            if not dry_run:
-                is_push_enabled = True
-
+        is_push_enabled = push and not dry_run
         if is_push_enabled:
             push_release(release_branch, tag_name, main_branch=main_branch, dry_run=dry_run)
-
-            # STEP 6: Publish GitHub release if gh CLI is available
-            publish_github_release(next_ver, dry_run=dry_run)
+            create_github_release(tag_name, notes_path, dry_run=dry_run)
 
     finally:
         # Restore original starting branch if different from current
@@ -553,20 +523,6 @@ def parse_arguments():
         help="Do not push release branch and tag to remote repository",
     )
     parser.add_argument(
-        "-b",
-        "--bullet",
-        dest="bullets",
-        action="append",
-        default=None,
-        help="Individual changelog bullet point (can specify multiple times)",
-    )
-    parser.add_argument(
-        "--bullets-file",
-        dest="bullets_file",
-        default=None,
-        help="Path to file containing markdown bullet points",
-    )
-    parser.add_argument(
         "--skip-tests",
         action="store_true",
         help="Skip pre-release unit test and quality gate verification (emergency use only)",
@@ -585,23 +541,10 @@ def main():
     args = parse_arguments()
     should_push = not args.no_push
 
-    bullets = args.bullets or []
-
-    if args.bullets_file:
-        bf_path = Path(args.bullets_file)
-
-        if bf_path.is_file():
-            lines = [l.strip() for l in bf_path.read_text(encoding="utf-8").splitlines() if l.strip()]
-            bullets.extend(lines)
-
-    resolved_bullets = bullets if bullets else None
-
     orchestrate_release(
         tier=args.tier,
         explicit_version=args.explicit_version,
         scope=args.scope,
-        bullets=resolved_bullets,
-        bullets_file=args.bullets_file,
         dry_run=args.dry_run,
         push=should_push,
         skip_tests=args.skip_tests,

@@ -68,21 +68,16 @@ def test_bash_installer(script_path: Path) -> list[str]:
         if not has_sha:
             issues.append(f"{script_path}: Missing SHA256 checksum verification")
 
-    is_uninstaller = "uninstall" in script_path.name.lower()
-    is_quick_delegator = "quick" in script_path.name.lower()
-    is_direct_installer = not is_uninstaller and not is_quick_delegator
-
-    if is_direct_installer:
-        has_safe_rename = (
-            "mv " in content
-            or "install -m" in content
-            or "cp -f" in content
-            or "cp " in content
-            or "merge_file" in content
-            or "record_overwrite_backup" in content
-        )
-        if not has_safe_rename:
-            issues.append(f"{script_path}: Missing non-destructive binary replacement logic")
+    has_safe_rename = (
+        "mv " in content
+        or "install -m" in content
+        or "cp -f" in content
+        or "cp " in content
+        or "merge_file" in content
+        or "record_overwrite_backup" in content
+    )
+    if not has_safe_rename:
+        issues.append(f"{script_path}: Missing non-destructive binary replacement logic")
 
     return issues
 
@@ -103,20 +98,15 @@ def test_powershell_installer(script_path: Path) -> list[str]:
         if not has_sha:
             issues.append(f"{script_path}: Missing SHA256 hash verification")
 
-    is_uninstaller = "uninstall" in script_path.name.lower()
-    is_quick_delegator = "quick" in script_path.name.lower()
-    is_direct_installer = not is_uninstaller and not is_quick_delegator
-
-    if is_direct_installer:
-        has_safe_rename = (
-            "move-item" in content.lower()
-            or "rename-item" in content.lower()
-            or "copy-item" in content.lower()
-            or "backup" in content.lower()
-            or "merge-file" in content.lower()
-        )
-        if not has_safe_rename:
-            issues.append(f"{script_path}: Missing safe rename-first replacement logic")
+    has_safe_rename = (
+        "move-item" in content.lower()
+        or "rename-item" in content.lower()
+        or "copy-item" in content.lower()
+        or "backup" in content.lower()
+        or "merge-file" in content.lower()
+    )
+    if not has_safe_rename:
+        issues.append(f"{script_path}: Missing safe rename-first replacement logic")
 
     return issues
 
