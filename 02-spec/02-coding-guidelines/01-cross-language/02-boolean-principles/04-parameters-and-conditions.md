@@ -1,6 +1,6 @@
 # Boolean Principles — P5: explicit params, P6: no mixed booleans, P7: no inline statements, P8: no raw system calls
 
-> **Parent:** [Boolean Principles](./01-index.md)
+> **Parent:** [Boolean Principles](./readme.md)
 > **Version:** 2.6.0
 > **Updated:** 2026-03-31
 
@@ -137,6 +137,17 @@ Chaining inverted negative checks (such as `!state.IsDefined || !state.IsEmpty |
       performFreshClone(params)
   }
   ```
+
+### Principle 6.2: Ban on 3+ Compound Conditions & Mixed Polarity Logic Chains
+
+- **Total Ban on 3+ Condition Conjunctions:** An `if` condition MUST NOT combine 3 or more logical clauses (e.g. `if len(items) >= 2 && !isValid(a) && isValid(b)`).
+- **Zero Mixed Polarity:** NEVER combine a positive check and a negative check in the same `if` condition.
+- **Affirmative Decomposition Mandate:**
+  1. Break down individual checks into explicit affirmative boolean variables using `is` or `has` prefixes (e.g. `hasEnoughItems`, `isFirstValid`, `isSecondValid`).
+  2. If an inversion is required, compute the inverted meaning into a semantic affirmative variable (`isFirstInvalid := !isFirstValid`).
+  3. Pre-compute the composite decision intent into a single affirmative boolean variable (`isAlternateOrder := hasEnoughItems && isSecondValid && isFirstInvalid`).
+  4. The `if` statement evaluates ONLY the single affirmative intent boolean: `if isAlternateOrder { ... }`.
+  5. See [32-branch-immutability-and-clean-construction.md](../32-branch-immutability-and-clean-construction.md) for full architecture and multi-language patterns.
 
 ---
 

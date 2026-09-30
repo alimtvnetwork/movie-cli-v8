@@ -199,4 +199,4 @@ impl Drop for HookHandle {
 | Reference | Location |
 |-----------|----------|
 | Memory Safety (unsafe policy) | `./04-memory-safety.md` |
-| Cross-Language Guidelines | `../01-cross-language/01-index.md` |
+| Cross-Language Guidelines | `../01-cross-language/readme.md` |

@@ -2,7 +2,7 @@
 
 **Version:** 3.3.0
 **Updated:** 2026-04-22
-**Source Module:** [`02-spec/03-error-manage/`](../03-error-manage/01-index.md)
+**Source Module:** [`02-spec/03-error-manage/`](../03-error-manage/readme.md)
 
 ---
 

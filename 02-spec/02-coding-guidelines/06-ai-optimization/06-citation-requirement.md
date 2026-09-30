@@ -22,7 +22,7 @@ Whenever an AI agent generates code, creates plans (`.ai-memory/plans/pending/`)
 #### ✅ VALID (Strict Relative Git Path):
 
 ```markdown
-- [SSH Commands](02-spec/13-generic-cli/01-index.md) — Why: Defines required behavior.
+- [SSH Commands](02-spec/13-generic-cli/readme.md) — Why: Defines required behavior.
 - [App Error Docs](02-spec/05-coding-guidelines/04-error-handling.md) — Why: Standards for returning results.
 - [cmd/main.go](cmd/main.go) — Why: Target file.
 ```
@@ -35,7 +35,7 @@ Whenever an AI agent generates code, creates plans (`.ai-memory/plans/pending/`)
 ### Examples of Valid Citations
 
 - *"Implementing this as an early return to avoid nesting, per `02-spec/02-coding-guidelines/01-cross-language/01-zero-nesting.md`."*
-- *"Returning a structured error with context, per `02-spec/03-error-manage/02-error-architecture/01-index.md`."*
+- *"Returning a structured error with context, per `02-spec/03-error-manage/02-error-architecture/readme.md`."*
 
 ### Violations
 

@@ -4,8 +4,8 @@
 **Updated:** 2026-04-16
 **Source Specs:**
 
-- [Go Enum Specification](../02-coding-guidelines/03-golang/01-enum-specification/01-index.md)
-- [TypeScript Enums](../02-coding-guidelines/02-typescript/01-index.md)
+- [Go Enum Specification](../02-coding-guidelines/03-golang/01-enum-specification/readme.md)
+- [TypeScript Enums](../02-coding-guidelines/02-typescript/readme.md)
 - [PHP Enums](../02-coding-guidelines/04-php/02-enums.md)
 - [Rust Naming Conventions](../02-coding-guidelines/05-rust/02-naming-conventions.md)
 - [Enum Naming Quick Reference](../02-coding-guidelines/06-ai-optimization/07-enum-naming-quick-reference.md)

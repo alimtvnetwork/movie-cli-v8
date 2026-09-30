@@ -233,4 +233,4 @@ if *shutdown.borrow() { break; }
 
 | Reference | Location |
 |-----------|----------|
-| Cross-Language Guidelines | `../01-cross-language/01-index.md` |
+| Cross-Language Guidelines | `../01-cross-language/readme.md` |

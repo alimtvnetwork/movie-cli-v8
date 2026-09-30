@@ -6,9 +6,9 @@
 
 Version: 1.5.0
 
-This is a standalone file. Follow every rule below without consulting any other document. If a `02-spec/02-coding-guidelines/` folder, a `02-spec/02-coding-guidelines/01-cross-language/01-index.md` file, or a `02-spec/03-error-manage/` folder exists in this repository, treat those as strictly binding extensions to this file, but this file alone is enough to write compliant code. The `error-manage` rules must be tightly followed.
+This is a standalone file. Follow every rule below without consulting any other document. If a `02-spec/02-coding-guidelines/` folder, a `02-spec/02-coding-guidelines/01-cross-language/readme.md` file, or a `02-spec/03-error-manage/` folder exists in this repository, treat those as strictly binding extensions to this file, but this file alone is enough to write compliant code. The `error-manage` rules must be tightly followed.
 
-**Before reading the rules below**, read the [AI Instruction Manual & Overview](../02-coding-guidelines/01-cross-language/01-index.md) to understand how to review code, interpret files, and maintain repository hygiene (e.g. updating `.gitignore`).
+**Before reading the rules below**, read the [AI Instruction Manual & Overview](../02-coding-guidelines/01-cross-language/readme.md) to understand how to review code, interpret files, and maintain repository hygiene (e.g. updating `.gitignore`).
 
 Canonical locations (all three must exist and match, byte-for-byte, via `scripts/sync-guidelines.mjs`):
 
@@ -244,7 +244,7 @@ The same rules apply to TypeScript, PHP, Rust, C#, PowerShell, and Python. Only 
   - **Never two blank lines in a row, anywhere**. No empty lines padded inside braces.
 - [ ] **Single Source of Truth for Versions**: Do not hardcode version numbers across files. Use a root-level JSON file (e.g. `version.json`) as the single source of truth and inject/read it dynamically.
 
-> **See Full Guide**: For complete rules and multi-language examples, see `02-spec/02-coding-guidelines/01-cross-language/01-index.md`
+> **See Full Guide**: For complete rules and multi-language examples, see `02-spec/02-coding-guidelines/01-cross-language/readme.md`
 
 # AI Code Review Guide — Naming, Signatures, Whitespace
 

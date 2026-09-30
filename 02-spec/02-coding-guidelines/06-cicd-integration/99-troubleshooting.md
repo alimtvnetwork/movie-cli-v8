@@ -469,4 +469,4 @@ python3 linters-cicd/scripts/load-config.py --config .codeguidelines.toml
 
 ---
 
-*Part of [CI/CD Integration](./01-index.md)*
+*Part of [CI/CD Integration](./readme.md)*

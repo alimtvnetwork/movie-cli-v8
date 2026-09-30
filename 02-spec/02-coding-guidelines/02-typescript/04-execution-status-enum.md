@@ -110,7 +110,7 @@ function isTerminal(status: ExecutionStatus): boolean {
 - Issue #10 — Domain Status Magic Strings <!-- external: 02-spec/23-how-app-issues-track/10-domain-status-magic-strings.md -->
 - [HttpMethod Enum](./06-http-method-enum.md) — Sibling enum spec
 - [TypeScript Standards](./09-typescript-standards-reference.md) — Parent spec
-- [Master Coding Guidelines §8](../01-cross-language/15-master-coding-guidelines/01-index.md) — Magic strings zero tolerance
+- [Master Coding Guidelines §8](../01-cross-language/15-master-coding-guidelines/readme.md) — Magic strings zero tolerance
 
 ---
 

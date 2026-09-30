@@ -1,6 +1,6 @@
 # Boolean Principles — P1: is/has prefixes, P2: no negative words
 
-> **Parent:** [Boolean Principles](./01-index.md)
+> **Parent:** [Boolean Principles](./readme.md)
 > **Version:** 2.6.0
 > **Updated:** 2026-03-31
 
