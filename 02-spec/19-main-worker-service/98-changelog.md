@@ -1,3 +1,9 @@
+## v2.343.8 — 2026-10-01 (Synchronize V6 prompts, SQLite task manager, skills, and coding guidelines)
+
+**Scope:** Version bump. Synchronize V6 prompts, SQLite task manager, skills, and coding guidelines.
+
+---
+
 ## v2.343.0 — 2026-09-23 (Root folder safeguards, quarantine into temp-remove, and exit confirmation)
 
 **Scope:** Version bump. Root folder safeguards, quarantine into temp-remove, and exit confirmation.

@@ -1,5 +1,12 @@
 # Changelog
 
+## [v2.343.8] - 2026-10-01
+
+### Added
+- Synchronize V6 prompts, SQLite task manager, skills, and coding guidelines
+
+---
+
 ## v2.343.0
 
 ### Added / Changed
@@ -17,7 +24,6 @@ irm https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.343.0/ins
 curl -fsSL https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.343.0/install.sh | bash
 ```
 
-
 ## v2.342.0
 
 ### Added / Changed
@@ -34,7 +40,6 @@ irm https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.342.0/ins
 ```bash
 curl -fsSL https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.342.0/install.sh | bash
 ```
-
 
 ## v2.341.0
 
@@ -56,7 +61,6 @@ irm https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.341.0/ins
 curl -fsSL https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.341.0/install.sh | bash
 ```
 
-
 ## v2.340.0
 
 ### Added / Changed
@@ -76,7 +80,6 @@ irm https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.340.0/ins
 ```bash
 curl -fsSL https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.340.0/install.sh | bash
 ```
-
 
 ## v2.339.0
 
@@ -102,7 +105,6 @@ irm https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.339.0/ins
 curl -fsSL https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.339.0/install.sh | bash
 ```
 
-
 ## v2.338.0
 
 ### Added / Changed
@@ -124,7 +126,6 @@ irm https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.338.0/ins
 ```bash
 curl -fsSL https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.338.0/install.sh | bash
 ```
-
 
 ## v2.337.0
 
@@ -148,7 +149,6 @@ irm https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.337.0/ins
 curl -fsSL https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.337.0/install.sh | bash
 ```
 
-
 ## v2.336.0
 
 ### Added / Changed
@@ -168,7 +168,6 @@ irm https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.336.0/ins
 ```bash
 curl -fsSL https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.336.0/install.sh | bash
 ```
-
 
 ## v2.335.0
 
@@ -190,7 +189,6 @@ irm https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.335.0/ins
 curl -fsSL https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.335.0/install.sh | bash
 ```
 
-
 ## v2.334.0
 
 ### Added / Changed
@@ -210,7 +208,6 @@ irm https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.334.0/ins
 ```bash
 curl -fsSL https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.334.0/install.sh | bash
 ```
-
 
 ## v2.333.0
 
@@ -232,7 +229,6 @@ irm https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.333.0/ins
 curl -fsSL https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.333.0/install.sh | bash
 ```
 
-
 ## v2.332.0
 
 ### Added / Changed
@@ -252,7 +248,6 @@ irm https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.332.0/ins
 ```bash
 curl -fsSL https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.332.0/install.sh | bash
 ```
-
 
 ## v2.331.0
 
@@ -274,7 +269,6 @@ irm https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.331.0/ins
 curl -fsSL https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.331.0/install.sh | bash
 ```
 
-
 ## v2.330.0
 
 ### Added / Changed
@@ -294,7 +288,6 @@ irm https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.330.0/ins
 ```bash
 curl -fsSL https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.330.0/install.sh | bash
 ```
-
 
 ## v2.329.0
 
@@ -316,7 +309,6 @@ irm https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.329.0/ins
 curl -fsSL https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.329.0/install.sh | bash
 ```
 
-
 ## v2.328.0
 
 ### Added / Changed
@@ -336,7 +328,6 @@ irm https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.328.0/ins
 ```bash
 curl -fsSL https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.328.0/install.sh | bash
 ```
-
 
 ## v2.327.0
 
@@ -358,7 +349,6 @@ irm https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.327.0/ins
 curl -fsSL https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.327.0/install.sh | bash
 ```
 
-
 ## v2.326.0
 
 ### Added / Changed
@@ -378,7 +368,6 @@ irm https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.326.0/ins
 ```bash
 curl -fsSL https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.326.0/install.sh | bash
 ```
-
 
 ## v2.325.0
 
@@ -400,7 +389,6 @@ irm https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.325.0/ins
 curl -fsSL https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.325.0/install.sh | bash
 ```
 
-
 ## v2.324.0
 
 ### Fixed
@@ -415,8 +403,6 @@ curl -fsSL https://github.com/alimtvnetwork/movie-cli-v8/releases/download/v2.32
 To pin your repository to this exact version, run the following one-liner:
 Unix/Bash: `curl -sL https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v8/v2.324.0/install.sh | bash -s -- ".ai-memory/prompts" "v2.324.0"`
 PowerShell: `Invoke-WebRequest -Uri https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v8/v2.324.0/install.ps1 -OutFile install.ps1; .\install.ps1 -TargetDir ".ai-memory/prompts" -Version "v2.324.0"`
-
-
 
 ## v2.323.0
 
@@ -435,7 +421,6 @@ PowerShell: `Invoke-WebRequest -Uri https://raw.githubusercontent.com/alimtvnetw
 To pin your repository to this exact version, run the following one-liner:
 Unix/Bash: `curl -sL https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v8/v2.323.0/install.sh | bash -s -- ".ai-memory/prompts" "v2.323.0"`
 PowerShell: `Invoke-WebRequest -Uri https://raw.githubusercontent.com/alimtvnetwork/movie-cli-v8/v2.323.0/install.ps1 -OutFile install.ps1; .\install.ps1 -TargetDir ".ai-memory/prompts" -Version "v2.323.0"`
-
 
 All notable changes to this project will be documented in this file.
 
@@ -815,7 +800,6 @@ All notable changes to this project will be documented in this file.
 - `enrichFromTMDb` now reports `(year %d) after fallback chain` in its warning so it is obvious when even the IMDb fallback failed.
 
 ## v2.99.0
-
 
 ### Fixed
 - **The update worker now calls `run.ps1` with explicit named arguments** instead of relying on a splatted hashtable, so `-DeployPath` and `-BinaryNameOverride` always bind and the update redeploys to the exact original binary path that launched `movie update`.
