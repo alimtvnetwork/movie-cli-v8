@@ -1,53 +1,47 @@
 ---
 name: letterly-execute-n-steps
-description: Formats input text verbatim into high-priority instructions, action items, additional learning and planning directives, and execute-parent-task-with-n-steps-v6 skill invocation suffix.
+description: >-
+  Formats raw voice dictation into high-priority instructions, action items starting with write plan and spec, and execute-parent-task-with-n-steps-v6 skill invocation suffix.
 ---
 
-# Letterly Execute N Steps Mode
+# Execute N-Steps — Letterly Prompt Formatter
 
-> **[/goal](slashCommand;goal)** Formats input text verbatim into high-priority instructions, action items, additional learning and planning directives, and `execute-parent-task-with-n-steps-v6` skill invocation suffix.
-> **[/learn](slashCommand;learn)** Ingest user input verbatim, structure into High Priority Instruction and Actionable Items, append skill invocation suffix, and include `/learn` and `/plan` pre-execution directives.
+Format whatever input text is provided according to the exact high-priority execution template below. Do NOT add conversational filler or commentary (never write "Certainly! Here is your output:").
 
-**Source prompt:** `01-prompts/22-letterly/03-execute-n-steps.md`
+1. Capture and clean the input text verbatim, stripping verbal filler words (`um`, `ah`, `uh`, `like`) while preserving every technical directive, parameter, flag, and file path.
+2. Structure the output starting immediately with `# High Priority Instruction`.
+3. Output `${Input Text Verbatim}` directly beneath the header.
+4. Construct `# Actionable Items Must Follow Non-Negotiable`:
+   - Item 1 is ALWAYS: `1. Write spec under 02-spec/21-app/<slug>/ and enqueue plan task in .ai-memory/plans/<slug>.md (subtasks in .ai-memory/plans/subtasks/<slug>/) first`
+   - Item 2 is ALWAYS: `2. Search codebase exclusively via GitMap (gitmap aum search, gitmap find, gitmap cat, gitmap ps, gitmap py, gitmap llm train); TOTAL BAN on rg, ripgrep, grep, git grep, Select-String`
+   - Item 3 is ALWAYS: `3. Strictly use relative Git paths (02-spec/..., .ai-memory/..., cmd/...); only add the relative paths, never add the absolute path during your work, and ensure this is respected on the release page and in release notes as well`
+   - Item 4..N are sequential, discrete technical directives extracted from the input.
+5. Append the mandatory agent invocation suffix pointing to `[execute-parent-task-with-n-steps-v6](file;.agents/skills/execute-parent-task-with-n-steps-v6)`.
+6. Make sure all the action items are listed and nothing pending.
+7. Relative Paths Mandate: Only add the relative paths, never add the absolute path during your work; ensure this is respected on the release page and in release notes as well.
+8. Additional Instructions Mandate: Always append the relative paths directive under ## Additional Instructions: '- Only add the relative paths, never add the absolute path during your work; this should be respected on the release page and in release notes as well.'
 
----
+${Input Text Verbatim} = The cleaned input text as it is, without conversational filler words.
 
-## 1. When to Use
+Output Format:
 
-Activate this skill when:
-- Structuring multi-step task directives with explicit planning phases before execution.
-- Creating standardized N-step task prompts with V6 subagent delegation.
-- Enforcing pre-flight spec reading and planning protocols.
-
----
-
-## 2. Formatting Rules
-
-1. **Zero Conversational Framing:** Omit all chatty filler, acknowledgments, and explanations.
-2. **High Priority Section:** `# High Priority Instruction` followed by `${Input Text Verbatim}`.
-3. **Actionable Items Section:** `# Actionable Items Must Follow Non-Negotiable` with numbered steps.
-4. **Mandatory Suffix:** `Must follow and spawn agent using` followed by `[06-execute-parent-task-with-n-steps-v6.md](file;.agents/skills/execute-parent-task-with-n-steps-v6)`.
-5. **Additional Instructions:** Include `learn [/learn](slashCommand;learn) if you have to learn something and [/plan](slashCommand;plan) stuff before working please.`
-
----
-
-## 3. Output Format
-
-```markdown
 # High Priority Instruction
 
 ${Input Text Verbatim}
 
 # Actionable Items Must Follow Non-Negotiable
 
-1. Write a plan and spec first
-2. ...
+1. Write spec under 02-spec/21-app/<slug>/ and enqueue plan task in .ai-memory/plans/<slug>.md (subtasks in .ai-memory/plans/subtasks/<slug>/) first
+2. Search codebase exclusively via GitMap (gitmap aum search, gitmap find, gitmap cat, gitmap ps, gitmap py, gitmap llm train); TOTAL BAN on rg, ripgrep, grep, git grep, Select-String
+3. Strictly use relative Git paths (02-spec/..., .ai-memory/..., cmd/...); only add the relative paths, never add the absolute path during your work, and ensure this is respected on the release page and in release notes as well
+4. ....other steps and more steps sequentially from the input direction. Create more steps in between.
 
-Must follow and spawn agent using
+## Must follow and spawn agent using
 
-[06-execute-parent-task-with-n-steps-v6.md](file;.agents/skills/execute-parent-task-with-n-steps-v6)
+[execute-parent-task-with-n-steps-v6](file;.agents/skills/execute-parent-task-with-n-steps-v6)
 
 ## Additional Instructions
 
-learn [/learn](slashCommand;learn) if you have to learn something and [/plan](slashCommand;plan) stuff before working please.
-```
+- [/plan](slashCommand;plan) first before doing the work to reduce the credits.
+- [/learn](slashCommand;learn) from [gitmap](file;.agents/skills/gitmap) skill to leverage GitMap high-speed search, toolchain discovery, and caching.
+- Only add the relative paths, never add the absolute path during your work; this should be respected on the release page and in release notes as well.

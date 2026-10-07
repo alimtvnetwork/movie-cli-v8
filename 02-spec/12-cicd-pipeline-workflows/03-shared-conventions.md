@@ -217,8 +217,8 @@ GitHub free-tier accounts provide only **0.5 GB** of shared Actions storage per 
 - [Vulnerability Scanning](./06-vulnerability-scanning.md) — Scanning classification rules
 - [Install Script Generation](./07-install-script-generation.md) — Placeholder strategy, checksum verification
 - [Code Signing](./10-code-signing.md) — SignPath integration, feature-flag gating
-- [Browser Extension Deploy](./01-browser-extension-deploy/01-index.md) — Node.js pipeline archetype
-- [Go Binary Deploy](./02-go-binary-deploy/01-index.md) — Go pipeline archetype
+- [Browser Extension Deploy](./01-browser-extension-deploy/readme.md) — Node.js pipeline archetype
+- [Go Binary Deploy](./02-go-binary-deploy/readme.md) — Go pipeline archetype
 
 ---
 

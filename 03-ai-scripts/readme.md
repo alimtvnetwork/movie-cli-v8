@@ -69,6 +69,7 @@ Follow this sequence before and during any repository modification task:
 | **45** | `45-antigravity-run-audit.py` | Audits Antigravity runs, transcript events, and subagent lifecycles | ~20ms | `audit`, `antigravity`, `transcripts`, `subagents` |
 | **46** | `46-agent-sqlite-task-manager.py` | Concurrency-safe SQLite task coordination and crash forensics engine | ~10ms | `task-manager`, `sqlite`, `acid`, `multi-agent`, `crash-forensics` |
 | **47** | `47-git-reconcile-and-resolve-conflict.py` | Autonomous Git divergence reconciliation, mechanical conflict resolver & push | ~30ms | `git`, `reconcile`, `merge`, `conflict-resolver`, `push`, `divergence` |
+| **49** | `49-commit-and-push-all-repos.py` | Multi-repository workspace discoverer, atomic conventional committer & remote push | ~25ms | `git`, `multi-repo`, `commit-all`, `push-all`, `workspace`, `sync` |
 
 ---
 
@@ -1242,9 +1243,13 @@ Safely synchronizes diverged branches without rewriting published Git history (s
 - Executes non-destructive standard merges (`git merge --no-ff`) when branches have diverged.
 - Scans and detects git conflict markers (`<<<<<<<`, `=======`, `>>>>>>>`).
 - Provides domain-specific mechanical conflict resolution engines:
-  - Deduplicated line unions for ignore/set files (`.gitignore`, `.gitattributes`).
-  - SemVer comparison and adoption for version manifests (`version.json`, `package.json`).
+  - Deduplicated line unions for ignore/set files (`.gitignore`, `.gitattributes`, `.npmignore`, `.dockerignore`).
+  - SemVer comparison and adoption for version manifests (`version.json`, `package.json`, `prompt-version.template.json`).
   - Chronological section preservation for markdown changelogs and release notes.
+  - Markdown list/checklist (`- [x]`) and table row deduplicated union with task completion preservation.
+  - Python dependency reconciliation (`requirements*.txt`, `*-requirements.txt`) with SemVer constraint arbitration.
+  - Code import block deduplication for Python, TypeScript, JavaScript, Go, and Rust.
+  - Pre-commit AST/JSON syntax validation ensuring no broken code or schemas are staged.
   - Pluggable fallback strategies (`smart`, `ours`, `theirs`, `union`).
 - Audits resolved files to verify 0 conflict markers remain before staging with `git add`.
 - Commits the resolved merge and autonomously pushes to remote, verifying 0 divergence post-push.
@@ -1254,6 +1259,9 @@ Safely synchronizes diverged branches without rewriting published Git history (s
 ```bash
 # Check divergence status and simulate merge (dry-run)
 python 03-ai-scripts/47-git-reconcile-and-resolve-conflict.py --check
+
+# Run internal mechanical conflict resolver self-tests
+python 03-ai-scripts/47-git-reconcile-and-resolve-conflict.py --self-test
 
 # Reconcile diverged branches, mechanically resolve conflicts, and push to origin
 python 03-ai-scripts/47-git-reconcile-and-resolve-conflict.py --push

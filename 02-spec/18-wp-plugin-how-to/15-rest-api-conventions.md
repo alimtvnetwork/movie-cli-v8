@@ -995,7 +995,7 @@ private function executeOpenapi(WP_REST_Request $request): WP_REST_Response
 - [Phase 4 — Logging and Error Handling](05-logging-and-error-handling.md) — safeExecute, error responses
 - [Phase 5 — Helpers, Response Envelope](06-helpers-responses-and-integration.md) — EnvelopeBuilder, response format
 - [Phase 6 — Input Validation](07-input-validation-patterns.md) — guard clauses, body validation
-- [Phase 2 — Enums and Coding Style](02-enums-and-coding-style/01-index.md) — enum patterns for all enum types used here
+- [Phase 2 — Enums and Coding Style](02-enums-and-coding-style/readme.md) — enum patterns for all enum types used here
 
 ---
 

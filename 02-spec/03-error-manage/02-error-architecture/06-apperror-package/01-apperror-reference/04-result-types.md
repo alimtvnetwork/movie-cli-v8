@@ -1,6 +1,6 @@
 # AppError Package Reference — Result[T], ResultSlice[T], ResultMap[K,V]
 
-> **Parent:** [AppError Package Reference](./01-index.md)
+> **Parent:** [AppError Package Reference](./readme.md)
 > **Version:** 1.5.0
 > **Updated:** 2026-09-13
 
@@ -148,7 +148,7 @@ func FailMapNew[K comparable, V any](code, message string) ResultMap[K, V]
 | Mutate | `Remove(key)` | — | Deletes key; no-op if error state |
 
 > **📌 `.AppError()` Naming Convention:**
-> All result wrappers — `Result[T]`, `ResultSlice[T]`, and `ResultMap[K, V]` — expose the underlying error via `.AppError()` (returning `*AppError`), **not** `.Error()`. This avoids collision with Go's native `error` interface method `.Error() string` and ensures callers always receive the structured `*AppError` type for direct propagation via `Fail[T]()`, `FailSlice[T]()`, etc. without interface casts. The same convention applies to `dbutil` result types (`dbutil.Result[T]`, `dbutil.ResultSet[T]`, `dbutil.ExecResult`), which also store and return `*apperror.AppError` from their `.AppError()` method to enable bridge methods like `ToAppResult()` and `ToAppResultSlice()`.
+> All result wrappers — `Result[T]`, `ResultSlice[T]`, and `ResultMap[K, V]` — expose the underlying error via `.AppError()` (returning `*AppError`), **not** `.Error()`. This avoids collision with Go's native `error` interface method `.Error() string` and ensures callers always receive the structured `*AppError` type for direct propagation via `Fail[T]()`, `FailSlice[T]()`, etc. without interface casts. The same convention applies to `dbutil` result types (`dbutil.Result[T]`, `dbutil.ResultSet[T]`, `dbutil.ExecResult`), which also store and return `*appfault.AppError` from their `.AppError()` method to enable bridge methods like `ToAppResult()` and `ToAppResultSlice()`.
 
 ---
 
@@ -210,9 +210,67 @@ When invoked on a `nil` pointer, methods return safe, predictable defaults:
 ### 6.4 Mandatory `types.go` Definition as a Single Reusable Type
 
 1. **Dedicated `types.go` per Package:**
-   - All domain payload structs (e.g. `ScheduleExportBundle`) and repeated generic Result type aliases (e.g. `type ScheduleExportBundleResult = result.ResultSlice[ScheduleExportBundle]`) MUST be defined in a dedicated `types.go` file within each package as a single reusable named type.
+   - All domain payload structs (e.g. `ScheduleExportBundle`, `Config`, `User`) and repeated generic Result type aliases (e.g. `type ConfigResult = result.Wrap[*Config]`, `type ScheduleExportBundleResult = result.ResultSlice[ScheduleExportBundle]`) MUST be defined in a dedicated `types.go` file within each package as a single reusable named type.
+   - If a type is reused and used across functions, services, or packages, convert it from raw generic (`result.Wrap[*Config]`) to an actual concrete named type (`ConfigResult`).
    - Never declare unexported structs or raw generic Result envelopes inline in implementation files.
-2. **Library Package Architecture (`pkg/result/`):**
+
+2. **Concrete Type Follow-Through Example:**
+   ```go
+   // -----------------------------------------------------------------------------
+   // Step 1: Declare Concrete Types in `types.go` (Mandatory Rule)
+   // -----------------------------------------------------------------------------
+   // In types.go:
+   // package config
+   //
+   // type (
+   //     // Config contains application configuration fields.
+   //     Config struct {
+   //         Port int    `json:"port"`
+   //         Host string `json:"host"`
+   //     }
+   //
+   //     // ConfigResult is the single reusable concrete result envelope for *Config.
+   //     // RULE: Convert raw generic result.Wrap[*Config] to an explicit concrete type
+   //     // in types.go so all signatures and callers share the exact same definition!
+   //     ConfigResult = result.Wrap[*Config]
+   // )
+   // -----------------------------------------------------------------------------
+
+   // In config.go (Implementation File):
+   // Signature uses the concrete type from types.go directly:
+   func LoadConfig(path string) ConfigResult {
+       if path == "" {
+           fault := appfault.New(errtype.Validation, "config path cannot be empty").
+               WithOp("config.LoadConfig")
+
+           return result.WrapFailure[*Config](fault)
+       }
+
+       data, err := os.ReadFile(path)
+
+       if err != nil {
+           fault := appfault.WrapFile(errtype.IO, err, path, "failed to read config file").
+               WithOp("config.LoadConfig")
+
+           return result.WrapFailure[*Config](fault)
+       }
+
+       var cfg Config
+       err = json.Unmarshal(data, &cfg)
+
+       if err != nil {
+           fault := appfault.Wrap(errtype.Validation, err, "failed to parse config json").
+               WithOp("config.LoadConfig")
+
+           return result.WrapFailure[*Config](fault)
+       }
+
+       return result.WrapSuccess(&cfg)
+   }
+   ```
+
+3. **Library Package Architecture (`pkg/result/`):**
    - Core types (`Wrap[T]`, `Result[T]`, `ResultSlice[T]`, `ResultMap[K, V]`, verifier and inspector interfaces) are defined in `types.go` as single canonical types. Implementation files contain only functions, constructors, and methods.
 
 ---
+
