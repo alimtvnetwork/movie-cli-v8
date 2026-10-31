@@ -19,7 +19,7 @@ This directory hosts the canonical, production-grade prompts library (V4 archite
    - Substring Filename Search: `gitmap find-files-any "<str>"` (alias: `gitmap ffa`)
    - Directory Indexing: `gitmap list-files [pattern]` (alias: `gitmap lf`)
 
-3. **Pipeline AI & Frictionless Dynamic Waiting:**
+3. **Pipeline AI & Zero-Credit-Waste Dynamic Waiting:**
    - Telemetry Query: `gitmap pipeline-ai status --json`
    - Adaptive Sleep: `gitmap pipeline-ai status -t <etaSeconds>` (replaces expensive busy-polling loops)
    - Failure Log Snippets: `gitmap pipeline errors` (alias: `gitmap pe`)
@@ -46,7 +46,7 @@ This directory hosts the canonical, production-grade prompts library (V4 archite
 
 ## Directory Index
 
-All 31 canonical prompt categories reside directly at the root of `01-prompts/`:
+All 27 canonical prompt categories reside directly at the root of `01-prompts/`:
 
 ```text
 01-prompts/
@@ -79,16 +79,7 @@ All 31 canonical prompt categories reside directly at the root of `01-prompts/`:
 ├── 26-gitmap/
 ├── 27-muse-prompts/
 ├── 28-mastery-prompts/
-├── 29-chat-management/
-└── 30-improvements/
-    ├── 01-next-100-ui-improvements.md
-    ├── 02-next-100-code-improvements.md
-    ├── 03-next-100-whole-system-improvements.md
-    ├── 04-next-detail-out-100-improvements.md
-    ├── 05-next-100-ideas-for-improvements.md
-    ├── 06-check-pending-improvements.md
-    ├── 07-implement-next-10-improvements.md
-    └── readme.md
+└── 29-chat-management/
 ```
 
 ---
@@ -111,8 +102,8 @@ All 31 canonical prompt categories reside directly at the root of `01-prompts/`:
 | **11** | `11-content-and-seo/` | `01-jokes-ideas-generate.md`, `03-seo-optimization.md`, `05-update-readme.md` | Content copywriting, SEO optimization, and documentation sync |
 | **12** | `12-old-plan-prompts/` | `01-plan-maximum-enforcement.md`, `05-plan-spec-steps.md` | Archived legacy planning protocols and audit workflows |
 | **13** | `13-plan-audit/` | `01-inventory-pending-tasks.md`, `02-plan-spec-steps-v2.md`, `03-audit-app-spec.md` | Task inventory, spec planning V2, and blind-AI audits |
-| **14** | `14-execute/` | `01-execute-pending-tasks.md`, `02-execute-parent-task-with-n-steps-v6.md`, `07-run.md`, `08-execute-with-e2e.md` | Canonical V6 autonomous parent task execution, continuous loops, run orchestration, and E2E verification with minor bump release |
-| **15** | `15-cg-execute/` | `01-execute-coding-guideline-fix.md` through `39-golang-pointers-and-mutation-reduction.md` | Granular coding guideline rule enforcement suite (all 39 prompts V6 compliant) |
+| **14** | `14-execute/` | `01-execute-pending-tasks.md`, `02-execute-parent-task-with-n-steps-v7.md` (V7 Canonical), `02-execute-parent-task-with-n-steps-v6.md`, `07-run.md`, `08-execute-with-e2e.md` | Canonical V7 and V6 autonomous parent task execution, continuous loops, run orchestration, GitMap author governance, and E2E verification with minor bump release |
+| **15** | `15-cg-execute/` | `01-execute-coding-guideline-fix.md` through `38-*` | Granular coding guideline rule enforcement suite (all 38 prompts V6 compliant) |
 | **16** | `16-ci-cd/` | `01-ci-cd-fix-with-release.md`, `02-cicd-pipeline-create.md` | CI/CD pipeline diagnosis, creation, and release integration |
 | **17** | `17-release-management/` | `01-release.md`, `02-patch-bump.md`, `03-minor-bump.md`, `04-major-bump.md` | Semantic release ceremonies, version bumps, and tags |
 | **18** | `18-insults/` | `01-raw-insults.md` | Anti-carelessness discipline and quality enforcement |
@@ -127,4 +118,3 @@ All 31 canonical prompt categories reside directly at the root of `01-prompts/`:
 | **27** | `27-muse-prompts/` | `01-muse-master-prompt.md` (Unified) | Unified Muse master onboarding & fleet execution prompt (SSH auth, GitMap scan, 14+ repo clone/pull-all, side chats, V6 multi-agent engine) |
 | **28** | `28-mastery-prompts/` | `01-mastery-bootstrap-prompt.md` | Foolproof standalone bootstrap prompt: reproduces the full working environment (GitHub, GitMap, repos, memory, chats) from any fresh chat on any machine |
 | **29** | `29-chat-management/` | `01-chat-histories-reread-remove-and-recreate.md` | Chat-history recovery: re-read per-repo side chats, prune stale ones (archive by default, delete only on explicit word), and recreate one `<repo> repo` chat per repo after a VM replacement |
-| **30** | `30-improvements/` | `01-next-100-ui-improvements.md`, `02-next-100-code-improvements.md`, `03-next-100-whole-system-improvements.md`, `04-next-detail-out-100-improvements.md`, `05-next-100-ideas-for-improvements.md`, `06-check-pending-improvements.md`, `07-implement-next-10-improvements.md` | Autonomous continuous improvement, ideation, backlog visibility, and fast-forward implementation suite covering UI, codebase quality, whole-system UX, review dockets, pending counts, and bounded 10-item execution loops without intermediate builds/tests |
