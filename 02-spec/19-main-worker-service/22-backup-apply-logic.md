@@ -5,7 +5,7 @@
 **Created:** 2026-05-06
 **Status:** Authoritative (spec-only, per plan §Mode)
 **Resolves:** Phase 10 — what BE-1 (`21-backup-endpoints.md` §4) actually does **after** the sealed envelope is received.
-**Depends on:** [`19-incremental-backup-sync.md`](./20-incremental-backup-sync.md) §6 (envelope SQLite shape), [`20-backup-encryption-and-keys.md`](./21-backup-encryption-and-keys.md) §9 (decrypt path), [`21-backup-endpoints.md`](./21-backup-endpoints.md) §4, [`13-error-codes.md`](./14-error-codes.md), [`15-tunable-constants.md`](./16-tunable-constants.md).
+**Depends on:** [`19-incremental-backup-sync.md`](./19-incremental-backup-sync.md) §6 (envelope SQLite shape), [`20-backup-encryption-and-keys.md`](./20-backup-encryption-and-keys.md) §9 (decrypt path), [`21-backup-endpoints.md`](./21-backup-endpoints.md) §4, [`13-error-codes.md`](./13-error-codes.md), [`15-tunable-constants.md`](./15-tunable-constants.md).
 
 ---
 
@@ -41,15 +41,15 @@ Failure on any stage short-circuits to **§6 Failure handling**. Partial state M
 
 Run **before** opening the apply transaction. All checks return early with a named error; none allow fallback.
 
-| ID  | Rule                                                                                                                     | Failure code                                    |
-| --- | ------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------- |
-| V1  | `Envelope.PrimaryWorkerNodeId` matches BE-1 header `X-Primary-Worker-Identity`.                                          | `MAIN-800-04 TrafficOnBackupRejected`           |
-| V2  | `Envelope.BackupWorkerNodeId` equals self.                                                                               | `WORKER-300-04 BackupNotRoutable`               |
-| V3  | `Envelope.KeyEpoch` matches the `BackupKeyEpoch` row used to decrypt (no epoch mixing).                                  | `WORKER-920-03 UnknownKeyEpoch`                 |
-| V4  | `Envelope.RowCount` equals `SELECT COUNT(*) FROM EnvelopeRow`.                                                           | `WORKER-930-01 EnvelopeRowCountMismatch`        |
-| V5  | Every `EnvelopeRow.SourceTable` appears in the **tracked-table allowlist** (`AppBackupTrackedTable` ref, Phase 12 seed). | `WORKER-930-02 UntrackedSourceTable`            |
-| V6  | `Envelope.MinSyncOpSeq` strictly greater than `BackupSyncWatermark.LastAcceptedSyncOpSeq` for this primary.              | `WORKER-910-01 BackupSyncWatermarkInconsistent` |
-| V7  | `EnvelopeId` not already present in `BackupApplyIdempotency` with `Status='Applied'`.                                    | Treat as replay → return original 200 (per §7). |
+| ID | Rule | Failure code |
+|---|---|---|
+| V1 | `Envelope.PrimaryWorkerNodeId` matches BE-1 header `X-Primary-Worker-Identity`. | `MAIN-800-04 TrafficOnBackupRejected` |
+| V2 | `Envelope.BackupWorkerNodeId` equals self. | `WORKER-300-04 BackupNotRoutable` |
+| V3 | `Envelope.KeyEpoch` matches the `BackupKeyEpoch` row used to decrypt (no epoch mixing). | `WORKER-920-03 UnknownKeyEpoch` |
+| V4 | `Envelope.RowCount` equals `SELECT COUNT(*) FROM EnvelopeRow`. | `WORKER-930-01 EnvelopeRowCountMismatch` |
+| V5 | Every `EnvelopeRow.SourceTable` appears in the **tracked-table allowlist** (`AppBackupTrackedTable` ref, Phase 12 seed). | `WORKER-930-02 UntrackedSourceTable` |
+| V6 | `Envelope.MinSyncOpSeq` strictly greater than `BackupSyncWatermark.LastAcceptedSyncOpSeq` for this primary. | `WORKER-910-01 BackupSyncWatermarkInconsistent` |
+| V7 | `EnvelopeId` not already present in `BackupApplyIdempotency` with `Status='Applied'`. | Treat as replay → return original 200 (per §7). |
 
 V1–V3 protect against operator misrouting; V4–V5 protect against truncated or schema-drift envelopes; V6 protects against out-of-order delivery; V7 is the idempotency short-circuit.
 
@@ -59,11 +59,11 @@ V1–V3 protect against operator misrouting; V4–V5 protect against truncated o
 
 One SQLite TX per envelope (`BEGIN IMMEDIATE` on the App tier). Iterate `EnvelopeRow ORDER BY SyncOpSeq ASC`. Row dispatch:
 
-| `SyncOpCode` | Action on backup mirror                                                                                               |
-| ------------ | --------------------------------------------------------------------------------------------------------------------- |
-| `Insert`     | `INSERT … ON CONFLICT(SourceTable PK) DO UPDATE SET …` (upsert; tolerates redelivery within a single envelope retry). |
-| `Update`     | Same upsert path — primary's view is authoritative; backup never branches.                                            |
-| `Delete`     | `DELETE FROM <SourceTable> WHERE <PkColumn> = <SourceRowId>`; missing row is **not** an error (idempotent).           |
+| `SyncOpCode` | Action on backup mirror |
+|---|---|
+| `Insert` | `INSERT … ON CONFLICT(SourceTable PK) DO UPDATE SET …` (upsert; tolerates redelivery within a single envelope retry). |
+| `Update` | Same upsert path — primary's view is authoritative; backup never branches. |
+| `Delete` | `DELETE FROM <SourceTable> WHERE <PkColumn> = <SourceRowId>`; missing row is **not** an error (idempotent). |
 
 CODE-RED-compliant per-row pseudocode (≤15 lines, zero nesting, ≤2 operands per guard):
 
@@ -182,12 +182,12 @@ Step 5's INSERT uses the table's `UNIQUE` constraint as the lock — second conc
 
 ## 8. Tunables introduced (mirrored verbatim into `15-tunable-constants.md` §2.14)
 
-| Key                                                   | Default | Unit    | Used by                   | Notes                                                                           |
-| ----------------------------------------------------- | ------: | ------- | ------------------------- | ------------------------------------------------------------------------------- |
-| `MainWorker.Backup.Apply.MaxRetriesPerEnvelope`       |   **5** | count   | §6.2                      | Primary's BE-1 retries inherit this; exceeding = `MAIN-840-01`.                 |
-| `MainWorker.Backup.Apply.TransactionTimeoutSeconds`   |  **30** | seconds | Stage 4 `BEGIN IMMEDIATE` | Wraps the per-envelope TX; exceeding = `WORKER-930-04 ApplyTransactionTimeout`. |
-| `MainWorker.Backup.Apply.DeadLetterRetentionDays`     |  **30** | days    | DLQ sweeper               | Symmetric with snapshot retention default; finalized in Phase 11 with OQ-A4.    |
-| `MainWorker.Backup.Apply.IdempotencyRowRetentionDays` |  **14** | days    | DLQ sweeper               | `Applied` rows reaped after this; replay protection window.                     |
+| Key | Default | Unit | Used by | Notes |
+|---|---:|---|---|---|
+| `MainWorker.Backup.Apply.MaxRetriesPerEnvelope` | **5** | count | §6.2 | Primary's BE-1 retries inherit this; exceeding = `MAIN-840-01`. |
+| `MainWorker.Backup.Apply.TransactionTimeoutSeconds` | **30** | seconds | Stage 4 `BEGIN IMMEDIATE` | Wraps the per-envelope TX; exceeding = `WORKER-930-04 ApplyTransactionTimeout`. |
+| `MainWorker.Backup.Apply.DeadLetterRetentionDays` | **30** | days | DLQ sweeper | Symmetric with snapshot retention default; finalized in Phase 11 with OQ-A4. |
+| `MainWorker.Backup.Apply.IdempotencyRowRetentionDays` | **14** | days | DLQ sweeper | `Applied` rows reaped after this; replay protection window. |
 
 ---
 
@@ -195,30 +195,30 @@ Step 5's INSERT uses the table's `UNIQUE` constraint as the lock — second conc
 
 Worker tier (apply-pipeline failures, range `WORKER-930-*` — first three slots of the freshly-allocated overflow range, cited below):
 
-| Prefixed        |         Flat | HTTP | Name                       | Meaning                                                                     |
-| --------------- | -----------: | ---: | -------------------------- | --------------------------------------------------------------------------- |
-| `WORKER-930-01` | _(see §9.1)_ |  422 | `EnvelopeRowCountMismatch` | V4: `Envelope.RowCount` ≠ `COUNT(EnvelopeRow)`.                             |
-| `WORKER-930-02` | _(see §9.1)_ |  422 | `UntrackedSourceTable`     | V5: `SourceTable` not in tracked-table allowlist.                           |
-| `WORKER-930-03` | _(see §9.1)_ |  422 | `UnknownSyncOpCode`        | Stage-4 guard `AssertKnownSyncOp` failure (not `Insert`/`Update`/`Delete`). |
-| `WORKER-930-04` | _(see §9.1)_ |  504 | `ApplyTransactionTimeout`  | Stage-4 TX exceeded `TransactionTimeoutSeconds`.                            |
+| Prefixed | Flat | HTTP | Name | Meaning |
+|---|---:|---:|---|---|
+| `WORKER-930-01` | _(see §9.1)_ | 422 | `EnvelopeRowCountMismatch` | V4: `Envelope.RowCount` ≠ `COUNT(EnvelopeRow)`. |
+| `WORKER-930-02` | _(see §9.1)_ | 422 | `UntrackedSourceTable` | V5: `SourceTable` not in tracked-table allowlist. |
+| `WORKER-930-03` | _(see §9.1)_ | 422 | `UnknownSyncOpCode` | Stage-4 guard `AssertKnownSyncOp` failure (not `Insert`/`Update`/`Delete`). |
+| `WORKER-930-04` | _(see §9.1)_ | 504 | `ApplyTransactionTimeout` | Stage-4 TX exceeded `TransactionTimeoutSeconds`. |
 
 Main tier:
 
-| Prefixed      |         Flat | HTTP | Name                   | Meaning                                                                                 |
-| ------------- | -----------: | ---: | ---------------------- | --------------------------------------------------------------------------------------- |
-| `MAIN-840-01` | _(see §9.1)_ |  n/a | `BackupApplyExhausted` | §6.2 — `MaxRetriesPerEnvelope` exceeded for one `EnvelopeId`; surfaced via BE-5 Health. |
+| Prefixed | Flat | HTTP | Name | Meaning |
+|---|---:|---:|---|---|
+| `MAIN-840-01` | _(see §9.1)_ | n/a | `BackupApplyExhausted` | §6.2 — `MaxRetriesPerEnvelope` exceeded for one `EnvelopeId`; surfaced via BE-5 Health. |
 
 ### 9.1 Range-allocation note
 
-Worker future-expansion range `WORKER-21095-21099` was **fully consumed** by Phase 8 (`WORKER-920-01..05`). Phase 10 therefore opens a new overflow window per `13-error-codes.md` §1 _Slot-overflow rule_: **`WORKER-21200-21299`** (next free hundred). Concrete slot assignments:
+Worker future-expansion range `WORKER-21095-21099` was **fully consumed** by Phase 8 (`WORKER-920-01..05`). Phase 10 therefore opens a new overflow window per `13-error-codes.md` §1 *Slot-overflow rule*: **`WORKER-21200-21299`** (next free hundred). Concrete slot assignments:
 
-| Prefixed        |                                                                             Flat |
-| --------------- | -------------------------------------------------------------------------------: |
-| `WORKER-930-01` |                                                                          `21200` |
-| `WORKER-930-02` |                                                                          `21201` |
-| `WORKER-930-03` |                                                                          `21202` |
-| `WORKER-930-04` |                                                                          `21203` |
-| `MAIN-840-01`   | `21191` (still inside the `MAIN-21191-21199` Phase-11-reserved window; see §9.2) |
+| Prefixed | Flat |
+|---|---:|
+| `WORKER-930-01` | `21200` |
+| `WORKER-930-02` | `21201` |
+| `WORKER-930-03` | `21202` |
+| `WORKER-930-04` | `21203` |
+| `MAIN-840-01` | `21191` (still inside the `MAIN-21191-21199` Phase-11-reserved window; see §9.2) |
 
 ### 9.2 Coexistence with Phase 11
 
@@ -228,12 +228,12 @@ Phase 11 reserves `MAIN-21191-21199` for snapshot/restore. `MAIN-840-01` consume
 
 ## 10. Linter hooks queued for Phase 12
 
-| ID                 | Rule                                                                                                                               |
-| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| ID | Rule |
+|---|---|
 | `BACKUP-APPLY-001` | Every `BackupApplyIdempotency.Status='Applied'` row MUST have `AppliedAtEpoch IS NOT NULL` and `OriginalResponseJson IS NOT NULL`. |
-| `BACKUP-APPLY-002` | Every `BackupApplyDeadLetter` row MUST have `EnvelopeBlobPath` resolving to an existing file under `var/dlq/`.                     |
-| `BACKUP-APPLY-003` | `EnvelopeRow.SourceTable` values referenced anywhere in spec/19 MUST appear in the `AppBackupTrackedTable` seed (Phase 12).        |
-| `BACKUP-APPLY-004` | Apply pipeline functions MUST be ≤15 lines, zero nested `if`, ≤2 operands per boolean (CODE RED). Violations fail CI.              |
+| `BACKUP-APPLY-002` | Every `BackupApplyDeadLetter` row MUST have `EnvelopeBlobPath` resolving to an existing file under `var/dlq/`. |
+| `BACKUP-APPLY-003` | `EnvelopeRow.SourceTable` values referenced anywhere in spec/19 MUST appear in the `AppBackupTrackedTable` seed (Phase 12). |
+| `BACKUP-APPLY-004` | Apply pipeline functions MUST be ≤15 lines, zero nested `if`, ≤2 operands per boolean (CODE RED). Violations fail CI. |
 
 ---
 
@@ -256,4 +256,4 @@ Phase 11 reserves `MAIN-21191-21199` for snapshot/restore. `MAIN-840-01` consume
 
 ---
 
-_Backup apply logic v1.0.0 — 2026-05-06 (Phase 10). CODE-RED-compliant pipeline; idempotent dispatch; explicit DLQ._
+*Backup apply logic v1.0.0 — 2026-05-06 (Phase 10). CODE-RED-compliant pipeline; idempotent dispatch; explicit DLQ.*

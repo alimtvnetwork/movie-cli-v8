@@ -43,13 +43,13 @@ repoPath := resolveRepoPath()
 
 The repo path is resolved using a **priority cascade**:
 
-| Priority | Method             | Description                                          |
-| -------- | ------------------ | ---------------------------------------------------- |
-| 1        | `--repo-path` flag | CLI flag passed by the user                          |
-| 2        | Embedded constant  | Compiled into the binary via `-ldflags -X`           |
-| 3        | Database lookup    | Previously saved path from a prior update            |
-| 4        | Interactive prompt | Ask the user to provide the path                     |
-| 5        | Updater fallback   | Delegate to `<binary>-updater` (binary-based update) |
+| Priority | Method | Description |
+|----------|--------|-------------|
+| 1 | `--repo-path` flag | CLI flag passed by the user |
+| 2 | Embedded constant | Compiled into the binary via `-ldflags -X` |
+| 3 | Database lookup | Previously saved path from a prior update |
+| 4 | Interactive prompt | Ask the user to provide the path |
+| 5 | Updater fallback | Delegate to `<binary>-updater` (binary-based update) |
 
 Each resolved path is **saved to the database** for future use (`saveRepoPathToDB()`).
 
@@ -83,7 +83,6 @@ func tryUpdaterFallback() bool {
 ```
 
 If `<binary>-updater` is found on PATH:
-
 - Execute `<binary>-updater run` synchronously.
 - Pipe all stdout/stderr to the terminal.
 - On success, exit with code 0.
@@ -145,7 +144,6 @@ func launchHandoff(copyPath, repoPath string) {
 ```
 
 **Critical behaviors:**
-
 - Uses `cmd.Run()` (blocking), NOT `cmd.Start()` (non-blocking).
 - Terminal stays attached — user sees all build/deploy output.
 - The `--verbose` flag is forwarded if present.
@@ -168,18 +166,15 @@ func runUpdateRunner() {
 The `executeUpdate()` function:
 
 **On Windows:**
-
 1. Generate a temporary PowerShell script with UTF-8 BOM.
 2. Script calls `run.ps1 -Update` in the repo directory.
 3. Execute via `powershell.exe -ExecutionPolicy Bypass -NoProfile -NoLogo -File <script>`.
 
 **On Linux/macOS:**
-
 1. Execute `bash run.sh --update` directly.
 2. No temporary script needed.
 
 Both paths invoke the build script which:
-
 1. Pulls latest code (`git pull`).
 2. Resolves dependencies (`go mod download`).
 3. Builds the binary (`go build`).
@@ -196,7 +191,6 @@ After deploy, compare versions:
 ```
 
 If versions are identical:
-
 ```
  !! Version unchanged — source may already be up to date
 ```
@@ -315,17 +309,17 @@ See [`diagrams/02-update-cleanup-workflow.mmd`](./diagrams/02-update-cleanup-wor
 
 ## Error Handling Matrix
 
-| Error                                | Source                 | Response                                        |
-| ------------------------------------ | ---------------------- | ----------------------------------------------- |
-| No internet                          | `requireOnline()`      | Print error, exit 1                             |
-| Cannot find binary path              | `os.Executable()`      | Print error, exit 1                             |
-| Handoff copy failed (both locations) | `createHandoffCopy()`  | Print error, exit 1                             |
-| No repo path (all methods exhausted) | `resolveRepoPath()`    | Print error, exit 1                             |
-| Updater not found (fallback)         | `tryUpdaterFallback()` | Print error, exit 1                             |
-| Worker process failed                | `launchHandoff()`      | Propagate exit code                             |
-| Build script failed                  | `executeUpdate()`      | Print error, exit 1 — original binary untouched |
-| Deploy failed (rename-first)         | `run.ps1` / `run.sh`   | Rollback from `.old` backup                     |
-| Version unchanged after update       | Version check          | Warn (yellow), exit 0                           |
+| Error | Source | Response |
+|-------|--------|----------|
+| No internet | `requireOnline()` | Print error, exit 1 |
+| Cannot find binary path | `os.Executable()` | Print error, exit 1 |
+| Handoff copy failed (both locations) | `createHandoffCopy()` | Print error, exit 1 |
+| No repo path (all methods exhausted) | `resolveRepoPath()` | Print error, exit 1 |
+| Updater not found (fallback) | `tryUpdaterFallback()` | Print error, exit 1 |
+| Worker process failed | `launchHandoff()` | Propagate exit code |
+| Build script failed | `executeUpdate()` | Print error, exit 1 — original binary untouched |
+| Deploy failed (rename-first) | `run.ps1` / `run.sh` | Rollback from `.old` backup |
+| Version unchanged after update | Version check | Warn (yellow), exit 0 |
 
 ---
 
@@ -364,16 +358,16 @@ The `--verbose` flag is forwarded from the parent to the worker so that detailed
 
 ## Cross-References
 
-- [Self-Update Overview](./02-self-update-overview.md) — High-level architecture and strategy selection
-- [Deploy Path Resolution](./03-deploy-path-resolution.md) — How the deploy target directory is determined
-- [Rename-First Deploy](./04-rename-first-deploy.md) — File replacement strategy used during deploy
-- [Build Scripts](./05-build-scripts.md) — `run.ps1` / `run.sh` invoked by the worker
-- [Handoff Mechanism](./06-handoff-mechanism.md) — Deep-dive on the copy-and-handoff pattern
-- [Cleanup](./07-cleanup.md) — Post-update artifact removal lifecycle
-- [Updater Binary](./20-updater-binary.md) — Standalone updater for binary-based updates
-- [Network Requirements](./21-network-requirements.md) — HTTP client and connectivity checks
+- [Self-Update Overview](./01-self-update-overview.md) — High-level architecture and strategy selection
+- [Deploy Path Resolution](./02-deploy-path-resolution.md) — How the deploy target directory is determined
+- [Rename-First Deploy](./03-rename-first-deploy.md) — File replacement strategy used during deploy
+- [Build Scripts](./04-build-scripts.md) — `run.ps1` / `run.sh` invoked by the worker
+- [Handoff Mechanism](./05-handoff-mechanism.md) — Deep-dive on the copy-and-handoff pattern
+- [Cleanup](./06-cleanup.md) — Post-update artifact removal lifecycle
+- [Updater Binary](./19-updater-binary.md) — Standalone updater for binary-based updates
+- [Network Requirements](./20-network-requirements.md) — HTTP client and connectivity checks
 - [Configuration File](./21-config-file.md) — Where repo path and deploy defaults are stored
 
 ---
 
-_Update command workflow — v3.2.0 — 2026-04-13_
+*Update command workflow — v3.2.0 — 2026-04-13*

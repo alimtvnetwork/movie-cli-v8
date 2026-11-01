@@ -47,12 +47,12 @@ logging helpers. It must run **before** the banner, before reading
 The script must detect `(owner, base, currentVersion)` from its own
 invocation context. Detection is a 4-step ladder; the first match wins.
 
-| #   | Source                                                                                                                                                                                                                            | Example produces                                                                         |
-| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| 1   | URL captured from `$MyInvocation.MyCommand.Definition` (PowerShell) or the script's own location resolved via `BASH_SOURCE` / `$0` (sh). When invoked via `irm \| iex`, PowerShell exposes the source URL inside `$MyInvocation`. | `https://raw.githubusercontent.com/alimtvnetwork/coding-guidelines-v24/main/install.ps1` |
-| 2   | Environment variables — `INSTALL_PROBE_OWNER`, `INSTALL_PROBE_BASE`, `INSTALL_PROBE_VERSION`. Used for local dev or CI.                                                                                                           | —                                                                                        |
-| 3   | Constants embedded at the top of the script: `$ProbeOwner`, `$ProbeBase`, `$ProbeVersion`. Maintainer fills these when forking.                                                                                                   | —                                                                                        |
-| 4   | Hard fail-open — if nothing resolves, log `"version probe disabled (no self-identity)"` and skip the probe. **Never block the local install.**                                                                                    | —                                                                                        |
+| # | Source | Example produces |
+|---|--------|------------------|
+| 1 | URL captured from `$MyInvocation.MyCommand.Definition` (PowerShell) or the script's own location resolved via `BASH_SOURCE` / `$0` (sh). When invoked via `irm \| iex`, PowerShell exposes the source URL inside `$MyInvocation`. | `https://raw.githubusercontent.com/alimtvnetwork/coding-guidelines-v24/main/install.ps1` |
+| 2 | Environment variables — `INSTALL_PROBE_OWNER`, `INSTALL_PROBE_BASE`, `INSTALL_PROBE_VERSION`. Used for local dev or CI. | — |
+| 3 | Constants embedded at the top of the script: `$ProbeOwner`, `$ProbeBase`, `$ProbeVersion`. Maintainer fills these when forking. | — |
+| 4 | Hard fail-open — if nothing resolves, log `"version probe disabled (no self-identity)"` and skip the probe. **Never block the local install.** | — |
 
 ### Required regex
 
@@ -149,12 +149,12 @@ exit $?
 
 ### Hand-off invariants
 
-| Rule                                                                                                                                                            | Reason                                                                                                                                                                                    |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| The child install MUST inherit stdout/stderr (no detach).                                                                                                       | User sees one continuous log.                                                                                                                                                             |
-| The parent MUST exit with the child's exit code.                                                                                                                | Pipelines and CI see the real outcome.                                                                                                                                                    |
-| The probe is **not** repeated by the child.                                                                                                                     | Each install.* runs the prologue exactly once for its own `currentVersion`. The child will probe for its own +1..+20 and (correctly) find nothing higher, so it falls through to install. |
-| Loop guard — env var `INSTALL_PROBE_HANDOFF_DEPTH` (int, default 0) is incremented on hand-off. If it reaches `3`, abort with a clear error to prevent runaway. | Defense in depth.                                                                                                                                                                         |
+| Rule | Reason |
+|------|--------|
+| The child install MUST inherit stdout/stderr (no detach). | User sees one continuous log. |
+| The parent MUST exit with the child's exit code. | Pipelines and CI see the real outcome. |
+| The probe is **not** repeated by the child. | Each install.* runs the prologue exactly once for its own `currentVersion`. The child will probe for its own +1..+20 and (correctly) find nothing higher, so it falls through to install. |
+| Loop guard — env var `INSTALL_PROBE_HANDOFF_DEPTH` (int, default 0) is incremented on hand-off. If it reaches `3`, abort with a clear error to prevent runaway. | Defense in depth. |
 
 ---
 
@@ -192,14 +192,14 @@ Or, when the probe is skipped:
 
 ## Failure Modes
 
-| Condition                         | Behavior                                                                                    |
-| --------------------------------- | ------------------------------------------------------------------------------------------- |
-| No internet                       | Log `⚠ Probe skipped: network unreachable`. Continue local install.                         |
-| GitHub rate-limit (HTTP 403/429)  | Log warning with `X-RateLimit-Reset` if present. Continue local install.                    |
-| TLS / certificate failure         | Log warning. Continue local install.                                                        |
-| Probe timeout exceeded            | Use whatever results are in. If none, continue local install.                               |
-| Hand-off child exits non-zero     | Parent exits with same code. **Do not** retry locally — the child explicitly chose to fail. |
-| `INSTALL_PROBE_HANDOFF_DEPTH ≥ 3` | Hard error, exit 1. Print: `Probe loop guard triggered — aborting.`                         |
+| Condition | Behavior |
+|-----------|-----------|
+| No internet | Log `⚠ Probe skipped: network unreachable`. Continue local install. |
+| GitHub rate-limit (HTTP 403/429) | Log warning with `X-RateLimit-Reset` if present. Continue local install. |
+| TLS / certificate failure | Log warning. Continue local install. |
+| Probe timeout exceeded | Use whatever results are in. If none, continue local install. |
+| Hand-off child exits non-zero | Parent exits with same code. **Do not** retry locally — the child explicitly chose to fail. |
+| `INSTALL_PROBE_HANDOFF_DEPTH ≥ 3` | Hard error, exit 1. Print: `Probe loop guard triggered — aborting.` |
 
 **Golden rule:** the probe is a courtesy, not a gate. Any error in the
 probe path falls back to "install whatever I am right now".
@@ -421,24 +421,24 @@ invoke_latest_version_probe
 
 ## Test Matrix
 
-| Scenario                                                             | Expected                                                            |
-| -------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| `irm .../coding-guidelines-v24/main/install.ps1 \| iex`, v19 exists  | Hands off to v19, exits 0.                                          |
-| `irm .../coding-guidelines-v24/main/install.ps1 \| iex`, no v20..v39 | Falls through to local install.                                     |
-| Local dev: `.\install.ps1` (no URL context), constants point to v19  | If running script claims v19 and no v20..v39 exists, falls through. |
-| Network down                                                         | Logs `⚠ network unreachable`, falls through.                        |
-| GitHub returns 429 for all probes                                    | Falls through.                                                      |
-| Hand-off child exits 1                                               | Parent exits 1, no local fallback.                                  |
-| `INSTALL_PROBE_HANDOFF_DEPTH=3` already set                          | Hard error, exit 1.                                                 |
-| URL has no `-v<N>` suffix and no fallback constants                  | Skip probe, fall through.                                           |
+| Scenario | Expected |
+|----------|----------|
+| `irm .../coding-guidelines-v24/main/install.ps1 \| iex`, v19 exists | Hands off to v19, exits 0. |
+| `irm .../coding-guidelines-v24/main/install.ps1 \| iex`, no v20..v39 | Falls through to local install. |
+| Local dev: `.\install.ps1` (no URL context), constants point to v19 | If running script claims v19 and no v20..v39 exists, falls through. |
+| Network down | Logs `⚠ network unreachable`, falls through. |
+| GitHub returns 429 for all probes | Falls through. |
+| Hand-off child exits 1 | Parent exits 1, no local fallback. |
+| `INSTALL_PROBE_HANDOFF_DEPTH=3` already set | Hard error, exit 1. |
+| URL has no `-v<N>` suffix and no fallback constants | Skip probe, fall through. |
 
 ---
 
 ## Cross-References
 
-- [18 — Install Scripts](./19-install-scripts.md) — Local install pipeline that runs after the probe falls through.
-- [05 — Handoff Mechanism](./06-handoff-mechanism.md) — Related but distinct: in-process binary self-replacement, not installer-to-installer.
-- [20 — Network Requirements](./21-network-requirements.md) — Timeout, retry, and TLS conventions referenced above.
+- [18 — Install Scripts](./18-install-scripts.md) — Local install pipeline that runs after the probe falls through.
+- [05 — Handoff Mechanism](./05-handoff-mechanism.md) — Related but distinct: in-process binary self-replacement, not installer-to-installer.
+- [20 — Network Requirements](./20-network-requirements.md) — Timeout, retry, and TLS conventions referenced above.
 - [22 — Update Command Workflow](./22-update-command-workflow.md) — `<binary> update` uses similar probe semantics for binary-based updates.
 
 ---

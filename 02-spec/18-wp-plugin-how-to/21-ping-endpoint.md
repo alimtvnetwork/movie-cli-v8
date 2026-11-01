@@ -28,7 +28,7 @@ Every WordPress plugin built under these conventions **must** expose a `/ping` e
 The ping endpoint supports **two authorization modes**. The plugin developer chooses which mode to use based on their security requirements. Both modes are documented here; the developer selects one via `PluginConfigType`.
 
 > **🔴 CODE RED — security update (v4.24+):** Per
-> [Phase 14 §14.5.1](./15-rest-api-conventions.md#1451-security--permission-callbacks--code-red),
+> [Phase 14 §14.5.1](./14-rest-api-conventions.md#1451-security--permission-callbacks--code-red),
 > `__return_true` is **forbidden** as the value of `permission_callback`,
 > including for "public" routes. Mode 1 below now resolves to a named
 > `allowPublicPing()` method whose docblock declares why the route is
@@ -345,10 +345,10 @@ curl -s -H "Authorization: Bearer <token>" \
 
 ## Cross-References
 
-- [Phase 14 — REST API Conventions](15-rest-api-conventions.md) — Route registration, EndpointType, response format
-- [Phase 5 — Helpers, Response Envelope](06-helpers-responses-and-integration.md) — EnvelopeBuilder pattern
-- [Phase 3 — Traits and Composition](04-traits-and-composition.md) — Handler trait anatomy
-- [Phase 4 — Logging and Error Handling](05-logging-and-error-handling.md) — safeExecute wrapper
+- [Phase 14 — REST API Conventions](14-rest-api-conventions.md) — Route registration, EndpointType, response format
+- [Phase 5 — Helpers, Response Envelope](05-helpers-responses-and-integration.md) — EnvelopeBuilder pattern
+- [Phase 3 — Traits and Composition](03-traits-and-composition.md) — Handler trait anatomy
+- [Phase 4 — Logging and Error Handling](04-logging-and-error-handling.md) — safeExecute wrapper
 
 ---
 

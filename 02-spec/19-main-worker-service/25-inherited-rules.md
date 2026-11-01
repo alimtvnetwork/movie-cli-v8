@@ -3,13 +3,13 @@
 **Spec:** `19-main-worker-service`
 **Version:** 1.0.0
 **Created:** 2026-05-06 (Phase 13.3 — closes audit-08 §2.4 cross-spec inlining gap)
-**Status:** Authoritative inline reference. Authoritative _source_ for each rule remains the linked external spec — this file is a **paste-ready cheat sheet**, not a fork. On any divergence, the linked source spec wins.
+**Status:** Authoritative inline reference. Authoritative *source* for each rule remains the linked external spec — this file is a **paste-ready cheat sheet**, not a fork. On any divergence, the linked source spec wins.
 
 ---
 
 ## 1. Why this file exists
 
-The dumb-AI audit (`audit/07-…v2.md`, `audit/08-…v3.md`) flagged that several rules `02-spec/19-…/` _inherits by reference_ from sibling specs are not resolvable when an implementer is handed only the `02-spec/19-…` folder. This file inlines the **minimum operative subset** of those rules so a literal AI never needs to leave the folder during implementation.
+The dumb-AI audit (`audit/07-…v2.md`, `audit/08-…v3.md`) flagged that several rules `02-spec/19-…/` *inherits by reference* from sibling specs are not resolvable when an implementer is handed only the `02-spec/19-…` folder. This file inlines the **minimum operative subset** of those rules so a literal AI never needs to leave the folder during implementation.
 
 **Five upstream specs are inherited:**
 
@@ -30,7 +30,7 @@ Operative subset for spec/19 implementers (full text in [`../03-error-manage/`](
 3. **Log context MUST include explicit file path + operation name** (per `mem://architecture/error-handling`). Format: `{file: "path/to/file.go", op: "Company.Create", err: <raw>}`.
 4. **Use the `apperror` package equivalent** in the implementer's stack. Wrap every error crossing a layer boundary; preserve the cause chain.
 5. **Never `String(caught)` — pass the raw error object through.** Stringification at the boundary is the loggers' job.
-6. **Error codes are cataloged in [`13-error-codes.md`](./14-error-codes.md);** the cross-tier envelope is defined in [`08-error-contract.md`](./09-error-contract.md) §2. The envelope is the sole wire shape.
+6. **Error codes are cataloged in [`13-error-codes.md`](./13-error-codes.md);** the cross-tier envelope is defined in [`08-error-contract.md`](./08-error-contract.md) §2. The envelope is the sole wire shape.
 
 **Conflict rule:** if any of the above conflicts with `08-error-contract.md`, **`02-spec/03-error-manage/` wins** for the rule itself; the envelope shape is owned by `08-§2`.
 
@@ -52,13 +52,13 @@ Operative subset for spec/19 implementers (full text in [`../03-error-manage/`](
 
 Every Main↔Worker call MUST honor:
 
-| Header                        | Direction        | Required when                                        | Notes                                                                                                                                                        |
-| ----------------------------- | ---------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `X-Correlation-Id`            | inbound + echoed | always                                               | ULID (Crockford base32, 26 chars). Server generates if missing on inbound and stamps response.                                                               |
-| `X-Idempotency-Key`           | inbound          | POST / PUT / PATCH                                   | UUID v4. Replays inside `MainWorker.Idempotency.KeyTtlSeconds` MUST return the original response (`08-§3.7`).                                                |
-| `X-Auth-Action`               | response         | when re-auth required                                | Frontend treats this as the **sole** "force re-login" signal. Do NOT infer from status codes. Values: `Reauthenticate`, `RegenerateBackupCodes`. (`08-§3.4`) |
-| `Content-Type`                | bodies           | always on bodies                                     | `application/json; charset=utf-8`.                                                                                                                           |
-| `Authorization: Bearer <jwt>` | inbound          | when endpoint row in `06-§2` lists `JWT (on Worker)` | RS256, verified per `12-§7`.                                                                                                                                 |
+| Header | Direction | Required when | Notes |
+| --- | --- | --- | --- |
+| `X-Correlation-Id` | inbound + echoed | always | ULID (Crockford base32, 26 chars). Server generates if missing on inbound and stamps response. |
+| `X-Idempotency-Key` | inbound | POST / PUT / PATCH | UUID v4. Replays inside `MainWorker.Idempotency.KeyTtlSeconds` MUST return the original response (`08-§3.7`). |
+| `X-Auth-Action` | response | when re-auth required | Frontend treats this as the **sole** "force re-login" signal. Do NOT infer from status codes. Values: `Reauthenticate`, `RegenerateBackupCodes`. (`08-§3.4`) |
+| `Content-Type` | bodies | always on bodies | `application/json; charset=utf-8`. |
+| `Authorization: Bearer <jwt>` | inbound | when endpoint row in `06-§2` lists `JWT (on Worker)` | RS256, verified per `12-§7`. |
 
 ### 3.3 Schema rules (from `02-schema-design.md` + Rules 10/11/12)
 
@@ -80,16 +80,16 @@ Every Main↔Worker call MUST honor:
 
 Full model has 6 tiers: Root, Settings, App, Session, Cache, Document. Spec/19 uses **4 of 6** in v1.0:
 
-| Tier         | Used by Main? | Used by Worker? | Holds                               | Notes                                                                                                                    |
-| ------------ | :-----------: | :-------------: | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| **Root**     |      ✅       |       ✅        | Top-level identity registry         | Main: `WorkerNode`, `Company`, `UserDirectory`. Worker: `RootCompany` shard pointers.                                    |
-| **Settings** |      ✅       |       ✅        | Per-tier tunables + bootstrap state | Includes `EndpointAuthSetting` on Main; `WorkerBootstrapState` on Worker.                                                |
-| **App**      |      ❌       |       ✅        | Per-company business data           | Authoritative `AppUser` (with `PasswordHash`, `TotpSecret`, `BackupCodesHash`) lives here. Main MUST NOT host this tier. |
-| **Session**  |      ✅       |       ✅        | Per-session ephemeral state         | Includes JWT denylist, in-flight idempotency rows.                                                                       |
-| Cache        |  (reserved)   |   (reserved)    | —                                   | Unused in v1.0.                                                                                                          |
-| Document     |  (reserved)   |   (reserved)    | —                                   | Unused in v1.0.                                                                                                          |
+| Tier | Used by Main? | Used by Worker? | Holds | Notes |
+| --- | :-: | :-: | --- | --- |
+| **Root** | ✅ | ✅ | Top-level identity registry | Main: `WorkerNode`, `Company`, `UserDirectory`. Worker: `RootCompany` shard pointers. |
+| **Settings** | ✅ | ✅ | Per-tier tunables + bootstrap state | Includes `EndpointAuthSetting` on Main; `WorkerBootstrapState` on Worker. |
+| **App** | ❌ | ✅ | Per-company business data | Authoritative `AppUser` (with `PasswordHash`, `TotpSecret`, `BackupCodesHash`) lives here. Main MUST NOT host this tier. |
+| **Session** | ✅ | ✅ | Per-session ephemeral state | Includes JWT denylist, in-flight idempotency rows. |
+| Cache | (reserved) | (reserved) | — | Unused in v1.0. |
+| Document | (reserved) | (reserved) | — | Unused in v1.0. |
 
-Authoritative tier mapping for spec/19: [`11-split-db-tier-reconciliation.md`](./12-split-db-tier-reconciliation.md) §5.
+Authoritative tier mapping for spec/19: [`11-split-db-tier-reconciliation.md`](./11-split-db-tier-reconciliation.md) §5.
 
 ### 4.2 Operative SQLite settings (per tier)
 
@@ -110,7 +110,7 @@ The RBAC adapter lives in the App tier per `mem://architecture/split-database`. 
 - Config seed file: `config.seed.json`. Categories block holds tunables (e.g. `Categories.MainWorker.Settings.WorkerJwtTtlSeconds`); Tables block holds reference rows.
 - **SemVer-merged via GORM at boot.** A category's `Version` controls migration order: bumping = forward migration on next boot.
 - **Defaults are authoritative** in the seed; runtime DB rows override only via explicit admin write. A literal AI MUST NOT hard-code defaults that already live in the seed.
-- Spec/19's seed payload is in [`15-tunable-constants.md`](./16-tunable-constants.md) §4 (current `MainWorker` category SemVer: **1.5.0**).
+- Spec/19's seed payload is in [`15-tunable-constants.md`](./15-tunable-constants.md) §4 (current `MainWorker` category SemVer: **1.5.0**).
 
 ### 5.2 Bump rules
 

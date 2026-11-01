@@ -13,11 +13,11 @@ Define the location, schema, and lifecycle of the CLI configuration file used fo
 
 ## File Location
 
-| Platform | Path                                                 |
-| -------- | ---------------------------------------------------- |
-| Windows  | `%APPDATA%\<binary>\config.json`                     |
-| Linux    | `~/.config/<binary>/config.json`                     |
-| macOS    | `~/Library/Application Support/<binary>/config.json` |
+| Platform | Path |
+|----------|------|
+| Windows | `%APPDATA%\<binary>\config.json` |
+| Linux | `~/.config/<binary>/config.json` |
+| macOS | `~/Library/Application Support/<binary>/config.json` |
 
 ### XDG Compliance (Linux)
 
@@ -120,12 +120,12 @@ The config file is created when:
 
 ### Default Values by Platform
 
-| Field                 | Windows Default                           | Linux/macOS Default |
-| --------------------- | ----------------------------------------- | ------------------- |
-| `deployPath`          | `%LOCALAPPDATA%\<binary>`                 | `$HOME/.local/bin`  |
-| `repoPath`            | (empty — detected from embedded constant) | (empty)             |
-| `updateChannel`       | `stable`                                  | `stable`            |
-| `checkUpdatesOnStart` | `false`                                   | `false`             |
+| Field | Windows Default | Linux/macOS Default |
+|-------|----------------|---------------------|
+| `deployPath` | `%LOCALAPPDATA%\<binary>` | `$HOME/.local/bin` |
+| `repoPath` | (empty — detected from embedded constant) | (empty) |
+| `updateChannel` | `stable` | `stable` |
+| `checkUpdatesOnStart` | `false` | `false` |
 
 ### Creation Logic
 
@@ -165,7 +165,7 @@ func EnsureConfig() (*Config, error) {
 
 ## Integration with Deploy Path Resolution
 
-The config file provides **Tier 3** of the [Deploy Path Resolution](./03-deploy-path-resolution.md) strategy:
+The config file provides **Tier 3** of the [Deploy Path Resolution](./02-deploy-path-resolution.md) strategy:
 
 ```
 Priority 1: CLI flag (--deploy-path) → highest
@@ -196,11 +196,11 @@ The **user-level** `config.json` described here is different from the **project-
 
 ## Cross-References
 
-- [Deploy Path Resolution](./03-deploy-path-resolution.md) — Tier 3 uses config file defaults
-- [Self-Update Overview](./02-self-update-overview.md) — Source repo path from config
-- [Updater Binary](./20-updater-binary.md) — Reads repo and deploy path from config
-- [Install Scripts](./19-install-scripts.md) — May create initial config on install
+- [Deploy Path Resolution](./02-deploy-path-resolution.md) — Tier 3 uses config file defaults
+- [Self-Update Overview](./01-self-update-overview.md) — Source repo path from config
+- [Updater Binary](./19-updater-binary.md) — Reads repo and deploy path from config
+- [Install Scripts](./18-install-scripts.md) — May create initial config on install
 
 ---
 
-_Configuration file — v3.2.0 — 2026-04-13_
+*Configuration file — v3.2.0 — 2026-04-13*

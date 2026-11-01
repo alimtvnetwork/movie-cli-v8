@@ -15,10 +15,10 @@ spec author cannot accidentally claim slot 24 for an unrelated topic.
 Slot 24 is reserved for a forthcoming **Threat Model** document that will
 underpin the v2.0 reopen of two formally-deferred open questions:
 
-| Origin OQ                                                                   | Source disposition                                                                                         | What the threat model must cover                                                                                           |
-| --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| **OQ-12-1** — Separate `RefreshToken` cookie + rotation                     | [`12-jwt-delivery-contract.md` §11.3](./13-jwt-delivery-contract.md) — _Future-work catalog_               | Token-theft window, sign-out-everywhere, refresh-replay attack tree, cross-origin isolation assumptions.                   |
-| **OQ-23-1** / **OQ-23-2** — Snapshot dedup pyramid + partial-tenant restore | [`23-snapshot-storage-and-restore.md` §14.4](./23-snapshot-storage-and-restore.md) — _Future-work catalog_ | Snapshot-chain integrity, per-tenant blast radius, re-seal/key-rotation interaction, audit-bypass risk of partial restore. |
+| Origin OQ | Source disposition | What the threat model must cover |
+|---|---|---|
+| **OQ-12-1** — Separate `RefreshToken` cookie + rotation | [`12-jwt-delivery-contract.md` §11.3](./12-jwt-delivery-contract.md) — *Future-work catalog* | Token-theft window, sign-out-everywhere, refresh-replay attack tree, cross-origin isolation assumptions. |
+| **OQ-23-1** / **OQ-23-2** — Snapshot dedup pyramid + partial-tenant restore | [`23-snapshot-storage-and-restore.md` §14.4](./23-snapshot-storage-and-restore.md) — *Future-work catalog* | Snapshot-chain integrity, per-tenant blast radius, re-seal/key-rotation interaction, audit-bypass risk of partial restore. |
 
 Both deferred OQs declared `24-threat-model.md` as a **shared prerequisite**
 for any v2.0 reopen. Until this file becomes a real spec, neither OQ may be
@@ -41,8 +41,7 @@ any of the following — adding them here is itself a CODE RED violation:
 - ❌ Any v1.0 implementation guidance — slot 24 is **v2.0-only**.
 
 Forbidden patterns above mirror:
-
-- [`12-jwt-delivery-contract.md` §11.1 / §11.3](./13-jwt-delivery-contract.md)
+- [`12-jwt-delivery-contract.md` §11.1 / §11.3](./12-jwt-delivery-contract.md)
 - [`23-snapshot-storage-and-restore.md` §14.1 / §14.2 / §14.4](./23-snapshot-storage-and-restore.md)
 
 ---
@@ -69,15 +68,15 @@ only this reservation notice.
 
 ## 4. Cross-references
 
-| Reference                             | Location                                                                         |
-| ------------------------------------- | -------------------------------------------------------------------------------- |
-| OQ-12-1 / OQ-12-2 dispositions        | [`12-jwt-delivery-contract.md` §11](./13-jwt-delivery-contract.md)               |
-| OQ-23-1 / OQ-23-2 dispositions        | [`23-snapshot-storage-and-restore.md` §14](./23-snapshot-storage-and-restore.md) |
-| Tunable constants (cap prerequisite)  | [`15-tunable-constants.md`](./16-tunable-constants.md)                           |
-| Error codes (allocation prerequisite) | [`13-error-codes.md`](./14-error-codes.md)                                       |
-| Acceptance criteria                   | [`97-acceptance-criteria.md`](./97-acceptance-criteria.md)                       |
-| Changelog                             | [`98-changelog.md`](./readme.md)                                                 |
+| Reference | Location |
+|---|---|
+| OQ-12-1 / OQ-12-2 dispositions | [`12-jwt-delivery-contract.md` §11](./12-jwt-delivery-contract.md) |
+| OQ-23-1 / OQ-23-2 dispositions | [`23-snapshot-storage-and-restore.md` §14](./23-snapshot-storage-and-restore.md) |
+| Tunable constants (cap prerequisite) | [`15-tunable-constants.md`](./15-tunable-constants.md) |
+| Error codes (allocation prerequisite) | [`13-error-codes.md`](./13-error-codes.md) |
+| Acceptance criteria | [`97-acceptance-criteria.md`](./97-acceptance-criteria.md) |
+| Changelog | [`98-changelog.md`](./98-changelog.md) |
 
 ---
 
-_Stub v0.1.0 — 2026-05-06 — slot reservation only, no normative content._
+*Stub v0.1.0 — 2026-05-06 — slot reservation only, no normative content.*

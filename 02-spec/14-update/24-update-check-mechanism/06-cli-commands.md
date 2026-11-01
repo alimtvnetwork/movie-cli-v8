@@ -15,11 +15,11 @@
 
 ### Flags
 
-| Flag      | Default | Behavior                                                                                                                   |
-| --------- | ------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `--async` | off     | Spawns a detached child process, returns immediately. The child runs `update-check --force` (no flag) and writes silently. |
-| `--force` | off     | Bypasses the `IsCheckDue` interval gate. Always runs the discovery.                                                        |
-| `--json`  | off     | Prints the combined JSON document instead of the formatted human output.                                                   |
+| Flag | Default | Behavior |
+|------|---------|----------|
+| `--async` | off | Spawns a detached child process, returns immediately. The child runs `update-check --force` (no flag) and writes silently. |
+| `--force` | off | Bypasses the `IsCheckDue` interval gate. Always runs the discovery. |
+| `--json`  | off | Prints the combined JSON document instead of the formatted human output. |
 
 > **No `--persist` flag.** Both sync and `--async` modes always persist
 > to the store. (Resolved Decision #7.)
@@ -62,9 +62,8 @@ If `NewRepoUrl` is set, an extra line is printed:
 ### `--force` behavior
 
 Skips `IsCheckDue()`. Used by:
-
-- The `--async` child (so the interval gate doesn't short-circuit it).
-- Power users who want to re-check immediately.
+* The `--async` child (so the interval gate doesn't short-circuit it).
+* Power users who want to re-check immediately.
 
 ---
 
@@ -88,7 +87,7 @@ Decision #2.)
    `update-check --force` first." and exit 1.
 4. Detect the current OS; pick `Install.Windows` or `Install.Unix`.
 5. Execute the install command. The command is the **pinned installer
-   one-liner** from [16-generic-release/08](../../16-generic-release/09-version-pinned-release-installers.md)
+   one-liner** from [16-generic-release/08](../../16-generic-release/08-version-pinned-release-installers.md)
    — never the "latest" redirect.
 6. On success: set `UpdateStatusId = UpdateApplied`, log to file, print
    success message.
@@ -109,23 +108,23 @@ Installing…
 
 ## 3. Exit Codes
 
-| Code | Meaning                                            |
-| ---- | -------------------------------------------------- |
-| 0    | Success (or `--async` dispatch succeeded)          |
+| Code | Meaning |
+|------|---------|
+| 0    | Success (or `--async` dispatch succeeded) |
 | 1    | No update payload available / pre-condition failed |
-| 2    | Network error (all six probes failed)              |
-| 3    | Persistence error                                  |
-| 4    | `do-update` install command failed                 |
+| 2    | Network error (all six probes failed) |
+| 3    | Persistence error |
+| 4    | `do-update` install command failed |
 
 ---
 
 ## 4. Conformance
 
-- The commands MUST be visible in `<cli> --help`.
-- They MUST NOT require any DB/network setup beyond what the rest of
+* The commands MUST be visible in `<cli> --help`.
+* They MUST NOT require any DB/network setup beyond what the rest of
   the CLI already needs — `update-check` works on a fresh install via
   the JSON fallback (see [09-json-fallback-store.md](./09-json-fallback-store.md)).
 
 ---
 
-_CLI Commands — v1.0.0 — 2026-04-20_
+*CLI Commands — v1.0.0 — 2026-04-20*

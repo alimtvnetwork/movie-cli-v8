@@ -2,6 +2,7 @@
 
 . **CRITICAL AI INSTRUCTION:** This `01-index.md` file is the primary entry point for this directory. AI agents MUST read this file first before exploring other files in this folder.
 
+
 > **Version:** 1.0.0
 > **Created:** 2026-04-20
 > **Status:** Active

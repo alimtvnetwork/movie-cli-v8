@@ -40,26 +40,26 @@ Defines the JSON document that every `Status.ps1` / `Status.sh` script
 
 ## Field Reference
 
-| Field                       | Type                  | Required | Notes                                                                                                          |
-| --------------------------- | --------------------- | -------- | -------------------------------------------------------------------------------------------------------------- |
-| `Version`                   | string                | yes      | SemVer with leading `V` (e.g., `V1.5.0`)                                                                       |
-| `ReleaseUrl`                | string (URL)          | yes      | GitHub release page                                                                                            |
-| `PublishedAt`               | string (ISO 8601 UTC) | yes      | Release publish time                                                                                           |
-| `Checksum`                  | string                | yes      | Format `<Algorithm>:<Hex>` — e.g., `Sha256:Abc...`                                                             |
-| `Install.Windows.ScriptUrl` | string (URL)          | yes      | Pinned installer per [16-generic-release/08](../../16-generic-release/09-version-pinned-release-installers.md) |
-| `Install.Windows.Command`   | string                | yes      | One-line invocation for end users                                                                              |
-| `Install.Unix.ScriptUrl`    | string (URL)          | yes      | Pinned installer                                                                                               |
-| `Install.Unix.Command`      | string                | yes      | One-line invocation                                                                                            |
-| `Notes`                     | string                | no       | Short release-notes summary; `null` allowed                                                                    |
-| `MinSupportedFrom`          | string                | yes      | Lowest version that can directly upgrade to this one                                                           |
-| `NewRepoUrl`                | string (URL) \| null  | yes      | Set if the project moved to a new repo (migration notice)                                                      |
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| `Version` | string | yes | SemVer with leading `V` (e.g., `V1.5.0`) |
+| `ReleaseUrl` | string (URL) | yes | GitHub release page |
+| `PublishedAt` | string (ISO 8601 UTC) | yes | Release publish time |
+| `Checksum` | string | yes | Format `<Algorithm>:<Hex>` — e.g., `Sha256:Abc...` |
+| `Install.Windows.ScriptUrl` | string (URL) | yes | Pinned installer per [16-generic-release/08](../../16-generic-release/08-version-pinned-release-installers.md) |
+| `Install.Windows.Command` | string | yes | One-line invocation for end users |
+| `Install.Unix.ScriptUrl` | string (URL) | yes | Pinned installer |
+| `Install.Unix.Command` | string | yes | One-line invocation |
+| `Notes` | string | no | Short release-notes summary; `null` allowed |
+| `MinSupportedFrom` | string | yes | Lowest version that can directly upgrade to this one |
+| `NewRepoUrl` | string (URL) \| null | yes | Set if the project moved to a new repo (migration notice) |
 
 ---
 
 ## Producer (Release Pipeline)
 
 The script is generated at release time by the pipeline (see
-[16-generic-release/08-version-pinned-release-installers.md](../../16-generic-release/09-version-pinned-release-installers.md)).
+[16-generic-release/08-version-pinned-release-installers.md](../../16-generic-release/08-version-pinned-release-installers.md)).
 Templates live next to the pinned installer templates:
 
 ```
@@ -97,9 +97,9 @@ A status response is **valid** iff:
 4. `Version` matches the regex `^V\d+\.\d+\.\d+$`.
 5. `PublishedAt` parses as RFC 3339 / ISO 8601.
 
-Any failure → treated as _not-found_ in discovery. Reason logged to the
+Any failure → treated as *not-found* in discovery. Reason logged to the
 file-system log (`UpdateChecker.log`).
 
 ---
 
-_Status Script JSON — v1.0.0 — 2026-04-20_
+*Status Script JSON — v1.0.0 — 2026-04-20*
