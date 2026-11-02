@@ -9,17 +9,17 @@
       ]
     }
   ],
-  "Description": "Personal movie \u0026 TV show library manager — from the terminal.",
+  "Description": "Personal movie & TV show library manager \u2014 from the terminal.",
   "LastCommitSha": "e503c5a90fd27af427fd44e02d4c2a5e560dbd8f",
   "RepoSlug": "movie-cli-v8",
   "RepoUrl": "https://github.com/alimtvnetwork/movie-cli-v8",
   "Title": "Movie CLI",
-  "Version": "2.343.56",
+  "Version": "2.343.57",
   "changelog": {
     "file_path": "CHANGELOG.md",
     "format": "keep-a-changelog"
   },
-  "releaseDate": "2026-10-31",
+  "releaseDate": "2026-11-02",
   "syncManifest": {
     "manifestVersion": "1.0.0",
     "generatedAt": "2026-11-01T09:39:10Z",
@@ -1464,5 +1464,5 @@
       "03-ai-scripts/update_trial_run.py": "8996c579376b942ac650bc6a9febc43cc7db88ec9d52986e8edf705534a6d4d1"
     }
   },
-  "version": "2.343.56"
+  "version": "2.343.57"
 }
