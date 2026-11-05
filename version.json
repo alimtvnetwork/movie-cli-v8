@@ -14,7 +14,7 @@
   "RepoSlug": "movie-cli-v8",
   "RepoUrl": "https://github.com/alimtvnetwork/movie-cli-v8",
   "Title": "Movie CLI",
-  "Version": "2.343.58",
+  "Version": "2.343.59",
   "changelog": {
     "file_path": "CHANGELOG.md",
     "format": "keep-a-changelog"
@@ -1464,5 +1464,5 @@
       "03-ai-scripts/update_trial_run.py": "8996c579376b942ac650bc6a9febc43cc7db88ec9d52986e8edf705534a6d4d1"
     }
   },
-  "version": "2.343.58"
+  "version": "2.343.59"
 }
